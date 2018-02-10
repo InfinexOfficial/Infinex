@@ -3,12 +3,17 @@ Infinex
 
 ----------------------------------------------------------------------------------------
 
-Website: www.infinex.info
+Website: https://www.infinex.info
+
 Email: infinex.coin@gmail.com
-Bitcointalk:
-Telegram:
-Discord:
-Twitter:
+
+Bitcointalk: https://bitcointalk.org/index.php?topic=2914468
+
+Telegram: https://t.me/Infinex
+
+Discord: https://discord.gg/2PpuNSe
+
+Twitter: https://twitter.com/InfinexCoin
 
 ----------------------------------------------------------------------------------------
 
