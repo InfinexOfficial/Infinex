@@ -1,0 +1,22 @@
+[Unit]
+Description=Infinex's distributed currency daemon
+After=network.target
+
+[Service]
+User=infinexcore
+Group=infinexcore
+
+Type=forking
+PIDFile=/var/lib/infinexd/infinexd.pid
+ExecStart=/usr/bin/infinexd -daemon -pid=/var/lib/infinexd/infinexd.pid \
+-conf=/etc/infinexcore/infinex.conf -datadir=/var/lib/infinexd -disablewallet
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=2s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,6 @@
+usr/local/bin/infinex-qt usr/bin
+share/pixmaps/infinex32.xpm usr/share/pixmaps
+share/pixmaps/infinex16.xpm usr/share/pixmaps
+share/pixmaps/infinex128.png usr/share/pixmaps
+debian/infinex-qt.desktop usr/share/applications
+debian/infinex-qt.protocol usr/share/kde4/services/

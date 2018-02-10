@@ -1,0 +1,11 @@
+[Protocol]
+exec=infinex-qt '%u'
+protocol=infinex
+input=none
+output=none
+helper=true
+listing=
+reading=false
+writing=false
+makedir=false
+deleting=false

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Infinex
+Comment=Infinex P2P Cryptocurrency
+Comment[fr]=Infinex, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=Infinex, eşten eşe kriptografik sanal para birimi
+Exec=infinex-qt %u
+Terminal=false
+Type=Application
+Icon=infinex128
+MimeType=x-scheme-handler/infinex;
+Categories=Office;Finance;
