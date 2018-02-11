@@ -38,13 +38,21 @@ Block time: 90 seconds.
 Block Reward / Block:
 
 Block 1 (Premine) - 40,000 coins.
+
 Block 2 - 4,800 - 11 coins (Miner 10; Founder 1) ~ 5 days.
+
 Block 4,801 - 350,400 - 11 coins (Miner 5; Masternode 5; Founder 1) ~ Year 1.
+
 Block 350,401 - 700,800 - 10 coins (Miner 4; Masternode 5; Founder 1) ~ Year 2.
+
 Block 700,801 - 1,051,200 - 9 coins (Miner 3; Masternode: 5; Founder 1) ~ Year 3.
+
 Block 1,051,201 - 1,401,600 - 8 coins (Miner 2; Masternode: 5; Founder 1) ~ Year 4.
+
 Block 1,401,601 - 1,752,000 - 7 coins (Miner 1; Masternode: 5; Founder 1) ~ Year 5.
+
 Block 1,752,001 - 3,504,000 - 6 coins (Miner 1; Masternode: 5; Founder 0) ~ Year 6 - Year 10.
+
 Year 10 & beyond - Miner & Masternode reward through transaction fee & network income (TBA)
 
 Premine Coins Allocation:
