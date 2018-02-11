@@ -31,9 +31,11 @@ Chain Protection through "InfiniGuard"
 
 Customised Infinex "TextSpork" Technology
 
+
 Maximum coins: 26,280,000 (over 10 years).
 
 Block time: 90 seconds.
+
 
 Block Reward / Block:
 
@@ -55,6 +57,7 @@ Block 1,752,001 - 3,504,000 - 6 coins (Miner 1; Masternode: 5; Founder 0) ~ Year
 
 Year 10 & beyond - Miner & Masternode reward through transaction fee & network income (TBA)
 
+
 Premine Coins Allocation:
 
 Airdrop - 20,000 coins
@@ -62,6 +65,7 @@ Airdrop - 20,000 coins
 10 coins per person, 10,000 reserved for Telegram participation, 10,000 reserved for Discord partcipation.
 
 Balance 20,000 coins as fee for listing on exchanges & masternode details website.
+
 
 Developer will be rewarded through founder reward.
 
