@@ -13,19 +13,19 @@
 
 ----------------------------------------------------------------------------------------
 
-:large_blue_circle: Website: https://www.infinex.info
+:small_blue_diamond: Website: https://www.infinex.info
 
-:large_blue_circle: Email: infinex.coin@gmail.com
+:small_blue_diamond: Email: infinex.coin@gmail.com
 
-:large_blue_circle: Bitcointalk: https://bitcointalk.org/index.php?topic=2914468
+:small_blue_diamond: Bitcointalk: https://bitcointalk.org/index.php?topic=2914468
 
-:large_blue_circle: Telegram: https://t.me/Infinex
+:small_blue_diamond: Telegram: https://t.me/Infinex
 
-:large_blue_circle: Discord: https://discord.gg/2PpuNSe
+:small_blue_diamond: Discord: https://discord.gg/2PpuNSe
 
-:large_blue_circle: Twitter: https://twitter.com/InfinexCoin
+:small_blue_diamond: Twitter: https://twitter.com/InfinexCoin
 
-:large_blue_circle: Youtube: https://www.youtube.com/channel/UCbHRhNkDkKKCOK4peC7gCrg
+:small_blue_diamond: Youtube: https://www.youtube.com/channel/UCbHRhNkDkKKCOK4peC7gCrg
 
 ----------------------------------------------------------------------------------------
 
