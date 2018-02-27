@@ -108,7 +108,10 @@ Telegram Airdrop - 10,000 coins
 MN Auction - 7,000 coins
 Balance coins for bounty & Infinex promoter
 
+:small_blue_diamond: Infinex transparency report: https://drive.google.com/open?id=1l_yKZiM4yUbXOUTwSpX5xl-0XzLGVLI6XWW9w1IXiNY
+
 ----------------------------------------------------------------------------------------
 
-# **Developer will be rewarded through founder reward.**
-# **0 coin for developer from premine.**
+**Developer will be rewarded through founder reward.**
+
+**0 coin for developer from premine.**
