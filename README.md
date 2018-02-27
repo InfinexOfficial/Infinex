@@ -7,6 +7,8 @@
 
 - [x] Decentralised
 
+- [x] TextSpork - Infinex Customised Spork Setup
+
 - [x] InfiniGuard - Chain Protection Mechanism
 
 - [x] InifiniLoop - Chain Flow Readjustment
@@ -78,7 +80,7 @@ Block time: 90 seconds.
 
 ----------------------------------------------------------------------------------------
 
-Block Reward / Block:
+**Block Reward / Block:**
 
 Block 1 (Premine) - 40,000 coins.
 
@@ -100,16 +102,13 @@ Year 10 & beyond - Miner & Masternode reward through transaction fee & network i
 
 ----------------------------------------------------------------------------------------
 
-Premine Coins Allocation:
+# **Premine Coins Allocation:**
 
-Airdrop - 20,000 coins
-
-10 coins per person, 10,000 reserved for Telegram participation, 10,000 reserved for Discord partcipation.
-
-Balance 20,000 coins as fee for listing on exchanges & masternode details website.
+Telegram Airdrop - 10,000 coins
+MN Auction - 7,000 coins
+Balance coins for bounty & Infinex promoter
 
 ----------------------------------------------------------------------------------------
 
-Developer will be rewarded through founder reward.
-
-0 coin for developer from premine.
+# **Developer will be rewarded through founder reward.**
+# **0 coin for developer from premine.**
