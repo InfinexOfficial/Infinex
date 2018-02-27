@@ -60,17 +60,17 @@
 
 # **Infinex Coin Specification**
 
-Proof of Work (PoW) & Masternode
+- Proof of Work (PoW) & Masternode
 
-PoW algorithm: Lyra2Z.
+- PoW algorithm: Lyra2Z.
 
-High efficiency, low power usage, ASIC resistant.
+- High efficiency, low power usage, ASIC resistant.
 
-Difficulty readjustment every block through "InfiniLoop".
+- Difficulty readjustment every block through "InfiniLoop".
 
-Chain Protection through "InfiniGuard"
+- Chain Protection through "InfiniGuard"
 
-Customised Infinex "TextSpork" Technology
+- Customised Infinex "TextSpork" Technology
 
 ----------------------------------------------------------------------------------------
 
@@ -82,30 +82,32 @@ Block time: 90 seconds.
 
 **Block Reward / Block:**
 
-Block 1 (Premine) - 40,000 coins.
+- Block 1 (Premine) - 40,000 coins.
 
-Block 2 - 4,800 - 11 coins (Miner 10; Founder 1) ~ 5 days.
+- Block 2 - 4,800 - 11 coins (Miner 10; Founder 1) ~ 5 days.
 
-Block 4,801 - 350,400 - 11 coins (Miner 5; Masternode 5; Founder 1) ~ Year 1.
+- Block 4,801 - 350,400 - 11 coins (Miner 5; Masternode 5; Founder 1) ~ Year 1.
 
-Block 350,401 - 700,800 - 10 coins (Miner 4; Masternode 5; Founder 1) ~ Year 2.
+- Block 350,401 - 700,800 - 10 coins (Miner 4; Masternode 5; Founder 1) ~ Year 2.
 
-Block 700,801 - 1,051,200 - 9 coins (Miner 3; Masternode: 5; Founder 1) ~ Year 3.
+- Block 700,801 - 1,051,200 - 9 coins (Miner 3; Masternode: 5; Founder 1) ~ Year 3.
 
-Block 1,051,201 - 1,401,600 - 8 coins (Miner 2; Masternode: 5; Founder 1) ~ Year 4.
+- Block 1,051,201 - 1,401,600 - 8 coins (Miner 2; Masternode: 5; Founder 1) ~ Year 4.
 
-Block 1,401,601 - 1,752,000 - 7 coins (Miner 1; Masternode: 5; Founder 1) ~ Year 5.
+- Block 1,401,601 - 1,752,000 - 7 coins (Miner 1; Masternode: 5; Founder 1) ~ Year 5.
 
-Block 1,752,001 - 3,504,000 - 6 coins (Miner 1; Masternode: 5; Founder 0) ~ Year 6 - Year 10.
+- Block 1,752,001 - 3,504,000 - 6 coins (Miner 1; Masternode: 5; Founder 0) ~ Year 6 - Year 10.
 
-Year 10 & beyond - Miner & Masternode reward through transaction fee & network income (TBA)
+- Year 10 & beyond - Miner & Masternode reward through transaction fee & network income (TBA)
 
 ----------------------------------------------------------------------------------------
 
 # **Premine Coins Allocation:**
 
 Telegram Airdrop - 10,000 coins
+
 MN Auction - 7,000 coins
+
 Balance coins for bounty & Infinex promoter
 
 :small_blue_diamond: Infinex transparency report: https://drive.google.com/open?id=1l_yKZiM4yUbXOUTwSpX5xl-0XzLGVLI6XWW9w1IXiNY
