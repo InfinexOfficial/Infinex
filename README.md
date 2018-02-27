@@ -1,16 +1,17 @@
 
 # **Infinex**
+
 - [X] Digital Cryptocurrency
 
 - [x] Masternode
 
 - [x] Decentralised
 
-- [x] InfiniGuard
+- [x] InfiniGuard - Chain Protection Mechanism
 
-- [x] InifiniLoop
+- [x] InifiniLoop - Chain Flow Readjustment
 
-- [x] InfiniBot
+- [x] InfiniBot - Telegram & Discord Bot
 
 - [ ] InfiniBot v2 (soon)
 
@@ -21,6 +22,8 @@
 - [ ] InfiniAppStore (Q2 2019)
 
 ----------------------------------------------------------------------------------------
+
+# **Infinex Official Channel**
 
 :small_blue_diamond: Website: https://www.infinex.info
 
@@ -35,6 +38,13 @@
 :small_blue_diamond: Twitter: https://twitter.com/InfinexCoin
 
 :small_blue_diamond: Youtube: https://www.youtube.com/channel/UCbHRhNkDkKKCOK4peC7gCrg
+
+
+---------------------------------------------------------------------------------------
+
+# **Infinex Official Exchange**
+
+:small_blue_diamond: Crypto-Bridge: https://wallet.crypto-bridge.org/market/BRIDGE.IFX_BRIDGE.BTC
 
 ----------------------------------------------------------------------------------------
 
