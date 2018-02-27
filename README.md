@@ -72,11 +72,9 @@
 
 - Customised Infinex "TextSpork" Technology
 
-----------------------------------------------------------------------------------------
+- Maximum coins: 26,280,000 (over 10 years).
 
-Maximum coins: 26,280,000 (over 10 years).
-
-Block time: 90 seconds.
+- Block time: 90 seconds.
 
 ----------------------------------------------------------------------------------------
 
