@@ -29,17 +29,12 @@
 
 ----------------------------------------------------------------------------------------
 
-Proof of Work (PoW) & Masternode
-
-PoW algorithm: Lyra2Z.
-
-High efficiency, low power usage, ASIC resistant.
-
-Difficulty readjustment every block through "InfiniLoop".
-
-Chain Protection through "InfiniGuard"
-
-Customised Infinex "TextSpork" Technology
+> Proof of Work (PoW) & Masternode
+> PoW algorithm: Lyra2Z.
+> High efficiency, low power usage, ASIC resistant.
+> Difficulty readjustment every block through "InfiniLoop".
+> Chain Protection through "InfiniGuard"
+> Customised Infinex "TextSpork" Technology
 
 ----------------------------------------------------------------------------------------
 
