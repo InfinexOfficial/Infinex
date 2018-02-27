@@ -1,5 +1,13 @@
 
-Infinex
+# **Infinex**
+- [X] Digital Cryptocurrency
+- [x] Masternode
+- [x] Decentralised
+- [x] InfiniGuard (Live)
+- [x] InifiniLoop (Live)
+- [ ] InfiniDex - Decentralised Exchange (Q3 2018)
+- [ ] InfiniLive - Decentralised Streaming (Q1 2019)
+- [ ] InfiniAppStore (Q2 2019)
 
 ----------------------------------------------------------------------------------------
 
