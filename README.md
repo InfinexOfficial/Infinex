@@ -1,14 +1,23 @@
 
 # **Infinex**
 - [X] Digital Cryptocurrency
+
 - [x] Masternode
+
 - [x] Decentralised
+
 - [x] InfiniGuard
+
 - [x] InifiniLoop
+
 - [x] InfiniBot
+
 - [ ] InfiniBot v2 (soon)
+
 - [ ] InfiniDex - Decentralised Exchange (Q3 2018)
+
 - [ ] InfiniLive - Decentralised Streaming (Q1 2019)
+
 - [ ] InfiniAppStore (Q2 2019)
 
 ----------------------------------------------------------------------------------------
@@ -29,17 +38,17 @@
 
 ----------------------------------------------------------------------------------------
 
-> Proof of Work (PoW) & Masternode
+Proof of Work (PoW) & Masternode
 
-> PoW algorithm: Lyra2Z.
+PoW algorithm: Lyra2Z.
 
-> High efficiency, low power usage, ASIC resistant.
+High efficiency, low power usage, ASIC resistant.
 
-> Difficulty readjustment every block through "InfiniLoop".
+Difficulty readjustment every block through "InfiniLoop".
 
-> Chain Protection through "InfiniGuard"
+Chain Protection through "InfiniGuard"
 
-> Customised Infinex "TextSpork" Technology
+Customised Infinex "TextSpork" Technology
 
 ----------------------------------------------------------------------------------------
 
