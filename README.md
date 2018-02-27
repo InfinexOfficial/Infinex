@@ -48,6 +48,16 @@
 
 ----------------------------------------------------------------------------------------
 
+# **Infinex Masternode ROI Info**
+
+:small_blue_diamond: Masternodes.online: https://masternodes.online/currencies/IFX/
+
+:small_blue_diamond: MNRank.com: http://mnrank.com/
+
+----------------------------------------------------------------------------------------
+
+# **Infinex Coin Specification**
+
 Proof of Work (PoW) & Masternode
 
 PoW algorithm: Lyra2Z.
