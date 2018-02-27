@@ -3,27 +3,29 @@
 - [X] Digital Cryptocurrency
 - [x] Masternode
 - [x] Decentralised
-- [x] InfiniGuard (Live)
-- [x] InifiniLoop (Live)
+- [x] InfiniGuard
+- [x] InifiniLoop
+- [x] InfiniBot
+- [ ] InfiniBot v2 (soon)
 - [ ] InfiniDex - Decentralised Exchange (Q3 2018)
 - [ ] InfiniLive - Decentralised Streaming (Q1 2019)
 - [ ] InfiniAppStore (Q2 2019)
 
 ----------------------------------------------------------------------------------------
 
-Website: https://www.infinex.info
+:large_blue_circle: Website: https://www.infinex.info
 
-Email: infinex.coin@gmail.com
+:large_blue_circle: Email: infinex.coin@gmail.com
 
-Bitcointalk: https://bitcointalk.org/index.php?topic=2914468
+:large_blue_circle: Bitcointalk: https://bitcointalk.org/index.php?topic=2914468
 
-Telegram: https://t.me/Infinex
+:large_blue_circle: Telegram: https://t.me/Infinex
 
-Discord: https://discord.gg/2PpuNSe
+:large_blue_circle: Discord: https://discord.gg/2PpuNSe
 
-Twitter: https://twitter.com/InfinexCoin
+:large_blue_circle: Twitter: https://twitter.com/InfinexCoin
 
-Youtube: https://www.youtube.com/channel/UCbHRhNkDkKKCOK4peC7gCrg
+:large_blue_circle: Youtube: https://www.youtube.com/channel/UCbHRhNkDkKKCOK4peC7gCrg
 
 ----------------------------------------------------------------------------------------
 
