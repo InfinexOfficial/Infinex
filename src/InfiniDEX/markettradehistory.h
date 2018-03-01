@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef SPORK_H
-#define SPORK_H
+#ifndef MARKETTRADEHISTORY_H
+#define MARKETTRADEHISTORY_H
 
 #include "hash.h"
 #include "net.h"
