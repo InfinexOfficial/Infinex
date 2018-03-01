@@ -12,7 +12,8 @@
 class CMarketTradeHistory;
 class CMarketTradeHistoryManager;
 
-extern std::map<uint256, CMarketTradeHistory> mapMarketTradeHistory;
+extern std::map<uint256, CMarketTradeHistory> mapRecentMarketTradeHistory;
+extern std::map<uint256, CMarketTradeHistory> mapPastMarketTradeHistory;
 extern CMarketTradeHistoryManager marketTradeHistoryManager;
 
 
@@ -47,7 +48,6 @@ public:
         nTradeProcessTime(0)
 	{}
 
-
 	ADD_SERIALIZE_METHODS;
 
 	template <typename Stream, typename Operation>
@@ -73,7 +73,7 @@ public:
 		return ss.GetHash();
 	}
 
-	bool Sign(std::string strSignKey);
+	bool Sign();
 	bool CheckSignature();
 	void Relay(CConnman& connman);
 };
