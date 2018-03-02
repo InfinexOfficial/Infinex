@@ -12,8 +12,8 @@
 class COrderBook;
 class COrderBookManager;
 
-extern std::map<uint256, COrderBook> orderBidBook;
-extern std::map<uint256, COrderBook> orderAskBook;
+extern std::map<uint256, std::vector<COrderBook>> orderBidBook; //pair of TradePair with bid data list
+extern std::map<uint256, std::vector<COrderBook>> orderAskBook; //pair of TradePair with ask data list
 extern COrderBookManager orderBookManager;
 
 
