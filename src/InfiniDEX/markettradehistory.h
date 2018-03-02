@@ -23,14 +23,14 @@ private:
 	std::vector<unsigned char> vchSig;
 
 public:
-	int nTradePairID;
-    int64_t nTradePrice;
-	int64_t nQuantity;
-    int64_t nTradeValue1;
-    int64_t nTradeValue2;
-	int64_t nTradeProcessTime;
+	uint256 nTradePairID;
+    uint64_t nTradePrice;
+	uint64_t nQuantity;
+    uint64_t nTradeValue1;
+    uint64_t nTradeValue2;
+	uint64_t nTradeProcessTime;
 
-	CMarketTradeHistory(int nTradePairID, int64_t nTradePrice, int64_t nQuantity, int64_t nTradeValue1, int64_t nTradeValue2, int64_t nTradeProcessTime) :
+	CMarketTradeHistory(uint256 nTradePairID, uint64_t nTradePrice, uint64_t nQuantity, uint64_t nTradeValue1, uint64_t nTradeValue2, uint64_t nTradeProcessTime) :
 		nTradePairID(nTradePairID),
         nTradePrice(nTradePrice),
         nQuantity(nQuantity),
@@ -78,5 +78,18 @@ public:
 	void Relay(CConnman& connman);
 };
 
+class CMarketTradeHistoryManager
+{
+private:
+    std::vector<unsigned char> vchSig;
+
+public:
+
+    CMarketTradeHistoryManager() {}
+
+    void ProcessMarketTradeHistory(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+    void BroadcastRecentMarketTradeHistory(uint256 nTradePairID);
+	void BroadcastPastMarketTradeHistory(uint256 nTradePairID);
+};
 
 #endif
