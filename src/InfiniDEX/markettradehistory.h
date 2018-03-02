@@ -90,6 +90,8 @@ public:
     void ProcessMarketTradeHistory(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
     void BroadcastRecentMarketTradeHistory(uint256 nTradePairID);
 	void BroadcastPastMarketTradeHistory(uint256 nTradePairID);
+	void ProvideRecentMarketTradeHistory(uint256 nTradePairID, string ip);
+	void ProvidePastMarketTradeHistory(uint256 nTradePairID, string ip);
 };
 
 #endif
