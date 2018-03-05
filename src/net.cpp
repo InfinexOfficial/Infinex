@@ -1959,9 +1959,6 @@ void CConnman::ThreadMessageHandler()
 
 
 
-
-
-
 bool CConnman::BindListenPort(const CService &addrBind, std::string& strError, bool fWhitelisted)
 {
     strError = "";
@@ -2259,6 +2256,12 @@ bool CConnman::Start(CScheduler& scheduler, std::string& strNodeError, Options c
     // Process messages
     threadMessageHandler = std::thread(&TraceThread<std::function<void()> >, "msghand", std::function<void()>(std::bind(&CConnman::ThreadMessageHandler, this)));
 
+    // Process InfiniDEX
+    //threadInfiniDEX = std::thread(&TraceThread<std::function<void()> >, "infinidex", std::function<void()>(std::bind(&CConnman::ThreadInfiniDEXHandler, this)));
+
+    // Process InfiniAPP
+    //threadInfiniAPP = std::thread(&TraceThread<std::function<void()> >, "infiniapp", std::function<void()>(std::bind(&CConnman::ThreadInfiniAPPHandler, this)));
+
     // Dump network addresses
     scheduler.scheduleEvery(boost::bind(&CConnman::DumpData, this), DUMP_ADDRESSES_INTERVAL);
 
@@ -2318,6 +2321,10 @@ void CConnman::Stop()
         threadDNSAddressSeed.join();
     if (threadSocketHandler.joinable())
         threadSocketHandler.join();
+    if (threadInfiniDEX.joinable())
+        threadInfiniDEX.join();
+    if (threadInfiniAPP.joinable())
+        threadInfiniAPP.join();        
 
     if (semMasternodeOutbound)
         for (int i=0; i<MAX_OUTBOUND_MASTERNODE_CONNECTIONS; i++)
