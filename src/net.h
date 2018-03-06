@@ -403,6 +403,8 @@ private:
     void ThreadSocketHandler();
     void ThreadDNSAddressSeed();
     void ThreadMnbRequestConnections();
+    //void ThreadInfiniDEXHandler();
+    //void ThreadInfiniAPPHandler();
 
     void WakeMessageHandler();
 
@@ -505,6 +507,8 @@ private:
     std::thread threadOpenConnections;
     std::thread threadMnbRequestConnections;
     std::thread threadMessageHandler;
+    //std::thread threadInfiniDEX;
+    //std::thread threadInfiniAPP;
 };
 extern std::unique_ptr<CConnman> g_connman;
 void Discover(boost::thread_group& threadGroup);
