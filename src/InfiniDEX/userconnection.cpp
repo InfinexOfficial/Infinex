@@ -20,12 +20,21 @@ void CUserConnection::ProcessUserConnection(CNode* pfrom, std::string& strComman
         if(ConnectionMessage == "")
             return;
 		
+        std::string IPIn = pFrom->addrLocal.ToStringIP();
+        std::string PortIn = pFrom->addrLocal.ToStringPort();
+        uint64_t LastSeenTimeIn = GetAdjustedTime();
+
         if(mapUserConnection.count(PublicKey))
-        {
-            
+        {            
+            mapUserConnection[PublicKey].UpdateUserConnectionInfo(IPIn, PortIn, LastSeenTimeIn);
+            return;
         }
 
-		CUserConnection UserConnection;
-
+        CUserConnection UserConnection = new CUserConnection(ConnectionMessage,IPIn,PortIn,LastSeenTimeIn);
+        mapUserConnection[ConnectionMessage] = UserConnection;
 	}
+    else if (strCommand == NetMsgType::DEXMNCONNECTION)
+    {
+        
+    }
 }
