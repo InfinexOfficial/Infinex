@@ -14,7 +14,8 @@ class CUserConnection;
 class CUserConnectionManager;
 
 extern std::map<std::string, CUserConnection> mapUserConnection; //user public key & connection info
-extern std::map<std::string, CUserConnection> mapMNConnection; //MN public key & connection info
+
+extern std::map<std::string, CUserConnection> mapMNConnection; //MN IP address & connection info
 
 class CUserConnection
 {
@@ -44,6 +45,8 @@ public:
         nPort = PortIn;
         nLastSeenTime = LastSeenTimeIn;
     }
+
+    std::string getIP() { return nIP; }
 };
 
 class CUserConnectionManager

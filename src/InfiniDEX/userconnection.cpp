@@ -36,6 +36,27 @@ void CUserConnection::ProcessUserConnection(CNode* pfrom, std::string& strComman
 	}
     else if (strCommand == NetMsgType::DEXMNCONNECTION)
     {
+        std::string IPIn = pFrom->addrLocal.ToStringIP();
+        std::string PortIn = pFrom->addrLocal.ToStringPort();
+        uint64_t LastSeenTimeIn = GetAdjustedTime();
         
+        if(mapMNConnection.count(IPIn))
+        {
+            return;
+        }
+
+        bool validMN = false;
+        std::map<COutPoint, CMasternode> mapMasternodes = mnodeman.GetFullMasternodeMap();
+        for (auto& mnpair : mapMasternodes) 
+        {
+            CMasternode mn = mnpair.second;
+            if(mn.addr.ToStringIP() == IPIn) 
+            {
+                validMN = true;
+                CUserConnection MNConnection = new CUserConnection(mn.pubKeyMasternode, IPIn, PortIn, LastSeenTimeIn);
+                mapMNConnection[IPIn] = MNConnection;
+                return;
+            }
+        }
     }
 }

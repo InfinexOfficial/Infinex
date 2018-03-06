@@ -2,6 +2,11 @@
     "files.associations": {
         "vector": "cpp",
         "xhash": "cpp",
-        "xstring": "cpp"
+        "xstring": "cpp",
+        "deque": "cpp",
+        "initializer_list": "cpp",
+        "list": "cpp",
+        "xtree": "cpp",
+        "xutility": "cpp"
     }
 }
