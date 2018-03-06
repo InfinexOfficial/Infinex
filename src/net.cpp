@@ -2321,10 +2321,10 @@ void CConnman::Stop()
         threadDNSAddressSeed.join();
     if (threadSocketHandler.joinable())
         threadSocketHandler.join();
-    if (threadInfiniDEX.joinable())
-        threadInfiniDEX.join();
-    if (threadInfiniAPP.joinable())
-        threadInfiniAPP.join();        
+    //if (threadInfiniDEX.joinable())
+        //threadInfiniDEX.join();
+    //if (threadInfiniAPP.joinable())
+        //threadInfiniAPP.join();        
 
     if (semMasternodeOutbound)
         for (int i=0; i<MAX_OUTBOUND_MASTERNODE_CONNECTIONS; i++)
