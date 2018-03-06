@@ -262,8 +262,7 @@ enum ServiceFlags : uint64_t {
     // See BIP 64 for details on how this is implemented.
     NODE_GETUTXO = (1 << 1),
     // NODE_BLOOM means the node is capable and willing to handle bloom-filtered connections.
-    // Infinex Core nodes used to support this by default, without advertising this bit,
-    // but no longer do as of protocol version 10000 (= NO_BLOOM_VERSION)
+    // Infinex Core does not support this
     NODE_BLOOM = (1 << 2),
 
     // Bits 24-31 are reserved for temporary experiments. Just pick a bit that
