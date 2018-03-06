@@ -61,6 +61,7 @@ const char *MNGOVERNANCEOBJECT="govobj";
 const char *MNGOVERNANCEOBJECTVOTE="govobjvote";
 const char *MNVERIFY="mnv";
 // InfiniDEX message types
+const char *DEXUSERCONNECTION="dexuserconnection";
 const char *DEXUSERBALANCE="dexuserbalance";
 };
 
