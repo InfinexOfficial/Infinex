@@ -12,24 +12,29 @@
 class CUserBalance;
 class CUserBalanceManager;
 
+extern std::map<std::string, CUserBalance> mapUserBalance; //user public key & userbalance
+extern CUserBalanceManager userBalanceManager;
 
 class CUserBalance
 {
+private:
+	std::vector<unsigned char> vchSig;
+
 public:
-    uint256 nUserPubKey;
-	uint256 nTradePairID;    
+    std::string nUserPubKey;
+	uint256 nCoinID;    
     uint64_t nAvailableBalance;
 	uint64_t nLastUpdateTime;
 
-	CMarketTradeHistory(uint256 nUserPubKey, uint256 nTradePairID, uint64_t nAvailableBalance, uint64_t nLastUpdateTime) :
+	CUserBalance(std::string nUserPubKey, uint256 nCoinID, uint64_t nAvailableBalance, uint64_t nLastUpdateTime) :
 		nUserPubKey(nUserPubKey),
-        nTradePairID(nTradePairID),
+        nTradePairID(nCoinID),
         nAvailableBalance(nAvailableBalance),
         nLastUpdateTime(nLastUpdateTime)
 	{}
 
-	CMarketTradeHistory() :
-		nUserPubKey(0),
+	CUserBalance() :
+		nUserPubKey(""),
         nTradePairID(0),
         nAvailableBalance(0),
         nLastUpdateTime(0)
@@ -40,7 +45,7 @@ public:
 	template <typename Stream, typename Operation>
 	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
 		READWRITE(nUserPubKey);
-		READWRITE(nTradePairID);
+		READWRITE(nCoinID);
 		READWRITE(nAvailableBalance);
 		READWRITE(nLastUpdateTime);
 	}
@@ -49,31 +54,27 @@ public:
 	{
 		CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
 		ss << nUserPubKey;
-		ss << nTradePairID;
+		ss << nCoinID;
 		ss << nAvailableBalance;
 		ss << nLastUpdateTime;
 		return ss.GetHash();
 	}
 
-	bool Sign();
+	bool Sign(std::string strSignKey);
 	bool CheckSignature();
-	void Relay(CConnman& connman);
+	void RelayTo(CNode* pnode, CConnman& connman);
 };
 
-class CMarketTradeHistoryManager
+class CUserBalanceManager
 {
 private:
     std::vector<unsigned char> vchSig;
 
 public:
 
-    CMarketTradeHistoryManager() {}
+    CUserBalanceManager() {}
 
-    void ProcessMarketTradeHistory(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
-    void BroadcastRecentMarketTradeHistory(uint256 nTradePairID);
-	void BroadcastPastMarketTradeHistory(uint256 nTradePairID);
-	void ProvideRecentMarketTradeHistory(uint256 nTradePairID, string ip);
-	void ProvidePastMarketTradeHistory(uint256 nTradePairID, string ip);
+    void ProcessUserBalanceMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);    
 };
 
 #endif

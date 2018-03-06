@@ -60,6 +60,8 @@ const char *MNGOVERNANCESYNC="govsync";
 const char *MNGOVERNANCEOBJECT="govobj";
 const char *MNGOVERNANCEOBJECTVOTE="govobjvote";
 const char *MNVERIFY="mnv";
+// InfiniDEX message types
+const char *DEXUSERBALANCE="dexuserbalance";
 };
 
 static const char* ppszTypeName[] =
