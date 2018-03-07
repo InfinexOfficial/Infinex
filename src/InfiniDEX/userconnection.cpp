@@ -11,7 +11,7 @@ class CUserConnectionManager;
 
 CUserConnectionManager userConnectionManager;
 
-void CUserConnection::ProcessUserConnection(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
+void CUserConnectionManager::ProcessUserConnection(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
     if (strCommand == NetMsgType::DEXUSERCONNECTION) 
     {
@@ -31,7 +31,7 @@ void CUserConnection::ProcessUserConnection(CNode* pfrom, std::string& strComman
             return;
         }
 
-        CUserConnection UserConnection = new CUserConnection(ConnectionMessage,IPIn,PortIn,LastSeenTimeIn);
+        CUserConnection* UserConnection = new CUserConnection(ConnectionMessage,IPIn,PortIn,LastSeenTimeIn);
         mapUserConnection[ConnectionMessage] = UserConnection;
 	}
     else if (strCommand == NetMsgType::DEXMNCONNECTION)
@@ -53,10 +53,21 @@ void CUserConnection::ProcessUserConnection(CNode* pfrom, std::string& strComman
             if(mn.addr.ToStringIP() == IPIn) 
             {
                 validMN = true;
-                CUserConnection MNConnection = new CUserConnection(mn.pubKeyMasternode, IPIn, PortIn, LastSeenTimeIn);
+                CUserConnection* MNConnection = new CUserConnection(mn.pubKeyMasternode, IPIn, PortIn, LastSeenTimeIn);
                 mapMNConnection[IPIn] = MNConnection;
                 return;
             }
         }
     }
+}
+
+void CUserConnectionManager::UserDisconnected(std::string IPAddress)
+{
+    std::pair<std::string, CUserConnection> ucPair;
+    
+}
+
+void CUserConnectionManager::MNDisconnected(std::string IPAddress)
+{
+    mapMNConnection.erase(IPAddress);
 }

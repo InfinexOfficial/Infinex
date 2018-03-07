@@ -54,6 +54,10 @@ public:
     CUserConnectionManager() {}
 
     void ProcessUserConnection(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+
+    void UserDisconnected(std::string IPAddress);
+
+    void MNDisconnected(std::string IPAddress);
 }
 
 #endif
