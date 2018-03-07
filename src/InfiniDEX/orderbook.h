@@ -12,8 +12,8 @@
 class COrderBook;
 class COrderBookManager;
 
-extern std::map<uint256, std::vector<COrderBook>> orderBidBook; //pair of TradePair with bid data list
-extern std::map<uint256, std::vector<COrderBook>> orderAskBook; //pair of TradePair with ask data list
+extern std::map<uint256, std::vector<COrderBook>> orderBidBook; //map of CoinID and bid data list
+extern std::map<uint256, std::vector<COrderBook>> orderAskBook; //map of CoinID and ask data list
 extern COrderBookManager orderBookManager;
 
 
@@ -23,58 +23,57 @@ private:
 	std::vector<unsigned char> vchSig;
 
 public:
-	int nOrderBookID;
-    int64_t nOrderPrice;
-	int64_t nQuantity;
-    int64_t nAmount;
-	int64_t nOrderTime;
+    uint64_t nOrderPrice;
+	uint64_t nQuantity;
+    uint64_t nAmount;
+	uint64_t nLastUpdateTime;
 
-	COrderBook(int nOrderBookID, int64_t nOrderPrice, int64_t nQuantity, int64_t nAmount, int64_t nOrderTime) :
-		nOrderBookID(nOrderBookID),
+	COrderBook(uint64_t nOrderPrice, uint64_t nQuantity, uint64_t nAmount, uint64_t nLastUpdateTime) :
         nOrderPrice(nOrderPrice),
         nQuantity(nQuantity),
         nAmount(nAmount),
-        nOrderTime(nOrderTime)
+        nLastUpdateTime(nLastUpdateTime)
 	{}
 
 	COrderBook() :
-		nOrderBookID(0),
         nOrderPrice(0),
         nQuantity(0),
         nAmount(0),
-        nOrderTime(0)
+        nLastUpdateTime(0)
 	{}
 
 	ADD_SERIALIZE_METHODS;
 
 	template <typename Stream, typename Operation>
 	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-		READWRITE(nOrderBookID);
 		READWRITE(nOrderPrice);
 		READWRITE(nQuantity);
 		READWRITE(nAmount);
-        READWRITE(nOrderTime);
+        READWRITE(nLastUpdateTime);
 	}
 
 	uint256 GetHash() const
 	{
 		CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-		ss << nOrderBookID;
 		ss << nOrderPrice;
 		ss << nQuantity;
 		ss << nAmount;
-        ss << nOrderTime;
+        ss << nLastUpdateTime;
 		return ss.GetHash();
 	}
 
 	bool Sign();
 	bool CheckSignature();
-	void Relay(CConnman& connman);
+	void AddQuantity(uint64_t Quantity);
 };
 
 class COrderBookManager
 {
 private:
     std::vector<unsigned char> vchSig;
+
+public:
+	void AddToBid(uint256 CoinID, uint64_t OrderPrice, uint64_t Quantity, uint64_t Amount);
+	void AddToAsk(uint256 CoinID, uint64_t OrderPrice, uint64_t Quantity, uint64_t Amount);
 };
 #endif
