@@ -184,7 +184,7 @@ int64_t CSporkManager::GetNumericSporkValue(int nSporkID)
 	{
 		LogPrint("spork", "CSporkManager::GetTextSporkValue -- Spork ID %d is not a numeric spork \n", nSporkID);
 		return -1;
-	}
+	}	
 
 	if (mapSporksActive.count(nSporkID))
 		return mapSporksActive[nSporkID].nNumericValue;

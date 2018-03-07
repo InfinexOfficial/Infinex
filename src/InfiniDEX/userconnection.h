@@ -9,7 +9,6 @@
 #include "net.h"
 #include "utilstrencodings.h"
 
-class CUserPubKeyInfo;
 class CUserConnection;
 class CUserConnectionManager;
 
