@@ -12,7 +12,8 @@
 class CUserBalance;
 class CUserBalanceManager;
 
-extern std::map<std::string, CUserBalance> mapUserBalance; //user public key & userbalance
+typedef std::map<std::string, CUserBalance> mapUserBalance; //user public key & userbalance
+extern std::map<int, mapUserBalance> mapCoinUserBalance; //coin ID & map user balance
 extern CUserBalanceManager userBalanceManager;
 
 class CUserBalance
@@ -23,13 +24,15 @@ private:
 public:
     std::string nUserPubKey;
 	uint256 nCoinID;    
-    uint64_t nAvailableBalance;
+    int64_t nAvailableBalance;
+	int64_t nPendingBalance;
 	uint64_t nLastUpdateTime;
 
-	CUserBalance(std::string nUserPubKey, uint256 nCoinID, uint64_t nAvailableBalance, uint64_t nLastUpdateTime) :
+	CUserBalance(std::string nUserPubKey, uint256 nCoinID, int64_t nAvailableBalance, int64_t nPendingBalance, uint64_t nLastUpdateTime) :
 		nUserPubKey(nUserPubKey),
         nTradePairID(nCoinID),
         nAvailableBalance(nAvailableBalance),
+		nPendingBalance(nPendingBalance),
         nLastUpdateTime(nLastUpdateTime)
 	{}
 
@@ -37,6 +40,7 @@ public:
 		nUserPubKey(""),
         nTradePairID(0),
         nAvailableBalance(0),
+		nPendingBalance(0),
         nLastUpdateTime(0)
 	{}
 
@@ -47,6 +51,7 @@ public:
 		READWRITE(nUserPubKey);
 		READWRITE(nCoinID);
 		READWRITE(nAvailableBalance);
+		READWRITE(nPendingBalance);
 		READWRITE(nLastUpdateTime);
 	}
 
@@ -56,6 +61,7 @@ public:
 		ss << nUserPubKey;
 		ss << nCoinID;
 		ss << nAvailableBalance;
+		ss << nPendingBalance;
 		ss << nLastUpdateTime;
 		return ss.GetHash();
 	}
@@ -71,10 +77,12 @@ private:
     std::vector<unsigned char> vchSig;
 
 public:
-
     CUserBalanceManager() {}
-
-    void ProcessUserBalanceMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);    
+    void ProcessUserBalanceMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	int64_t GetUserAvailableBalance(int CoinID, std::string UserPubKey);
+	int64_t GetUserPendingBalance(int CoinID, std::string UserPubKey);
+	void UpdateUserAvailableBalance();
+	void UpdateUserPendingBalance();
 };
 
 #endif

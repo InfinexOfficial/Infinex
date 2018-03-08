@@ -31,10 +31,12 @@ public:
     bool nTradeEnabled;
     uint64_t nMinimumTradeQuantity;
     uint64_t nMaximumTradeQuantity;
+	int nBidCommission;
+	int nAskCommission;
 	std::string nStatus;
     uint64_t nLastUpdate;
 
-	CTradePair(int nTradePairID, std::string nName, int nCoinInfoID1, std::string nSymbol1, int nCoinInfoID2, std::string nSymbol2, bool nTradeEnabled, uint64_t nMinimumTradeQuantity, uint64_t nMaximumTradeQuantity, std::string nStatus, uint64_t nLastUpdate) :
+	CTradePair(int nTradePairID, std::string nName, int nCoinInfoID1, std::string nSymbol1, int nCoinInfoID2, std::string nSymbol2, bool nTradeEnabled, uint64_t nMinimumTradeQuantity, uint64_t nMaximumTradeQuantity, int nBidCommission, int nAskCommission, std::string nStatus, uint64_t nLastUpdate) :
 		nTradePairID(nTradePairID),
 		nName(nName),
 		nCoinInfoID1(nCoinInfoID1),
@@ -44,6 +46,8 @@ public:
         nTradeEnabled(nTradeEnabled),
         nMinimumTradeQuantity(nMinimumTradeQuantity),
         nMaximumTradeQuantity(nMaximumTradeQuantity),
+		nBidCommission(nBidCommission),
+		nAskCommission(nAskCommission),
         nStatus(nStatus),
         nLastUpdate(nLastUpdate)
 	{}
@@ -58,6 +62,8 @@ public:
         nTradeEnabled(false),
         nMinimumTradeQuantity(0),
         nMaximumTradeQuantity(0),
+		nBidCommission(0),
+		nAskCommission(0),
         nStatus(""),
         nLastUpdate(0)
 	{}
@@ -76,6 +82,8 @@ public:
 		READWRITE(nTradeEnabled);
 		READWRITE(nMinimumTradeQuantity);
         READWRITE(nMaximumTradeQuantity);
+		READWRITE(nBidCommission);
+		READWRITE(nAskCommission);
         READWRITE(nStatus);
         READWRITE(nLastUpdate);
 		READWRITE(vchSig);
@@ -91,8 +99,10 @@ public:
         ss << nCoinInfoID2;
 		ss << nSymbol2;
 		ss << nTradeEnabled;
-		ss << nMinimumTradeQuantity;        
+		ss << nMinimumTradeQuantity;
 		ss << nMaximumTradeQuantity;
+		ss << nBidCommission;
+		ss << nAskCommission;
         ss << nStatus;
 		ss << nLastUpdate;
 		return ss.GetHash();

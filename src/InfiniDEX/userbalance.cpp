@@ -9,6 +9,9 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 
+std::map<int, mapUserBalance> mapCoinUserBalance; //coin ID & map user balance
+CUserBalanceManager userBalanceManager;
+
 bool CUserBalance::Sign(std::string strSignKey)
 {
 	CKey key;
