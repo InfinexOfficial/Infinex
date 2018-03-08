@@ -13,8 +13,8 @@ class CUserConnection;
 class CUserConnectionManager;
 
 extern std::map<std::string, CUserConnection> mapUserConnection; //user public key & connection info
-
 extern std::map<std::string, CUserConnection> mapMNConnection; //MN IP address & connection info
+extern CUserConnectionManager userConnectionManager;
 
 class CUserConnection
 {
@@ -58,6 +58,6 @@ public:
     void UserDisconnected(std::string IPAddress);
 
     void MNDisconnected(std::string IPAddress);
-}
+};
 
 #endif

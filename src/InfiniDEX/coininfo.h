@@ -12,7 +12,8 @@
 class CCoinInfo;
 class CCoinInfoManager;
 
-extern std::vector<CCoinInfo> vecCoinInfo; //coin info list
+extern std::vector<CCoinInfo> vecCompleteCoinInfo;
+extern std::vector<CCoinInfo> vecCoinInfoInNode;
 extern CCoinInfoManager coinInfoManager;
 
 class CCoinInfo

@@ -9,6 +9,8 @@
 class CUserConnection;
 class CUserConnectionManager;
 
+std::map<std::string, CUserConnection> mapUserConnection; //user public key & connection info
+std::map<std::string, CUserConnection> mapMNConnection; //MN IP address & connection info
 CUserConnectionManager userConnectionManager;
 
 void CUserConnectionManager::ProcessUserConnection(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
