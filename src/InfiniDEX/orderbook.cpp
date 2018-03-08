@@ -11,15 +11,36 @@ class COrderBookManager;
 
 COrderBookManager orderBookManager;
 
-std::map<int, std::vector<COrderBook>> orderBidBook; //map of CoinID and bid data list
-std::map<int, std::vector<COrderBook>> orderAskBook; //map of CoinID and ask data list
+extern std::map<int, PriceOrderBook> orderBidBook; //trade pair and bid data
+extern std::map<int, PriceOrderBook> orderAskBook; //trade pair and ask data
+extern COrderBookManager orderBookManager;
 
-void COrderBookManager::AddToAsk(uint256 CoinID, uint64_t OrderPrice, uint64_t Quantity, uint64_t Amount)
+void COrderBookManager::AddToAsk(int CoinID, uint64_t OrderPrice, uint64_t Quantity, uint64_t Amount)
 {
-    
+    std::map<int, PriceOrderBook>::iterator it = orderBidBook.find(CoinID);
+    if(it != orderBidBook.end())
+    {
+        PriceOrderBook::iterator it2 = it->second.find(OrderPrice);
+        if(it2 != it->second.end())
+        {
+        }
+        else
+        {            
+        }
+    }
 }
 
-void COrderBookManager::AddToBid(uint256 CoinID, uint64_t OrderPrice, uint64_t Quantity, uint64_t Amount)
+void COrderBookManager::AddToBid(int CoinID, uint64_t OrderPrice, uint64_t Quantity, uint64_t Amount)
 {
-    
+    std::map<int, PriceOrderBook>::iterator it = orderAskBook.find(CoinID);
+    if(it != orderAskBook.end())
+    {
+        PriceOrderBook::iterator it2 = it->second.find(OrderPrice);
+        if(it2 != it->second.end())
+        {            
+        }
+        else
+        {            
+        }
+    }
 }

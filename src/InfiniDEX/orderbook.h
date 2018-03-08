@@ -12,8 +12,9 @@
 class COrderBook;
 class COrderBookManager;
 
-extern std::map<uint256, std::vector<COrderBook>> orderBidBook; //map of CoinID and bid data list
-extern std::map<uint256, std::vector<COrderBook>> orderAskBook; //map of CoinID and ask data list
+typedef std::map<uint64_t, COrderBook> PriceOrderBook; //price and order data
+extern std::map<int, PriceOrderBook> orderBidBook; //trade pair and bid data
+extern std::map<int, PriceOrderBook> orderAskBook; //trade pair and ask data
 extern COrderBookManager orderBookManager;
 
 
@@ -73,7 +74,7 @@ private:
     std::vector<unsigned char> vchSig;
 
 public:
-	void AddToBid(uint256 CoinID, uint64_t OrderPrice, uint64_t Quantity, uint64_t Amount);
-	void AddToAsk(uint256 CoinID, uint64_t OrderPrice, uint64_t Quantity, uint64_t Amount);
+	void AddToBid(int CoinID, uint64_t OrderPrice, uint64_t Quantity, uint64_t Amount);
+	void AddToAsk(int CoinID, uint64_t OrderPrice, uint64_t Quantity, uint64_t Amount);
 };
 #endif

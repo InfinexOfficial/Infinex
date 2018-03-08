@@ -12,10 +12,12 @@
 class CMarketTradeHistory;
 class CMarketTradeHistoryManager;
 
-extern std::map<uint256, CMarketTradeHistory> mapRecentMarketTradeHistory;
-extern std::map<uint256, CMarketTradeHistory> mapPastMarketTradeHistory;
+extern std::map<int, std::vector<CMarketTradeHistory>> mapRecentMarketTradeHistory; //trade pair and recent trade data
+extern std::map<int, std::vector<CMarketTradeHistory>> mapSecondMarketTradeHistory; //trade pair and past seconds trade data
+extern std::map<int, std::vector<CMarketTradeHistory>> mapMinuteMarketTradeHistory; //trade pair and past minutes trade data
+extern std::map<int, std::vector<CMarketTradeHistory>> mapHourMarketTradeHistory; //trade pair and past hours trade data
+extern std::map<int, std::vector<CMarketTradeHistory>> mapDayMarketTradeHistory; //trade pair and past days trade data
 extern CMarketTradeHistoryManager marketTradeHistoryManager;
-
 
 class CMarketTradeHistory
 {
@@ -89,9 +91,7 @@ public:
 
     void ProcessMarketTradeHistory(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
     void BroadcastRecentMarketTradeHistory(uint256 nTradePairID);
-	void BroadcastPastMarketTradeHistory(uint256 nTradePairID);
 	void ProvideRecentMarketTradeHistory(uint256 nTradePairID, string ip);
-	void ProvidePastMarketTradeHistory(uint256 nTradePairID, string ip);
 };
 
 #endif
