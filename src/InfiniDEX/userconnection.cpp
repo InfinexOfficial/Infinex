@@ -9,6 +9,8 @@
 class CUserConnection;
 class CUserConnectionManager;
 
+//new user to verify their private key to public key signing
+
 std::map<std::string, CUserConnection> mapUserConnection; //user public key & connection info
 std::map<std::string, CUserConnection> mapMNConnection; //MN IP address & connection info
 CUserConnectionManager userConnectionManager;
@@ -65,11 +67,8 @@ void CUserConnectionManager::ProcessUserConnection(CNode* pfrom, std::string& st
 
 void CUserConnectionManager::UserDisconnected(std::string IPAddress)
 {
-    std::pair<std::string, CUserConnection> ucPair;
-    
 }
 
 void CUserConnectionManager::MNDisconnected(std::string IPAddress)
 {
-    mapMNConnection.erase(IPAddress);
 }

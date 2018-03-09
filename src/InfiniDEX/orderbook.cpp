@@ -9,13 +9,11 @@
 class COrderBook;
 class COrderBookManager;
 
+std::map<int, PriceOrderBook> orderBidBook; //trade pair and bid data
+std::map<int, PriceOrderBook> orderAskBook; //trade pair and ask data
 COrderBookManager orderBookManager;
 
-extern std::map<int, PriceOrderBook> orderBidBook; //trade pair and bid data
-extern std::map<int, PriceOrderBook> orderAskBook; //trade pair and ask data
-extern COrderBookManager orderBookManager;
-
-void COrderBookManager::AddToAsk(int CoinID, uint64_t OrderPrice, uint64_t Quantity, uint64_t Amount)
+void COrderBookManager::AddToAsk(int CoinID, uint64_t OrderPrice, uint64_t Quantity)
 {
     std::map<int, PriceOrderBook>::iterator it = orderAskBook.find(CoinID);
 	if (it != orderAskBook.end())
@@ -39,7 +37,7 @@ void COrderBookManager::AddToAsk(int CoinID, uint64_t OrderPrice, uint64_t Quant
 	}
 }
 
-void COrderBookManager::AddToBid(int CoinID, uint64_t OrderPrice, uint64_t Quantity, uint64_t Amount)
+void COrderBookManager::AddToBid(int CoinID, uint64_t OrderPrice, uint64_t Quantity)
 {
     std::map<int, PriceOrderBook>::iterator it = orderBidBook.find(CoinID);
 	if (it != orderBidBook.end())

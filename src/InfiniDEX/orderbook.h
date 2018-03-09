@@ -74,7 +74,7 @@ private:
     std::vector<unsigned char> vchSig;
 
 public:
-	void AddToBid(int CoinID, uint64_t OrderPrice, uint64_t Quantity, uint64_t Amount);
-	void AddToAsk(int CoinID, uint64_t OrderPrice, uint64_t Quantity, uint64_t Amount);
+	void AddToBid(int CoinID, uint64_t OrderPrice, uint64_t Quantity);
+	void AddToAsk(int CoinID, uint64_t OrderPrice, uint64_t Quantity);
 };
 #endif
