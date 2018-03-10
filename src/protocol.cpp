@@ -139,6 +139,10 @@ const static std::string allNetMessageTypes[] = {
     NetMsgType::MNGOVERNANCEOBJECT,
     NetMsgType::MNGOVERNANCEOBJECTVOTE,
     NetMsgType::MNVERIFY,
+    // InfiniDEX message types
+    NetMsgType::DEXUSERCONNECTION,
+    NetMsgType::DEXMNCONNECTION,
+    NetMsgType::DEXUSERBALANCE,
 };
 const static std::vector<std::string> allNetMessageTypesVec(allNetMessageTypes, allNetMessageTypes+ARRAYLEN(allNetMessageTypes));
 

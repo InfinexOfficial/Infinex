@@ -13,7 +13,6 @@ class CTradePair;
 class CTradePairManager;
 
 extern std::vector<CTradePair> vecCompleteTradePair;
-extern std::vector<CTradePair> vecTradePairInNode;
 extern CTradePairManager tradePairManager;
 
 class CTradePair
@@ -31,25 +30,31 @@ public:
     bool nTradeEnabled;
     uint64_t nMinimumTradeQuantity;
     uint64_t nMaximumTradeQuantity;
-	int nBidCommission;
-	int nAskCommission;
+	int nBidTradeFee; //regular trade fee in percentage for bid, can be negative as form of incentive
+	int nBidTradeFeeCoinID; //trade fee coin type payout for bid
+	int nAskTradeFee; //regular trade fee in percentage for ask, can be negative as form of incentive
+	int nAskTradeFeeCoinID; //trade fee coin type payout for ask
 	std::string nStatus;
     uint64_t nLastUpdate;
 
-	CTradePair(int nTradePairID, std::string nName, int nCoinInfoID1, std::string nSymbol1, int nCoinInfoID2, std::string nSymbol2, bool nTradeEnabled, uint64_t nMinimumTradeQuantity, uint64_t nMaximumTradeQuantity, int nBidCommission, int nAskCommission, std::string nStatus, uint64_t nLastUpdate) :
-		nTradePairID(nTradePairID),
-		nName(nName),
-		nCoinInfoID1(nCoinInfoID1),
-		nSymbol1(nSymbol1),
-        nCoinInfoID2(nCoinInfoID2),
-        nSymbol2(nSymbol2),
-        nTradeEnabled(nTradeEnabled),
-        nMinimumTradeQuantity(nMinimumTradeQuantity),
-        nMaximumTradeQuantity(nMaximumTradeQuantity),
-		nBidCommission(nBidCommission),
-		nAskCommission(nAskCommission),
-        nStatus(nStatus),
-        nLastUpdate(nLastUpdate)
+	CTradePair(int nTradePairID, std::string nName, int nCoinInfoID1, std::string nSymbol1, int nCoinInfoID2, std::string nSymbol2, 
+		bool nTradeEnabled, uint64_t nMinimumTradeQuantity, uint64_t nMaximumTradeQuantity, int nBidTradeFee, int nBidTradeFeeCoinID,
+		int nAskTradeFee, int nAskTradeFeeCoinID, std::string nStatus, uint64_t nLastUpdate) :
+			nTradePairID(nTradePairID),
+			nName(nName),
+			nCoinInfoID1(nCoinInfoID1),
+			nSymbol1(nSymbol1),
+			nCoinInfoID2(nCoinInfoID2),
+			nSymbol2(nSymbol2),
+			nTradeEnabled(nTradeEnabled),
+			nMinimumTradeQuantity(nMinimumTradeQuantity),
+			nMaximumTradeQuantity(nMaximumTradeQuantity),
+			nBidTradeFee(nBidTradeFee),
+			nBidTradeFeeCoinID(nBidTradeFeeCoinID),
+			nAskTradeFee(nAskTradeFee),
+			nAskTradeFeeCoinID(nAskTradeFeeCoinID),
+			nStatus(nStatus),
+			nLastUpdate(nLastUpdate)
 	{}
 
 	CTradePair() :
@@ -62,8 +67,10 @@ public:
         nTradeEnabled(false),
         nMinimumTradeQuantity(0),
         nMaximumTradeQuantity(0),
-		nBidCommission(0),
-		nAskCommission(0),
+		nBidTradeFee(0),
+		nBidTradeFeeCoinID(0),
+		nAskTradeFee(0),
+		nAskTradeFeeCoinID(0),
         nStatus(""),
         nLastUpdate(0)
 	{}
@@ -82,8 +89,10 @@ public:
 		READWRITE(nTradeEnabled);
 		READWRITE(nMinimumTradeQuantity);
         READWRITE(nMaximumTradeQuantity);
-		READWRITE(nBidCommission);
-		READWRITE(nAskCommission);
+		READWRITE(nBidTradeFee);
+		READWRITE(nBidTradeFeeCoinID);
+		READWRITE(nAskTradeFee);
+		READWRITE(nAskTradeFeeCoinID);
         READWRITE(nStatus);
         READWRITE(nLastUpdate);
 		READWRITE(vchSig);
@@ -101,8 +110,10 @@ public:
 		ss << nTradeEnabled;
 		ss << nMinimumTradeQuantity;
 		ss << nMaximumTradeQuantity;
-		ss << nBidCommission;
-		ss << nAskCommission;
+		ss << nBidTradeFee;
+		ss << nBidTradeFeeCoinID;
+		ss << nAskTradeFee;
+		ss << nAskTradeFeeCoinID;
         ss << nStatus;
 		ss << nLastUpdate;
 		return ss.GetHash();
@@ -122,7 +133,7 @@ public:
 
     CTradePairManager() {}
 
-    void ProcessTradePairMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+    void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);	
 };
 
 #endif

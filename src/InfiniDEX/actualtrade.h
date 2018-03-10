@@ -24,20 +24,28 @@ public:
     uint64_t nTradePrice;
     uint64_t nTradeQty;
     uint64_t nTradeAmount;
-    int64_t nFee1;
-    int64_t nFee2;
+    int64_t nFee1; //during promo period, we can provide rebate instead of trade fee to user
+    int nFee1CoinID;
+    int64_t nFee2; //during promo period, we can provide rebate instead of trade fee to user
+    int nFee2CoinID;
+    std::string nMasternodeInspector;
 	uint64_t nTradeTime;
 
-	CActualTrade(std::string nUserPubKey1, std::string nUserPubKey2, int nTradePairID, uint64_t nTradePrice, uint64_t nTradeQty, uint64_t nTradeAmount, int64_t nFee1, int64_t nFee2, uint64_t nTradeTime) :
-		nUserPubKey1(nUserPubKey1),
-        nUserPubKey2(nUserPubKey2),
-        nTradePairID(nTradePairID),
-        nTradePrice(nTradePrice),
-        nTradeQty(nTradeQty),
-        nTradeAmount(nTradeAmount),
-        nFee1(nFee1),
-        nFee2(nFee2),
-        nTradeTime(nTradeTime)
+	CActualTrade(std::string nUserPubKey1, std::string nUserPubKey2, int nTradePairID, uint64_t nTradePrice, uint64_t nTradeQty, 
+        uint64_t nTradeAmount, int64_t nFee1, int nFee1CoinID, int64_t nFee2, int nFee2CoinID, 
+        std::string nMasternodeInspector, uint64_t nTradeTime) :
+            nUserPubKey1(nUserPubKey1),
+            nUserPubKey2(nUserPubKey2),
+            nTradePairID(nTradePairID),
+            nTradePrice(nTradePrice),
+            nTradeQty(nTradeQty),
+            nTradeAmount(nTradeAmount),
+            nFee1(nFee1),
+            nFee1CoinID(nFee1CoinID),
+            nFee2(nFee2),
+            nFee2CoinID(nFee2CoinID),
+            nMasternodeInspector(nMasternodeInspector),
+            nTradeTime(nTradeTime)
 	{}
 
 	CActualTrade() :
@@ -48,7 +56,10 @@ public:
         nTradeQty(0),
         nTradeAmount(0),
         nFee1(0),
+        nFee1CoinID(0),
         nFee2(0),
+        nFee2CoinID(0),
+        nMasternodeInspector(""),
         nTradeTime(0)
 	{}
 };
@@ -57,6 +68,7 @@ class CActualTradeManager
 {
 public:
     CActualTradeManager() {}
+    void TradeMatchingEngine();
 };
 
 #endif
