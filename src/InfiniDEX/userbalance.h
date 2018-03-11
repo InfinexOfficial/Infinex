@@ -30,7 +30,7 @@ public:
 
 	CUserBalance(std::string nUserPubKey, uint256 nCoinID, int64_t nAvailableBalance, int64_t nPendingBalance, uint64_t nLastUpdateTime) :
 		nUserPubKey(nUserPubKey),
-        nTradePairID(nCoinID),
+        nCoinID(nCoinID),
         nAvailableBalance(nAvailableBalance),
 		nPendingBalance(nPendingBalance),
         nLastUpdateTime(nLastUpdateTime)
@@ -38,7 +38,7 @@ public:
 
 	CUserBalance() :
 		nUserPubKey(""),
-        nTradePairID(0),
+        nCoinID(0),
         nAvailableBalance(0),
 		nPendingBalance(0),
         nLastUpdateTime(0)
@@ -53,6 +53,7 @@ public:
 		READWRITE(nAvailableBalance);
 		READWRITE(nPendingBalance);
 		READWRITE(nLastUpdateTime);
+        READWRITE(vchSig);
 	}
 
 	uint256 GetHash() const
