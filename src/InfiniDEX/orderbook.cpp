@@ -13,50 +13,52 @@ std::map<int, PriceOrderBook> orderBidBook; //trade pair and bid data
 std::map<int, PriceOrderBook> orderAskBook; //trade pair and ask data
 COrderBookManager orderBookManager;
 
-void COrderBookManager::AddToAsk(int CoinID, uint64_t OrderPrice, uint64_t Quantity)
+void COrderBookManager::AddToAsk(int TradePairID, uint64_t OrderPrice, uint64_t Quantity)
 {
-    std::map<int, PriceOrderBook>::iterator it = orderAskBook.find(CoinID);
-	if (it != orderAskBook.end())
-	{
-		PriceOrderBook::iterator it2 = it->second.find(OrderPrice);
-		if (it2 != it->second.end())
-		{
-			it2->second.nQuantity += Quantity;
-			it2->second.nAmount = OrderPrice * it2->second.nQuantity;
-		}
-		else
-		{
-			orderAskBook[CoinID][OrderPrice] = COrderBook(OrderPrice, Quantity, OrderPrice*Quantity, 1234);
-		}
-	}
-	else
-	{
-		PriceOrderBook NewCoinID;
-		NewCoinID.insert(std::make_pair(OrderPrice, COrderBook(OrderPrice, Quantity, OrderPrice*Quantity, 1234)));
-		orderAskBook.insert(std::make_pair(CoinID, NewCoinID));
-	}
+    std::map<int, PriceOrderBook>::iterator it = orderAskBook.find(TradePairID);
+    if (it != orderAskBook.end()) {
+        PriceOrderBook::iterator it2 = it->second.find(OrderPrice);
+        if (it2 != it->second.end()) {
+            it2->second.nQuantity += Quantity;
+            it2->second.nAmount = OrderPrice * it2->second.nQuantity;
+            it2->second.LastUpdateTime = GetAdjustedTime();
+        } else {
+            orderAskBook[TradePairID][OrderPrice] = COrderBook(OrderPrice, Quantity, OrderPrice * Quantity, GetAdjustedTime());
+        }
+    } else {
+		//node need to sync for updated trade pair before proceed as below
+        PriceOrderBook NewTradePair;
+        NewTradePair.insert(std::make_pair(OrderPrice, COrderBook(OrderPrice, Quantity, OrderPrice * Quantity, GetAdjustedTime())));
+        orderAskBook.insert(std::make_pair(TradePairID, NewTradePair));
+    }
 }
 
-void COrderBookManager::AddToBid(int CoinID, uint64_t OrderPrice, uint64_t Quantity)
+void COrderBookManager::AddToBid(int TradePairID, uint64_t OrderPrice, uint64_t Quantity)
 {
-    std::map<int, PriceOrderBook>::iterator it = orderBidBook.find(CoinID);
-	if (it != orderBidBook.end())
+    std::map<int, PriceOrderBook>::iterator it = orderBidBook.find(TradePairID);
+    if (it != orderBidBook.end()) {
+        PriceOrderBook::iterator it2 = it->second.find(OrderPrice);
+        if (it2 != it->second.end()) {
+            it2->second.nQuantity += Quantity;
+            it2->second.nAmount = OrderPrice * it2->second.nQuantity;
+        } else {
+            orderBidBook[TradePairID][OrderPrice] = COrderBook(OrderPrice, Quantity, OrderPrice * Quantity, GetAdjustedTime());
+        }
+    } else {
+		//node need to sync for updated trade pair before proceed as below
+        PriceOrderBook NewTradePair;
+        NewTradePair.insert(std::make_pair(OrderPrice, COrderBook(OrderPrice, Quantity, OrderPrice * Quantity, GetAdjustedTime())));
+        orderBidBook.insert(std::make_pair(TradePairID, NewTradePair));
+    }
+}
+
+void ::COrderBookManager::CheckForTradePossibility(int TradePairID)
+{
+	std::map<int, PriceOrderBook>::iterator bidit = orderBidBook.find(TradePairID);
+	std::map<int, PriceOrderBook>::iterator askit = orderAskBook.find(TradePairID);
+
+	if(bidit != orderBidBook.end() && askit != orderAskBook.end())
 	{
-		PriceOrderBook::iterator it2 = it->second.find(OrderPrice);
-		if (it2 != it->second.end())
-		{
-			it2->second.nQuantity += Quantity;
-			it2->second.nAmount = OrderPrice * it2->second.nQuantity;
-		}
-		else
-		{
-			orderBidBook[CoinID][OrderPrice] = COrderBook(OrderPrice, Quantity, OrderPrice*Quantity, 1234);
-		}
-	}
-	else
-	{
-		PriceOrderBook NewCoinID;
-		NewCoinID.insert(std::make_pair(OrderPrice, COrderBook(OrderPrice, Quantity, OrderPrice*Quantity, 1234)));
-		orderBidBook.insert(std::make_pair(CoinID, NewCoinID));
+		
 	}
 }
