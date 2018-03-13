@@ -13,10 +13,10 @@ class CUserTrade;
 class CUserTradeManager;
 
 typedef std::map<uint64_t, std::vector<CUserTrade*>> MapPriceCUserTrade; //price and user trade map
-typedef std::map<std::string, std::vector<CUserTrade*>> MapUserCUserTrade; //user public key and user trade map
-typedef std::pair<MapPriceCUserTrade, MapUserCUserTrade> TradeUserPricePair;
-extern std::map<int, TradeUserPricePair> mapBidTradeUserPrice; //trade pair and bid data
-extern std::map<int, TradeUserPricePair> mapAskTradeUserPrice; //trade pair and ask data
+typedef std::map<std::string, std::vector<CUserTrade*>> MapPubKeyCUserTrade; //user public key and user trade map
+typedef std::pair<MapPriceCUserTrade, MapPubKeyCUserTrade> PairPricePubKeyCUserTrade;
+typedef std::pair<PairPricePubKeyCUserTrade, PairPricePubKeyCUserTrade> PairBidAskCUserTrade; //bid & ask
+extern std::map<int, PairBidAskCUserTrade> mapUserTradeRequest; //trade pair and bid ask data
 extern CUserTradeManager userTradeManager;
 
 class CUserTrade
@@ -66,7 +66,8 @@ private:
 	std::vector<unsigned char> vchSig;
 
 public:
-	void AddToAsk(CUserTrade userTrade);
+	void UserSellRequest(CUserTrade userTrade);
+	void UserBuyRequest(CUserTrade userTrade);
 };
 
 #endif

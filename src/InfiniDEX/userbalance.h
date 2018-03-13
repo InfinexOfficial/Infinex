@@ -17,15 +17,15 @@ extern std::map<int, mapUserBalance> mapCoinUserBalance; //coin ID & map user ba
 extern CUserBalanceManager userBalanceManager;
 
 enum userbalance_to_exchange_enum_t {
-	USERACCOUNT_NOT_FOUND = -1,
-	USERBALANCE_NOT_ENOUGH = 0,
-	USERBALANCE_DEDUCTED = 1
+	USER_ACCOUNT_NOT_FOUND = -1,
+	USER_BALANCE_NOT_ENOUGH = 0,
+	USER_BALANCE_DEDUCTED = 1
 };
 
 enum exchange_to_userbalance_enum_t {
-	USERACCOUNT_NOT_FOUND = -1,
-	EXCHANGEBALANCE_NOT_ENOUGH = 0,
-	EXCHANGEBALANCE_RETURNED = 1
+	EXCHANGE_ACCOUNT_NOT_FOUND = -1,
+	EXCHANGE_BALANCE_NOT_ENOUGH = 0,
+	EXCHANGE_BALANCE_RETURNED = 1
 };
 
 class CUserBalance
@@ -34,63 +34,45 @@ private:
 	std::vector<unsigned char> vchSig;
 
 public:
-    std::string nUserPubKey;
-	uint256 nCoinID;    
-    int64_t nAvailableBalance;
+	std::string nUserPubKey;
+	int nCoinID;
+	int64_t nAvailableBalance;
+	int64_t nInExchangeBalance;
+	int64_t nInDisputeBalance;
 	int64_t nPendingBalance;
+	int64_t nTotalBalance;
 	uint64_t nLastUpdateTime;
 
-	CUserBalance(std::string nUserPubKey, uint256 nCoinID, int64_t nAvailableBalance, int64_t nPendingBalance, uint64_t nLastUpdateTime) :
+	CUserBalance(std::string nUserPubKey, int nCoinID, int64_t nAvailableBalance, int64_t nInExchangeBalance, int64_t nInDisputeBalance, int64_t nPendingBalance, int64_t nTotalBalance, uint64_t nLastUpdateTime) :
 		nUserPubKey(nUserPubKey),
-        nCoinID(nCoinID),
-        nAvailableBalance(nAvailableBalance),
+		nCoinID(nCoinID),
+		nAvailableBalance(nAvailableBalance),
+		nInExchangeBalance(nInExchangeBalance),
+		nInDisputeBalance(nInDisputeBalance),
 		nPendingBalance(nPendingBalance),
-        nLastUpdateTime(nLastUpdateTime)
+		nTotalBalance(nTotalBalance),
+		nLastUpdateTime(nLastUpdateTime)
 	{}
 
 	CUserBalance() :
 		nUserPubKey(""),
-        nCoinID(0),
-        nAvailableBalance(0),
+		nCoinID(0),
+		nAvailableBalance(0),
+		nInExchangeBalance(0),
+		nInDisputeBalance(0),
 		nPendingBalance(0),
-        nLastUpdateTime(0)
+		nTotalBalance(0),
+		nLastUpdateTime(0)
 	{}
-
-	ADD_SERIALIZE_METHODS;
-
-	template <typename Stream, typename Operation>
-	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-		READWRITE(nUserPubKey);
-		READWRITE(nCoinID);
-		READWRITE(nAvailableBalance);
-		READWRITE(nPendingBalance);
-		READWRITE(nLastUpdateTime);
-        READWRITE(vchSig);
-	}
-
-	uint256 GetHash() const
-	{
-		CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-		ss << nUserPubKey;
-		ss << nCoinID;
-		ss << nAvailableBalance;
-		ss << nPendingBalance;
-		ss << nLastUpdateTime;
-		return ss.GetHash();
-	}
-
-	bool Sign(std::string strSignKey);
-	bool CheckSignature();
-	void RelayTo(CNode* pnode, CConnman& connman);
 };
 
 class CUserBalanceManager
 {
 private:
-    std::vector<unsigned char> vchSig;
+	std::vector<unsigned char> vchSig;
 
 public:
-    CUserBalanceManager() {}
+	CUserBalanceManager() {}
 	userbalance_to_exchange_enum_t BalanceToExchange(int CoinID, uint64_t amount);
 	exchange_to_userbalance_enum_t ExchangeToBalance(int CoinID, uint64_t amount);
 	int64_t GetUserAvailableBalance(int CoinID, std::string UserPubKey);

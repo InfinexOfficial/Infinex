@@ -12,48 +12,39 @@
 std::map<int, mapUserBalance> mapCoinUserBalance; //coin ID & map user balance
 CUserBalanceManager userBalanceManager;
 
-bool CUserBalance::Sign(std::string strSignKey)
+userbalance_to_exchange_enum_t CUserBalanceManager::BalanceToExchange(int CoinID, uint64_t amount)
 {
-	CKey key;
-	CPubKey pubkey;
-	std::string strError = "";
-	std::string strMessage = GetMessage();
-
-	if (!CMessageSigner::GetKeysFromSecret(strSignKey, key, pubkey)) {
-		LogPrintf("CUserBalance::Sign -- GetKeysFromSecret() failed, invalid spork key %s\n", strSignKey);
-		return false;
-	}
-
-	if (!CMessageSigner::SignMessage(strMessage, vchSig, key)) {
-		LogPrintf("CUserBalance::Sign -- SignMessage() failed\n");
-		return false;
-	}
-
-	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
-		LogPrintf("CUserBalance::Sign -- VerifyMessage() failed, error: %s\n", strError);
-		return false;
-	}
-
-	return true;
+	return USER_BALANCE_DEDUCTED;
 }
 
-bool CUserBalance::CheckSignature()
+exchange_to_userbalance_enum_t CUserBalanceManager::ExchangeToBalance(int CoinID, uint64_t amount)
 {
-	std::string strError = "";
-	std::string strMessage = GetMessage();
-	CPubKey pubkey(ParseHex(Params().SporkPubKey()));
-
-	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
-		LogPrintf("CUserBalance::CheckSignature -- VerifyMessage() failed, error: %s\n", strError);
-		return false;
-	}
-
-	return true;
+	return EXCHANGE_BALANCE_RETURNED;
 }
 
-std::string CUserBalance::GetMessage() 
+int64_t CUserBalanceManager::GetUserAvailableBalance(int CoinID, std::string UserPubKey)
 {
-    return nUserPubKey + boost::lexical_cast<std::string>(nCoinID) + boost::lexical_cast<std::string>(nAvailableBalance) + boost::lexical_cast<std::string>(nLastUpdateTime);
+	return 0;
+}
+
+int64_t CUserBalanceManager::GetUserInExchangeBalance(int CoinID, std::string UserPubKey)
+{
+	return 0;
+}
+
+int64_t CUserBalanceManager::GetUserPendingBalance(int CoinID, std::string UserPubKey)
+{
+	return 0;
+}
+
+void CUserBalanceManager::UpdateUserAvailableBalance()
+{
+
+}
+
+void CUserBalanceManager::UpdateUserPendingBalance()
+{
+
 }
 
 void CUserBalance::RelayTo(CNode* pnode, CConnman& connman)
