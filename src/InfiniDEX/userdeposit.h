@@ -8,9 +8,12 @@
 #include "hash.h"
 #include "net.h"
 #include "utilstrencodings.h"
+#include "userconnection.h"
 
 class CUserDeposit;
 class CUserDepositManager;
+
+
 
 class CUserDeposit
 {
@@ -77,10 +80,9 @@ public:
         ss << nLastUpdateTime;
 		return ss.GetHash();
 	}
-
-	bool Sign(std::string strSignKey);
+	
 	bool CheckSignature();
-	void RelayTo(CNode* pnode, CConnman& connman);
+	void RelayTo(CUserConnection user);
 };
 
 class CUserDepositManager
@@ -90,6 +92,9 @@ private:
 
 public:
     CUserDepositManager() {}
+	bool AddNewDeposit(CUserDeposit UserDeposit);
+	bool ReflectDepositToBalance(std::string DepositHash);
+	bool UpdateDepositStatus(std::string DepositHash, bool ValidDeposit, std::string Remark);
 };
 
 #endif

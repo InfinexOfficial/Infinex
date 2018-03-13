@@ -19,12 +19,14 @@ extern CUserConnectionManager userConnectionManager;
 class CUserConnection
 {
 public:
+    CNode* nNode;
     std::string nUserPubKey;
     std::string nIP;
     std::string nPort;
 	uint64_t nLastSeenTime;
 
-	CUserConnection(std::string nUserPubKey, std::string nIP, std::string nPort, uint64_t nLastSeenTime) :
+	CUserConnection(CNode* nNode, std::string nUserPubKey, std::string nIP, std::string nPort, uint64_t nLastSeenTime) :
+        nNode(nNode),
 		nUserPubKey(nUserPubKey),
         nIP(nIP),
         nPort(nPort),
