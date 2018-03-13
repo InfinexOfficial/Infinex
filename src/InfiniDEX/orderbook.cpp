@@ -21,7 +21,7 @@ void COrderBookManager::AddToAsk(int TradePairID, uint64_t OrderPrice, uint64_t 
         if (it2 != it->second.end()) {
             it2->second.nQuantity += Quantity;
             it2->second.nAmount = OrderPrice * it2->second.nQuantity;
-            it2->second.LastUpdateTime = GetAdjustedTime();
+            it2->second.nLastUpdateTime = GetAdjustedTime();
         } else {
             orderAskBook[TradePairID][OrderPrice] = COrderBook(OrderPrice, Quantity, OrderPrice * Quantity, GetAdjustedTime());
         }

@@ -130,10 +130,9 @@ private:
     std::vector<unsigned char> vchSig;
 
 public:
-
     CTradePairManager() {}
-
-    void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);	
+	int GetAskSideCoinInfoID(int TradePairID);
+	int GetBidSideCoinInfoID(int TradePairID);
 };
 
 #endif

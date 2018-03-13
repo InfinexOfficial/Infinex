@@ -16,6 +16,18 @@ typedef std::map<std::string, CUserBalance> mapUserBalance; //user public key & 
 extern std::map<int, mapUserBalance> mapCoinUserBalance; //coin ID & map user balance
 extern CUserBalanceManager userBalanceManager;
 
+enum userbalance_to_exchange_enum_t {
+	USERACCOUNT_NOT_FOUND = -1,
+	USERBALANCE_NOT_ENOUGH = 0,
+	USERBALANCE_DEDUCTED = 1
+};
+
+enum exchange_to_userbalance_enum_t {
+	USERACCOUNT_NOT_FOUND = -1,
+	EXCHANGEBALANCE_NOT_ENOUGH = 0,
+	EXCHANGEBALANCE_RETURNED = 1
+};
+
 class CUserBalance
 {
 private:
@@ -79,8 +91,10 @@ private:
 
 public:
     CUserBalanceManager() {}
-    void ProcessUserBalanceMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	userbalance_to_exchange_enum_t BalanceToExchange(int CoinID, uint64_t amount);
+	exchange_to_userbalance_enum_t ExchangeToBalance(int CoinID, uint64_t amount);
 	int64_t GetUserAvailableBalance(int CoinID, std::string UserPubKey);
+	int64_t GetUserInExchangeBalance(int CoinID, std::string UserPubKey);
 	int64_t GetUserPendingBalance(int CoinID, std::string UserPubKey);
 	void UpdateUserAvailableBalance();
 	void UpdateUserPendingBalance();

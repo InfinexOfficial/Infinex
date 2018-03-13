@@ -12,6 +12,13 @@
 class CUserTrade;
 class CUserTradeManager;
 
+typedef std::map<uint64_t, std::vector<CUserTrade*>> MapPriceCUserTrade; //price and user trade map
+typedef std::map<std::string, std::vector<CUserTrade*>> MapUserCUserTrade; //user public key and user trade map
+typedef std::pair<MapPriceCUserTrade, MapUserCUserTrade> TradeUserPricePair;
+extern std::map<int, TradeUserPricePair> mapBidTradeUserPrice; //trade pair and bid data
+extern std::map<int, TradeUserPricePair> mapAskTradeUserPrice; //trade pair and ask data
+extern CUserTradeManager userTradeManager;
+
 class CUserTrade
 {
 private:
@@ -19,25 +26,25 @@ private:
 
 public:
 	int nTradePairID;
-    uint64_t nPrice;
-    uint64_t nQuantity;
-    uint64_t nAmount;    
+	uint64_t nPrice;
+	uint64_t nQuantity;
+	uint64_t nAmount;
 	std::string nUserPubKey;
 	uint64_t nTimeSubmit;
 	int64_t nBalanceQty;
-    int64_t nBalanceAmount;
-    uint64_t nLastUpdate;
+	int64_t nBalanceAmount;
+	uint64_t nLastUpdate;
 
 	CUserTrade(int nTradePairID, uint64_t nPrice, uint64_t nQuantity, uint64_t nAmount, std::string nUserPubKey, uint64_t nTimeSubmit, int64_t nBalanceQty, int64_t nBalanceAmount, uint64_t nLastUpdate) :
 		nTradePairID(nTradePairID),
 		nPrice(nPrice),
 		nQuantity(nQuantity),
 		nAmount(nAmount),
-        nUserPubKey(nUserPubKey),
-        nTimeSubmit(nTimeSubmit),
-        nBalanceQty(nBalanceQty),
-        nBalanceAmount(nBalanceAmount),
-        nLastUpdate(nLastUpdate)
+		nUserPubKey(nUserPubKey),
+		nTimeSubmit(nTimeSubmit),
+		nBalanceQty(nBalanceQty),
+		nBalanceAmount(nBalanceAmount),
+		nLastUpdate(nLastUpdate)
 	{}
 
 	CUserTrade() :
@@ -45,48 +52,21 @@ public:
 		nPrice(0),
 		nQuantity(0),
 		nAmount(0),
-        nUserPubKey(""),
-        nTimeSubmit(0),
-        nBalanceQty(0),
-        nBalanceAmount(0),
-        nLastUpdate(0)
+		nUserPubKey(""),
+		nTimeSubmit(0),
+		nBalanceQty(0),
+		nBalanceAmount(0),
+		nLastUpdate(0)
 	{}
+};
 
+class CUserTradeManager
+{
+private:
+	std::vector<unsigned char> vchSig;
 
-	ADD_SERIALIZE_METHODS;
-
-	template <typename Stream, typename Operation>
-	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-		READWRITE(nTradePairID);
-		READWRITE(nPrice);
-		READWRITE(nQuantity);
-		READWRITE(nAmount);
-        READWRITE(nUserPubKey);
-		READWRITE(nTimeSubmit);
-		READWRITE(nBalanceQty);
-		READWRITE(nBalanceAmount);
-        READWRITE(nLastUpdate);
-		READWRITE(vchSig);
-	}
-
-	uint256 GetHash() const
-	{
-		CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-		ss << nTradePairID;
-		ss << nPrice;
-		ss << nQuantity;
-		ss << nAmount;
-        ss << nUserPubKey;
-		ss << nTimeSubmit;
-		ss << nBalanceQty;
-		ss << nBalanceAmount;
-		ss << nLastUpdate;
-		return ss.GetHash();
-	}
-
-	bool Sign(std::string strSignKey);
-	bool CheckSignature();
-	void Relay(CConnman& connman);
+public:
+	void AddToAsk(CUserTrade userTrade);
 };
 
 #endif
