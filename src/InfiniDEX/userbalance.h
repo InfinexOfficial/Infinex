@@ -80,6 +80,7 @@ public:
 	int64_t GetUserPendingBalance(int CoinID, std::string UserPubKey);
 	void UpdateUserAvailableBalance();
 	void UpdateUserPendingBalance();
+	bool UpdateAfterTradeBalance(std::string UserPubKey, int SellCoinID, int SellQuantity, int BuyCoinID, int BuyQuantity);
 };
 
 #endif

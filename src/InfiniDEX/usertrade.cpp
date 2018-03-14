@@ -31,19 +31,40 @@ void CUserTradeManager::UserSellRequest(CUserTrade userTrade)
 	if (it != mapUserTradeRequest.end())
 	{
 		userbalance_to_exchange_enum_t result = userBalanceManager.BalanceToExchange(AskSideCoinID, userTrade.nAmount);
-		if (result != USERBALANCE_DEDUCTED)
+		if (result != USER_BALANCE_DEDUCTED)
 		{
 			//we should not be here
 			//for future user banning
 			return;
 		}
 
-		MapPriceCUserTrade BuySideRequest = it->second.first.first;
+		MapPriceCUserTrade buySideRequest = it->second.first.first;
+		MapPriceCUserTrade::reverse_iterator itBuySideRequest = buySideRequest.rbegin();
+		while (itBuySideRequest != buySideRequest.rend())
+		{
+			if (userTrade.nQuantity < 0)
+			{
+				//add code to buy back to match to 0
+			}
+			else if (userTrade.nQuantity == 0)
+			{
+				return;
+			}
 
+			if (itBuySideRequest->first >= userTrade.nPrice)
+			{
+				
+				++itBuySideRequest;
+			}
+			else
+			{
+				break;
+			}
+		}
 
-		PairPricePubKeyCUserTrade pairPricePubKeyContainer = it->second.second;
-		mpcut = pairPricePubKeyContainer.first;
-		mucut = pairPricePubKeyContainer.second;
+		PairPricePubKeyCUserTrade sellSidePairPricePubKeyContainer = it->second.second;
+		mpcut = sellSidePairPricePubKeyContainer.first;
+		mucut = sellSidePairPricePubKeyContainer.second;
 
 		if (mpcut.count(userTrade.nPrice))
 		{
@@ -101,16 +122,44 @@ void CUserTradeManager::UserBuyRequest(CUserTrade userTrade)
 	if (it != mapUserTradeRequest.end())
 	{
 		userbalance_to_exchange_enum_t result = userBalanceManager.BalanceToExchange(BuySideCoinID, userTrade.nAmount);
-		if (result != USERBALANCE_DEDUCTED)
+		if (result != USER_BALANCE_DEDUCTED)
 		{
 			//we should not be here
 			//for future user banning
 			return;
 		}
 
-		PairPricePubKeyCUserTrade pairPricePubKeyContainer = it->second.first;
-		mpcut = pairPricePubKeyContainer.first;
-		mucut = pairPricePubKeyContainer.second;
+		MapPriceCUserTrade sellSideRequest = it->second.first.first;
+		MapPriceCUserTrade::iterator itSellSideRequest = sellSideRequest.begin();
+		while (itSellSideRequest != sellSideRequest.end())
+		{
+			if (itSellSideRequest->first <= userTrade.nPrice)
+			{
+				for (auto& test : itSellSideRequest->second)
+				{
+					std::cout << "Sell Quantity: " << test->nBalanceQty << ", Buy Quantity: " << userTrade.nBalanceQty << ", Price: " << test->nPrice << std::endl;
+					if (userTrade.nBalanceQty <= test->nBalanceQty)
+					{
+						test->nBalanceQty -= userTrade.nBalanceQty;
+						std::cout << "Completed Quantity: " << test->nBalanceQty << ", Price: " << test->nPrice << std::endl;
+					}
+					else
+					{
+						test->nBalanceQty -= userTrade.nBalanceQty;
+						std::cout << "Partial Quantity: " << test->nBalanceQty << ", Price: " << test->nPrice << std::endl;
+					}
+				}
+				++itSellSideRequest;
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		PairPricePubKeyCUserTrade buySidePairPricePubKeyContainer = it->second.first;
+		mpcut = buySidePairPricePubKeyContainer.first;
+		mucut = buySidePairPricePubKeyContainer.second;
 
 		if (mpcut.count(userTrade.nPrice))
 		{
