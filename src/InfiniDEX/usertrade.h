@@ -5,15 +5,16 @@
 #ifndef USERTRADE_H
 #define USERTRADE_H
 
-#include "hash.h"
-#include "net.h"
-#include "utilstrencodings.h"
+#include <iostream>
+#include <vector>
+#include <map>
 
 class CUserTrade;
 class CUserTradeManager;
 
-typedef std::map<uint64_t, std::vector<CUserTrade*>> MapPriceCUserTrade; //price and user trade map
-typedef std::map<std::string, std::vector<CUserTrade*>> MapPubKeyCUserTrade; //user public key and user trade map
+typedef std::pair<std::string, CUserTrade*> PairSignatureUserTrade; //user signature (change to uint256 on actual implementation) and trade details
+typedef std::map<uint64_t, std::vector<PairSignatureUserTrade>> MapPriceCUserTrade; //price and user trade map
+typedef std::map<std::string, std::vector<PairSignatureUserTrade>> MapPubKeyCUserTrade; //user public key and user trade map
 typedef std::pair<MapPriceCUserTrade, MapPubKeyCUserTrade> PairPricePubKeyCUserTrade;
 typedef std::pair<PairPricePubKeyCUserTrade, PairPricePubKeyCUserTrade> PairBidAskCUserTrade; //bid & ask
 extern std::map<int, PairBidAskCUserTrade> mapUserTradeRequest; //trade pair and bid ask data
@@ -31,17 +32,32 @@ public:
 	uint64_t nAmount;
 	std::string nUserPubKey;
 	uint64_t nTimeSubmit;
+	std::string nUserSignature; //change to uint256 on actual implementation
 	int64_t nBalanceQty;
 	int64_t nBalanceAmount;
 	uint64_t nLastUpdate;
 
-	CUserTrade(int nTradePairID, uint64_t nPrice, uint64_t nQuantity, uint64_t nAmount, std::string nUserPubKey, uint64_t nTimeSubmit, int64_t nBalanceQty, int64_t nBalanceAmount, uint64_t nLastUpdate) :
+	CUserTrade(int nTradePairID, uint64_t nPrice, uint64_t nQuantity, std::string nUserPubKey, uint64_t nTimeSubmit, std::string nUserSignature) :
+		nTradePairID(nTradePairID),
+		nPrice(nPrice),
+		nQuantity(nQuantity),
+		nAmount(nPrice*nQuantity),
+		nUserPubKey(nUserPubKey),
+		nTimeSubmit(nTimeSubmit),
+		nUserSignature(nUserSignature),
+		nBalanceQty(nQuantity),
+		nBalanceAmount(nAmount),
+		nLastUpdate(nTimeSubmit)
+	{}
+
+	CUserTrade(int nTradePairID, uint64_t nPrice, uint64_t nQuantity, uint64_t nAmount, std::string nUserPubKey, uint64_t nTimeSubmit, std::string nUserSignature, int64_t nBalanceQty, int64_t nBalanceAmount, uint64_t nLastUpdate) :
 		nTradePairID(nTradePairID),
 		nPrice(nPrice),
 		nQuantity(nQuantity),
 		nAmount(nAmount),
 		nUserPubKey(nUserPubKey),
 		nTimeSubmit(nTimeSubmit),
+		nUserSignature(nUserSignature),
 		nBalanceQty(nBalanceQty),
 		nBalanceAmount(nBalanceAmount),
 		nLastUpdate(nLastUpdate)
@@ -54,6 +70,7 @@ public:
 		nAmount(0),
 		nUserPubKey(""),
 		nTimeSubmit(0),
+		nUserSignature(""),
 		nBalanceQty(0),
 		nBalanceAmount(0),
 		nLastUpdate(0)

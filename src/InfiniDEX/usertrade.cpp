@@ -20,9 +20,7 @@ void CUserTradeManager::UserSellRequest(CUserTrade userTrade)
 	int AskSideCoinID = tradePairManager.GetAskSideCoinInfoID(userTrade.nTradePairID);
 	if (AskSideCoinID < 0)
 		return;
-
-	//to shift into if loop after remove else on actual implementation
-	userTrade.nAmount = userTrade.nQuantity * userTrade.nPrice;
+	
 	CUserTrade* cut = new CUserTrade(userTrade);
 	MapPriceCUserTrade mpcut;
 	MapPubKeyCUserTrade mucut;
@@ -38,7 +36,7 @@ void CUserTradeManager::UserSellRequest(CUserTrade userTrade)
 			return;
 		}
 
-		MapPriceCUserTrade buySideRequest = it->second.first.first;
+		MapPriceCUserTrade buySideRequest = it->second.first.first;		
 		MapPriceCUserTrade::reverse_iterator itBuySideRequest = buySideRequest.rbegin();
 		while (itBuySideRequest != buySideRequest.rend())
 		{
@@ -53,7 +51,23 @@ void CUserTradeManager::UserSellRequest(CUserTrade userTrade)
 
 			if (itBuySideRequest->first >= userTrade.nPrice)
 			{
-				
+				for (int i = 0; i < itBuySideRequest->second.size(); i++)
+				{
+					CUserTrade* temp = itBuySideRequest->second[i].second;
+					if (userTrade.nBalanceQty <= temp->nBalanceQty)
+					{
+						int qty = userTrade.nBalanceQty;
+						temp->nBalanceQty -= qty;
+						userTrade.nBalanceQty -= qty;
+						return;
+					}
+					else
+					{
+						int qty = temp->nBalanceQty;
+						temp->nBalanceQty -= qty;
+						userTrade.nBalanceQty -= qty;
+					}
+				}
 				++itBuySideRequest;
 			}
 			else
@@ -68,22 +82,22 @@ void CUserTradeManager::UserSellRequest(CUserTrade userTrade)
 
 		if (mpcut.count(userTrade.nPrice))
 		{
-			mapUserTradeRequest[userTrade.nTradePairID].second.first[userTrade.nPrice].push_back(cut);
+			mapUserTradeRequest[userTrade.nTradePairID].second.first[userTrade.nPrice].push_back(std::make_pair(userTrade.nUserSignature, cut));
 		}
 		else
 		{
-			std::vector<CUserTrade*> vecCut;
-			vecCut.push_back(cut);
+			std::vector<PairSignatureUserTrade> vecCut;
+			vecCut.push_back(std::make_pair(userTrade.nUserSignature, cut));
 			mapUserTradeRequest[userTrade.nTradePairID].second.first.insert(std::make_pair(userTrade.nPrice, vecCut));
 		}
 		if (mucut.count(userTrade.nUserPubKey))
 		{
-			mapUserTradeRequest[userTrade.nTradePairID].second.second[userTrade.nUserPubKey].push_back(cut);
+			mapUserTradeRequest[userTrade.nTradePairID].second.second[userTrade.nUserPubKey].push_back(std::make_pair(userTrade.nUserSignature, cut));
 		}
 		else
 		{
-			std::vector<CUserTrade*> vecCut;
-			vecCut.push_back(cut);
+			std::vector<PairSignatureUserTrade> vecCut;
+			vecCut.push_back(std::make_pair(userTrade.nUserSignature, cut));
 			mapUserTradeRequest[userTrade.nTradePairID].second.second.insert(std::make_pair(userTrade.nUserPubKey, vecCut));
 		}
 	}
@@ -91,8 +105,8 @@ void CUserTradeManager::UserSellRequest(CUserTrade userTrade)
 	{
 		//for testing purpose
 		//to remove on actual implementation
-		std::vector<CUserTrade*> vecCut;
-		vecCut.push_back(cut);
+		std::vector<PairSignatureUserTrade> vecCut;
+		vecCut.push_back(std::make_pair(userTrade.nUserSignature, cut));
 		mpcut.insert(std::make_pair(userTrade.nPrice, vecCut));
 		mucut.insert(std::make_pair(userTrade.nUserPubKey, vecCut));
 		PairPricePubKeyCUserTrade sellSide = std::make_pair(mpcut, mucut);
@@ -112,8 +126,7 @@ void CUserTradeManager::UserBuyRequest(CUserTrade userTrade)
 	if (BuySideCoinID < 0)
 		return;
 
-	//to shift into if loop after remove else on actual implementation
-	userTrade.nAmount = userTrade.nQuantity * userTrade.nPrice;
+	//to shift into if loop after remove else on actual implementation	
 	CUserTrade* cut = new CUserTrade(userTrade);
 	MapPriceCUserTrade mpcut;
 	MapPubKeyCUserTrade mucut;
@@ -135,18 +148,21 @@ void CUserTradeManager::UserBuyRequest(CUserTrade userTrade)
 		{
 			if (itSellSideRequest->first <= userTrade.nPrice)
 			{
-				for (auto& test : itSellSideRequest->second)
+				for (int i = 0; i < itSellSideRequest->second.size(); i++)
 				{
-					std::cout << "Sell Quantity: " << test->nBalanceQty << ", Buy Quantity: " << userTrade.nBalanceQty << ", Price: " << test->nPrice << std::endl;
-					if (userTrade.nBalanceQty <= test->nBalanceQty)
+					CUserTrade* temp = itSellSideRequest->second[i].second;
+					if (userTrade.nBalanceQty <= temp->nBalanceQty)
 					{
-						test->nBalanceQty -= userTrade.nBalanceQty;
-						std::cout << "Completed Quantity: " << test->nBalanceQty << ", Price: " << test->nPrice << std::endl;
+						int qty = userTrade.nBalanceQty;
+						temp->nBalanceQty -= qty;
+						userTrade.nBalanceQty -= qty;
+						return;
 					}
 					else
 					{
-						test->nBalanceQty -= userTrade.nBalanceQty;
-						std::cout << "Partial Quantity: " << test->nBalanceQty << ", Price: " << test->nPrice << std::endl;
+						int qty = temp->nBalanceQty;
+						temp->nBalanceQty -= qty;
+						userTrade.nBalanceQty -= qty;
 					}
 				}
 				++itSellSideRequest;
@@ -163,22 +179,22 @@ void CUserTradeManager::UserBuyRequest(CUserTrade userTrade)
 
 		if (mpcut.count(userTrade.nPrice))
 		{
-			mapUserTradeRequest[userTrade.nTradePairID].first.first[userTrade.nPrice].push_back(cut);
+			mapUserTradeRequest[userTrade.nTradePairID].first.first[userTrade.nPrice].push_back(std::make_pair(userTrade.nUserSignature, cut));
 		}
 		else
 		{
-			std::vector<CUserTrade*> vecCut;
-			vecCut.push_back(cut);
+			std::vector<PairSignatureUserTrade> vecCut;
+			vecCut.push_back(std::make_pair(userTrade.nUserSignature, cut));
 			mapUserTradeRequest[userTrade.nTradePairID].first.first.insert(std::make_pair(userTrade.nPrice, vecCut));
 		}
 		if (mucut.count(userTrade.nUserPubKey))
 		{
-			mapUserTradeRequest[userTrade.nTradePairID].first.second[userTrade.nUserPubKey].push_back(cut);
+			mapUserTradeRequest[userTrade.nTradePairID].first.second[userTrade.nUserPubKey].push_back(std::make_pair(userTrade.nUserSignature, cut));
 		}
 		else
 		{
-			std::vector<CUserTrade*> vecCut;
-			vecCut.push_back(cut);
+			std::vector<PairSignatureUserTrade> vecCut;
+			vecCut.push_back(std::make_pair(userTrade.nUserSignature, cut));
 			mapUserTradeRequest[userTrade.nTradePairID].first.second.insert(std::make_pair(userTrade.nUserPubKey, vecCut));
 		}
 	}
@@ -186,8 +202,8 @@ void CUserTradeManager::UserBuyRequest(CUserTrade userTrade)
 	{
 		//for testing purpose
 		//to remove on actual implementation
-		std::vector<CUserTrade*> vecCut;
-		vecCut.push_back(cut);
+		std::vector<PairSignatureUserTrade> vecCut;
+		vecCut.push_back(std::make_pair(userTrade.nUserSignature, cut));
 		mpcut.insert(std::make_pair(userTrade.nPrice, vecCut));
 		mucut.insert(std::make_pair(userTrade.nUserPubKey, vecCut));
 		PairPricePubKeyCUserTrade buySide = std::make_pair(mpcut, mucut);

@@ -19,7 +19,7 @@ private:
 
 public:
     std::string nUserPubKey;
-	uint256 nCoinID;
+	int nCoinID;
     uint64_t nWithdrawAmount;
 	uint64_t nWithdrawBlock;
 	uint64_t nWithdrawTime;
