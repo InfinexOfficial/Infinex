@@ -12,8 +12,8 @@
 class CUserBalance;
 class CUserBalanceManager;
 
-typedef std::map<std::string, CUserBalance> mapUserBalance; //user public key & userbalance
-extern std::map<int, mapUserBalance> mapCoinUserBalance; //coin ID & map user balance
+typedef std::pair<int, std::string> pairCoinIDUserPubKey; //pair of coin id & user public key
+extern std::map<pairCoinIDUserPubKey, CUserBalance> mapCoinUserBalance;
 extern CUserBalanceManager userBalanceManager;
 
 enum userbalance_to_exchange_enum_t {
@@ -73,14 +73,16 @@ private:
 
 public:
 	CUserBalanceManager() {}
-	userbalance_to_exchange_enum_t BalanceToExchange(int CoinID, uint64_t amount);
-	exchange_to_userbalance_enum_t ExchangeToBalance(int CoinID, uint64_t amount);
+	bool AddNewUserBalance(CUserBalance NewUserBalance);
+	bool IsUserBalanceExist(int CoinID, std::string UserPubKey);
+	userbalance_to_exchange_enum_t BalanceToExchange(int CoinID, std::string UserPubKey, uint64_t amount);
+	exchange_to_userbalance_enum_t ExchangeToBalance(int CoinID, std::string UserPubKey, uint64_t amount);
 	int64_t GetUserAvailableBalance(int CoinID, std::string UserPubKey);
 	int64_t GetUserInExchangeBalance(int CoinID, std::string UserPubKey);
 	int64_t GetUserPendingBalance(int CoinID, std::string UserPubKey);
 	void UpdateUserAvailableBalance();
 	void UpdateUserPendingBalance();
-	bool UpdateAfterTradeBalance(std::string UserPubKey, int SellCoinID, int SellQuantity, int BuyCoinID, int BuyQuantity);
+	bool UpdateAfterTradeBalance(std::string User1PubKey, std::string User2PubKey, int CoinID1, int CoinID2, int64_t User1EAdj, int64_t User1BAdj, int64_t User2EAdj, int64_t User2BAdj);
 };
 
 #endif
