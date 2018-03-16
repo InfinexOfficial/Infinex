@@ -86,14 +86,17 @@ class CUserTradeManager
 {
 private:
 	std::vector<unsigned char> vchSig;
+	uint64_t GetAdjustedTime();
 
 public:
-	bool IsSubmittedBidValid(CUserTrade userTrade);
-	bool IsSubmittedAskValid(CUserTrade userTrade);
+	bool IsSubmittedBidValid(CUserTrade UserTrade, CTradePair TradePair);
+	bool IsSubmittedAskValid(CUserTrade UserTrade, CTradePair TradePair);
 	bool IsSubmittedBidAmountValid(CUserTrade userTrade, int nTradeFee);
 	bool IsSubmittedAskAmountValid(CUserTrade userTrade, int nTradeFee);
 	void UserSellRequest(CUserTrade userTrade);
 	void UserBuyRequest(CUserTrade userTrade);
+	uint64_t GetBidRequiredAmount(uint64_t Price, uint64_t Qty, int TradeFee);
+	uint64_t GetAskExpectedAmount(uint64_t Price, uint64_t Qty, int TradeFee);
 };
 
 #endif

@@ -5,9 +5,9 @@
 #ifndef ORDERBOOK_H
 #define ORDERBOOK_H
 
-#include "hash.h"
-#include "net.h"
-#include "utilstrencodings.h"
+#include <iostream>
+#include <vector>
+#include <map>
 
 class COrderBook;
 class COrderBookManager;
@@ -24,58 +24,40 @@ private:
 	std::vector<unsigned char> vchSig;
 
 public:
-    uint64_t nOrderPrice;
+	uint64_t nOrderPrice;
 	uint64_t nQuantity;
-    uint64_t nAmount;
+	uint64_t nAmount;
 	uint64_t nLastUpdateTime;
 
 	COrderBook(uint64_t nOrderPrice, uint64_t nQuantity, uint64_t nAmount, uint64_t nLastUpdateTime) :
-        nOrderPrice(nOrderPrice),
-        nQuantity(nQuantity),
-        nAmount(nAmount),
-        nLastUpdateTime(nLastUpdateTime)
+		nOrderPrice(nOrderPrice),
+		nQuantity(nQuantity),
+		nAmount(nAmount),
+		nLastUpdateTime(nLastUpdateTime)
 	{}
 
 	COrderBook() :
-        nOrderPrice(0),
-        nQuantity(0),
-        nAmount(0),
-        nLastUpdateTime(0)
+		nOrderPrice(0),
+		nQuantity(0),
+		nAmount(0),
+		nLastUpdateTime(0)
 	{}
 
-	ADD_SERIALIZE_METHODS;
-
-	template <typename Stream, typename Operation>
-	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-		READWRITE(nOrderPrice);
-		READWRITE(nQuantity);
-		READWRITE(nAmount);
-        READWRITE(nLastUpdateTime);
-	}
-
-	uint256 GetHash() const
-	{
-		CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-		ss << nOrderPrice;
-		ss << nQuantity;
-		ss << nAmount;
-        ss << nLastUpdateTime;
-		return ss.GetHash();
-	}
-
-	bool Sign();
-	bool CheckSignature();
-	void AddQuantity(uint64_t Quantity);
 };
 
 class COrderBookManager
 {
 private:
-    std::vector<unsigned char> vchSig;
+	std::vector<unsigned char> vchSig;
+	uint64_t GetAdjustedTime();
+	bool InsertNewBidOrder(int TradePairID, uint64_t Price, int64_t Qty);
+	bool InsertNewAskOrder(int TradePairID, uint64_t Price, int64_t Qty);
 
 public:
-	void AddToBid(int TradePairID, uint64_t OrderPrice, uint64_t Quantity);
-	void AddToAsk(int TradePairID, uint64_t OrderPrice, uint64_t Quantity);
+	void AdjustBidQuantity(int TradePairID, uint64_t Price, int64_t Qty);
+	void AdjustAskQuantity(int TradePairID, uint64_t Price, int64_t Qty);
+	void UpdateBidOrder(int TradePairID, uint64_t Price, uint64_t Quantity);
+	void UpdateAskOrder(int TradePairID, uint64_t Price, uint64_t Quantity);	
 	void CheckForTradePossibility(int TradePairID);
 };
 #endif

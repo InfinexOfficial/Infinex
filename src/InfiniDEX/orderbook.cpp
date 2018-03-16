@@ -2,9 +2,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "stdafx.h"
 #include "orderbook.h"
-#include "messagesigner.h"
-#include "net_processing.h"
+#include <chrono>
 
 class COrderBook;
 class COrderBookManager;
@@ -13,43 +13,95 @@ std::map<int, PriceOrderBook> orderBidBook; //trade pair and bid data
 std::map<int, PriceOrderBook> orderAskBook; //trade pair and ask data
 COrderBookManager orderBookManager;
 
-void COrderBookManager::AddToAsk(int TradePairID, uint64_t OrderPrice, uint64_t Quantity)
+uint64_t COrderBookManager::GetAdjustedTime()
 {
-    std::map<int, PriceOrderBook>::iterator it = orderAskBook.find(TradePairID);
-    if (it != orderAskBook.end()) {
-        PriceOrderBook::iterator it2 = it->second.find(OrderPrice);
-        if (it2 != it->second.end()) {
-            it2->second.nQuantity += Quantity;
-            it2->second.nAmount = OrderPrice * it2->second.nQuantity;
-            it2->second.nLastUpdateTime = GetAdjustedTime();
-        } else {
-            orderAskBook[TradePairID][OrderPrice] = COrderBook(OrderPrice, Quantity, OrderPrice * Quantity, GetAdjustedTime());
-        }
-    } else {
-		//node need to sync for updated trade pair before proceed as below
-        PriceOrderBook NewTradePair;
-        NewTradePair.insert(std::make_pair(OrderPrice, COrderBook(OrderPrice, Quantity, OrderPrice * Quantity, GetAdjustedTime())));
-        orderAskBook.insert(std::make_pair(TradePairID, NewTradePair));
-    }
+	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();	
 }
 
-void COrderBookManager::AddToBid(int TradePairID, uint64_t OrderPrice, uint64_t Quantity)
+bool COrderBookManager::InsertNewBidOrder(int TradePairID, uint64_t Price, int64_t Qty)
 {
-    std::map<int, PriceOrderBook>::iterator it = orderBidBook.find(TradePairID);
-    if (it != orderBidBook.end()) {
-        PriceOrderBook::iterator it2 = it->second.find(OrderPrice);
-        if (it2 != it->second.end()) {
-            it2->second.nQuantity += Quantity;
-            it2->second.nAmount = OrderPrice * it2->second.nQuantity;
-        } else {
-            orderBidBook[TradePairID][OrderPrice] = COrderBook(OrderPrice, Quantity, OrderPrice * Quantity, GetAdjustedTime());
-        }
-    } else {
-		//node need to sync for updated trade pair before proceed as below
-        PriceOrderBook NewTradePair;
-        NewTradePair.insert(std::make_pair(OrderPrice, COrderBook(OrderPrice, Quantity, OrderPrice * Quantity, GetAdjustedTime())));
-        orderBidBook.insert(std::make_pair(TradePairID, NewTradePair));
-    }
+	if (orderBidBook[TradePairID].count(Price))
+		return false;
+
+	COrderBook NewOrder(Price, Qty, Price*Qty, GetAdjustedTime());
+	orderBidBook[TradePairID].insert(std::make_pair(Price, NewOrder));
+	return true;
+}
+
+bool COrderBookManager::InsertNewAskOrder(int TradePairID, uint64_t Price, int64_t Qty)
+{
+	if (orderAskBook[TradePairID].count(Price))
+		return false;
+
+	COrderBook NewOrder(Price, Qty, Price*Qty, GetAdjustedTime());
+	orderAskBook[TradePairID].insert(std::make_pair(Price, NewOrder));
+	return true;
+}
+
+void COrderBookManager::AdjustBidQuantity(int TradePairID, uint64_t Price, int64_t Qty)
+{
+	if (!orderBidBook.count(TradePairID))
+	{
+		//need to sync with seed server or check node task
+	}
+
+	if (InsertNewBidOrder(TradePairID, Price, Qty))
+		return;
+
+	int finalQty = orderBidBook[TradePairID][Price].nQuantity + Qty;
+	if (finalQty < 0)
+	{
+		//some check need to be done here
+		finalQty = 0;
+	}
+
+	orderBidBook[TradePairID][Price].nQuantity = finalQty;
+}
+
+void COrderBookManager::AdjustAskQuantity(int TradePairID, uint64_t Price, int64_t Qty)
+{
+	if (!orderAskBook.count(TradePairID))
+	{
+		//need to sync with seed server or check node task
+	}
+
+	if (InsertNewAskOrder(TradePairID, Price, Qty))
+		return;
+
+	int finalQty = orderAskBook[TradePairID][Price].nQuantity + Qty;
+	if (finalQty < 0)
+	{
+		//some check need to be done here
+		finalQty = 0;
+	}
+
+	orderAskBook[TradePairID][Price].nQuantity = finalQty;
+}
+
+void COrderBookManager::UpdateBidOrder(int TradePairID, uint64_t Price, uint64_t Qty)
+{
+	if (!orderBidBook.count(TradePairID))
+	{
+		//need to sync with seed server or check node task
+	}
+
+	if (InsertNewBidOrder(TradePairID, Price, Qty))
+		return;
+
+	orderBidBook[TradePairID][Price].nQuantity = Qty;
+}
+
+void COrderBookManager::UpdateAskOrder(int TradePairID, uint64_t Price, uint64_t Qty)
+{
+	if (!orderAskBook.count(TradePairID))
+	{
+		//need to sync with seed server or check node task
+	}
+
+	if (InsertNewAskOrder(TradePairID, Price, Qty))
+		return;
+
+	orderAskBook[TradePairID][Price].nQuantity = Qty;
 }
 
 void ::COrderBookManager::CheckForTradePossibility(int TradePairID)
@@ -57,8 +109,8 @@ void ::COrderBookManager::CheckForTradePossibility(int TradePairID)
 	std::map<int, PriceOrderBook>::iterator bidit = orderBidBook.find(TradePairID);
 	std::map<int, PriceOrderBook>::iterator askit = orderAskBook.find(TradePairID);
 
-	if(bidit != orderBidBook.end() && askit != orderAskBook.end())
+	if (bidit != orderBidBook.end() && askit != orderAskBook.end())
 	{
-		
+
 	}
 }

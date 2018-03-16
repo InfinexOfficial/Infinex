@@ -3,11 +3,14 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "stdafx.h"
+#include "actualtrade.h"
+#include "orderbook.h"
 #include "tradepair.h"
 #include "userbalance.h"
 #include "usertrade.h"
 
 #include <boost/multiprecision/cpp_int.hpp>
+#include <chrono>
 
 class CUserTrade;
 class CUserTradeManager;
@@ -15,10 +18,28 @@ class CUserTradeManager;
 std::map<int, PairBidAskCUserTrade> mapUserTradeRequest; //trade pair and bid ask data
 CUserTradeManager userTradeManager;
 
+uint64_t COrderBookManager::GetAdjustedTime()
+{
+	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+uint64_t CUserTradeManager::GetBidRequiredAmount(uint64_t Price, uint64_t Qty, int TradeFee)
+{
+	//overflow prevention
+	boost::multiprecision::uint128_t amount = Price * Qty * 10000 / (10000 + TradeFee);
+	return (uint64_t)amount;
+}
+
+uint64_t CUserTradeManager::GetAskExpectedAmount(uint64_t Price, uint64_t Qty, int TradeFee)
+{
+	//overflow prevention
+	boost::multiprecision::uint128_t amount = Price * Qty * 10000 / (10000 - TradeFee);
+	return (uint64_t)amount;
+}
+
 bool CUserTradeManager::IsSubmittedBidAmountValid(CUserTrade userTrade, int nTradeFee)
 {	
-	//overflow prevention
-	boost::multiprecision::uint128_t ExpectedAmount = userTrade.nPrice * userTrade.nQuantity * 10000 / (10000 + nTradeFee);
+	uint64_t ExpectedAmount = GetBidRequiredAmount(userTrade.nPrice, userTrade.nQuantity, nTradeFee);
 	if ((ExpectedAmount - 1) <= userTrade.nAmount <= (ExpectedAmount + 1))
 		return true;
 	return false;
@@ -26,8 +47,7 @@ bool CUserTradeManager::IsSubmittedBidAmountValid(CUserTrade userTrade, int nTra
 
 bool CUserTradeManager::IsSubmittedAskAmountValid(CUserTrade userTrade, int nTradeFee)
 {
-	//overflow prevention
-	boost::multiprecision::uint128_t ExpectedAmount = userTrade.nPrice * userTrade.nQuantity * 10000 / (10000 - nTradeFee);
+	uint64_t ExpectedAmount = GetAskExpectedAmount(userTrade.nPrice, userTrade.nQuantity, nTradeFee);
 	if ((ExpectedAmount - 1) <= userTrade.nAmount <= (ExpectedAmount + 1))
 		return true;
 	return false;
@@ -35,39 +55,37 @@ bool CUserTradeManager::IsSubmittedAskAmountValid(CUserTrade userTrade, int nTra
 
 
 //change to enum for more return info
-bool CUserTradeManager::IsSubmittedBidValid(CUserTrade userTrade)
+bool CUserTradeManager::IsSubmittedBidValid(CUserTrade UserTrade, CTradePair TradePair)
 {
-	CTradePair tradePair = tradePairManager.GetTradePair(userTrade.nTradePairID);
-	if (tradePair.nTradePairID != userTrade.nTradePairID)
+	if (TradePair.nTradePairID != UserTrade.nTradePairID)
 		return false;
 
-	if (!IsSubmittedBidAmountValid(userTrade, tradePair.nBidTradeFee))
+	if (UserTrade.nAmount < TradePair.nMaximumTradeAmount)
 		return false;
 
-	if (userTrade.nAmount < tradePair.nMaximumTradeAmount)
+	if (UserTrade.nAmount > TradePair.nMaximumTradeAmount)
 		return false;
 
-	if (userTrade.nAmount > tradePair.nMaximumTradeAmount)
-		return false;
+	if (!IsSubmittedBidAmountValid(UserTrade, TradePair.nBidTradeFee))
+		return false;	
 
 	return true;
 }
 
 //change to enum for more return info
-bool CUserTradeManager::IsSubmittedAskValid(CUserTrade userTrade)
+bool CUserTradeManager::IsSubmittedAskValid(CUserTrade UserTrade, CTradePair TradePair)
 {
-	CTradePair tradePair = tradePairManager.GetTradePair(userTrade.nTradePairID);
-	if (tradePair.nTradePairID != userTrade.nTradePairID)
+	if (TradePair.nTradePairID != UserTrade.nTradePairID)
 		return false;
 
-	if (!IsSubmittedAskAmountValid(userTrade, tradePair.nAskTradeFee))
+	if (UserTrade.nAmount < TradePair.nMaximumTradeAmount)
 		return false;
 
-	if (userTrade.nAmount < tradePair.nMaximumTradeAmount)
+	if (UserTrade.nAmount > TradePair.nMaximumTradeAmount)
 		return false;
 
-	if (userTrade.nAmount > tradePair.nMaximumTradeAmount)
-		return false;
+	if (!IsSubmittedAskAmountValid(UserTrade, TradePair.nAskTradeFee))
+		return false;	
 
 	return true;
 }
@@ -75,8 +93,8 @@ bool CUserTradeManager::IsSubmittedAskValid(CUserTrade userTrade)
 //to convert into enum return
 void CUserTradeManager::UserSellRequest(CUserTrade userTrade)
 {
-	int AskSideCoinID = tradePairManager.GetAskSideCoinInfoID(userTrade.nTradePairID);
-	if (AskSideCoinID < 0)
+	CTradePair tradePair = tradePairManager.GetTradePair(userTrade.nTradePairID);
+	if (tradePair.nTradePairID != userTrade.nTradePairID)
 		return;
 
 	std::shared_ptr<CUserTrade> cut = std::make_shared<CUserTrade>(userTrade);
@@ -86,7 +104,10 @@ void CUserTradeManager::UserSellRequest(CUserTrade userTrade)
 	std::map<int, PairBidAskCUserTrade>::iterator it = mapUserTradeRequest.find(cut->nTradePairID);
 	if (it != mapUserTradeRequest.end())
 	{
-		userbalance_to_exchange_enum_t result = userBalanceManager.BalanceToExchange(AskSideCoinID, cut->nUserPubKey, cut->nAmount);
+		if (!IsSubmittedAskValid(userTrade, tradePair))
+			return;
+
+		userbalance_to_exchange_enum_t result = userBalanceManager.BalanceToExchange(tradePair.nCoinInfoID1, cut->nUserPubKey, cut->nAmount);
 		if (result != USER_BALANCE_DEDUCTED)
 		{
 			//we should not be here
@@ -98,11 +119,7 @@ void CUserTradeManager::UserSellRequest(CUserTrade userTrade)
 		MapPriceCUserTrade::reverse_iterator itBuySideRequest = buySideRequest.rbegin();
 		while (itBuySideRequest != buySideRequest.rend())
 		{
-			if (cut->nQuantity < 0)
-			{
-				//add code to buy back to match to 0
-			}
-			else if (cut->nQuantity == 0)
+			if (cut->nQuantity == 0)
 			{
 				return;
 			}
@@ -112,19 +129,33 @@ void CUserTradeManager::UserSellRequest(CUserTrade userTrade)
 				for (int i = 0; i < itBuySideRequest->second.size(); i++)
 				{
 					std::shared_ptr<CUserTrade> ExistingTrade = itBuySideRequest->second[i].second;
+					int qty = 0;
 					if (cut->nBalanceQty <= ExistingTrade->nBalanceQty)
 					{
-						int qty = cut->nBalanceQty;
-						ExistingTrade->nBalanceQty -= qty;
-						cut->nBalanceQty -= qty;
-						return;
+						qty = cut->nBalanceQty;
 					}
 					else
 					{
-						int qty = ExistingTrade->nBalanceQty;
-						ExistingTrade->nBalanceQty -= qty;
-						cut->nBalanceQty -= qty;
+						qty = ExistingTrade->nBalanceQty;
 					}
+
+					if (qty <= 0)
+					{
+						//should not be here, let's think what should we do
+					}
+
+					ExistingTrade->nBalanceQty -= qty;
+					cut->nBalanceQty -= qty;
+					int bidTradeFee = (ExistingTrade->nTradeFee < tradePair.nBidTradeFee) ? ExistingTrade->nTradeFee : tradePair.nBidTradeFee;
+					int askTradeFee = (cut->nTradeFee < tradePair.nAskTradeFee) ? cut->nTradeFee : tradePair.nAskTradeFee;
+					uint64_t bidAmount = GetBidRequiredAmount(ExistingTrade->nPrice, qty, bidTradeFee);
+					uint64_t askAmount = GetAskExpectedAmount(cut->nPrice, qty, askTradeFee);
+					uint64_t actualAmount = cut->nPrice*qty;
+					userBalanceManager.UpdateAfterTradeBalance(ExistingTrade->nUserPubKey, cut->nUserPubKey, tradePair.nCoinInfoID1, tradePair.nCoinInfoID2, -bidAmount, qty, -qty, askAmount);
+					orderBookManager.AdjustAskQuantity(tradePair.nTradePairID, ExistingTrade->nPrice, qty);
+					actualTradeManager.InputNewCompletedTrade(CActualTrade(ExistingTrade->nUserPubKey, cut->nUserPubKey, tradePair.nTradePairID, ExistingTrade->nPrice, qty, actualAmount, bidAmount - actualAmount, tradePair.nBidTradeFeeCoinID, actualAmount - askAmount, tradePair.nAskTradeFeeCoinID, "", GetAdjustedTime()));
+					if (cut->nBalanceQty == 0)
+						return;
 				}
 				++itBuySideRequest;
 			}
