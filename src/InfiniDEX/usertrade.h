@@ -34,6 +34,7 @@ public:
 	std::string nUserPubKey;
 	uint64_t nTimeSubmit;
 	std::string nUserSignature; //change to uint256 on actual implementation
+	int nTradeFee; //this is here to compare with trade pair fee & apply to whichever lower fee (benefit user)	
 	int64_t nBalanceQty;
 	int64_t nBalanceAmount;
 	uint64_t nLastUpdate;
@@ -46,12 +47,13 @@ public:
 		nUserPubKey(nUserPubKey),
 		nTimeSubmit(nTimeSubmit),
 		nUserSignature(nUserSignature),
+		nTradeFee(0),
 		nBalanceQty(nQuantity),
 		nBalanceAmount(nAmount),
 		nLastUpdate(nTimeSubmit)
 	{}
 
-	CUserTrade(int nTradePairID, uint64_t nPrice, uint64_t nQuantity, uint64_t nAmount, std::string nUserPubKey, uint64_t nTimeSubmit, std::string nUserSignature, int64_t nBalanceQty, int64_t nBalanceAmount, uint64_t nLastUpdate) :
+	CUserTrade(int nTradePairID, uint64_t nPrice, uint64_t nQuantity, uint64_t nAmount, std::string nUserPubKey, uint64_t nTimeSubmit, std::string nUserSignature, int nTradeFee, int64_t nBalanceQty, int64_t nBalanceAmount, uint64_t nLastUpdate) :
 		nTradePairID(nTradePairID),
 		nPrice(nPrice),
 		nQuantity(nQuantity),
@@ -59,6 +61,7 @@ public:
 		nUserPubKey(nUserPubKey),
 		nTimeSubmit(nTimeSubmit),
 		nUserSignature(nUserSignature),
+		nTradeFee(nTradeFee),
 		nBalanceQty(nBalanceQty),
 		nBalanceAmount(nBalanceAmount),
 		nLastUpdate(nLastUpdate)
@@ -72,6 +75,7 @@ public:
 		nUserPubKey(""),
 		nTimeSubmit(0),
 		nUserSignature(""),
+		nTradeFee(0),
 		nBalanceQty(0),
 		nBalanceAmount(0),
 		nLastUpdate(0)
@@ -84,6 +88,10 @@ private:
 	std::vector<unsigned char> vchSig;
 
 public:
+	bool IsSubmittedBidValid(CUserTrade userTrade);
+	bool IsSubmittedAskValid(CUserTrade userTrade);
+	bool IsSubmittedBidAmountValid(CUserTrade userTrade, int nTradeFee);
+	bool IsSubmittedAskAmountValid(CUserTrade userTrade, int nTradeFee);
 	void UserSellRequest(CUserTrade userTrade);
 	void UserBuyRequest(CUserTrade userTrade);
 };

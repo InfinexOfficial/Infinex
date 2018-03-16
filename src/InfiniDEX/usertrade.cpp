@@ -2,17 +2,75 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "usertrade.h"
-#include "userbalance.h"
+#include "stdafx.h"
 #include "tradepair.h"
-#include <boost/lexical_cast.hpp>
-#include <boost/foreach.hpp>
+#include "userbalance.h"
+#include "usertrade.h"
+
+#include <boost/multiprecision/cpp_int.hpp>
 
 class CUserTrade;
 class CUserTradeManager;
 
 std::map<int, PairBidAskCUserTrade> mapUserTradeRequest; //trade pair and bid ask data
 CUserTradeManager userTradeManager;
+
+bool CUserTradeManager::IsSubmittedBidAmountValid(CUserTrade userTrade, int nTradeFee)
+{	
+	//overflow prevention
+	boost::multiprecision::uint128_t ExpectedAmount = userTrade.nPrice * userTrade.nQuantity * 10000 / (10000 + nTradeFee);
+	if ((ExpectedAmount - 1) <= userTrade.nAmount <= (ExpectedAmount + 1))
+		return true;
+	return false;
+}
+
+bool CUserTradeManager::IsSubmittedAskAmountValid(CUserTrade userTrade, int nTradeFee)
+{
+	//overflow prevention
+	boost::multiprecision::uint128_t ExpectedAmount = userTrade.nPrice * userTrade.nQuantity * 10000 / (10000 - nTradeFee);
+	if ((ExpectedAmount - 1) <= userTrade.nAmount <= (ExpectedAmount + 1))
+		return true;
+	return false;
+}
+
+
+//change to enum for more return info
+bool CUserTradeManager::IsSubmittedBidValid(CUserTrade userTrade)
+{
+	CTradePair tradePair = tradePairManager.GetTradePair(userTrade.nTradePairID);
+	if (tradePair.nTradePairID != userTrade.nTradePairID)
+		return false;
+
+	if (!IsSubmittedBidAmountValid(userTrade, tradePair.nBidTradeFee))
+		return false;
+
+	if (userTrade.nAmount < tradePair.nMaximumTradeAmount)
+		return false;
+
+	if (userTrade.nAmount > tradePair.nMaximumTradeAmount)
+		return false;
+
+	return true;
+}
+
+//change to enum for more return info
+bool CUserTradeManager::IsSubmittedAskValid(CUserTrade userTrade)
+{
+	CTradePair tradePair = tradePairManager.GetTradePair(userTrade.nTradePairID);
+	if (tradePair.nTradePairID != userTrade.nTradePairID)
+		return false;
+
+	if (!IsSubmittedAskAmountValid(userTrade, tradePair.nAskTradeFee))
+		return false;
+
+	if (userTrade.nAmount < tradePair.nMaximumTradeAmount)
+		return false;
+
+	if (userTrade.nAmount > tradePair.nMaximumTradeAmount)
+		return false;
+
+	return true;
+}
 
 //to convert into enum return
 void CUserTradeManager::UserSellRequest(CUserTrade userTrade)
