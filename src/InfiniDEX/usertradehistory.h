@@ -5,16 +5,17 @@
 #ifndef USERTRADEHISTORY_H
 #define USERTRADEHISTORY_H
 
-#include "hash.h"
-#include "net.h"
-#include "utilstrencodings.h"
+#include <iostream>
+#include <vector>
+#include <map>
 
 class CUserTradeHistory;
 class CUserTradeHistoryManager;
 
-extern std::map<uint256, CUserTradeHistory> mapUserTradeHistory;
+typedef std::map<std::string, CUserTradeHistory> mapHashUserTradeHistory;
+typedef std::map<std::string, mapHashUserTradeHistory> mapUserTradeHistories;
+extern std::map<int, mapUserTradeHistories> mapTradePairUsersTradeHistories;
 extern CUserTradeHistoryManager userTradeHistoryManager;
-
 
 class CUserTradeHistory
 {
@@ -22,69 +23,65 @@ private:
 	std::vector<unsigned char> vchSig;
 
 public:
-	uint256 nTradePairID;
-    uint64_t nTradePrice;
-	uint64_t nQuantity;
-    uint64_t nTradeValue1;
-    uint64_t nTradeValue2;
+	int nTradePairID;
+	std::string nUserPubKey;
+	uint64_t nTradePrice;
+	uint64_t nQty1;
+	uint64_t nQty2;
+	uint64_t nAmount;
+	bool nIsBid;
+	std::string nHash;
 	uint64_t nTradeProcessTime;
 
-	CUserTradeHistory(uint256 nTradePairID, uint64_t nTradePrice, uint64_t nQuantity, uint64_t nTradeValue1, uint64_t nTradeValue2, uint64_t nTradeProcessTime) :
+	CUserTradeHistory(int nTradePairID, std::string nUserPubkey, uint64_t nTradePrice, uint64_t nQty1, uint64_t nQty2, uint64_t nAmount, bool nIsBid, 
+		std::string nHash, uint64_t nTradeProcessTime) :
 		nTradePairID(nTradePairID),
-        nTradePrice(nTradePrice),
-        nQuantity(nQuantity),
-        nTradeValue1(nTradeValue1),
-        nTradeValue2(nTradeValue2),
-        nTradeProcessTime(nTradeProcessTime)
+		nUserPubKey(nUserPubkey),
+		nTradePrice(nTradePrice),
+		nQty1(nQty1),
+		nQty2(nQty2),
+		nAmount(nAmount),
+		nIsBid(nIsBid),
+		nHash(nHash),
+		nTradeProcessTime(nTradeProcessTime)
+	{}
+
+	CUserTradeHistory(int nTradePairID, std::string nUserPubKey, uint64_t nTradePrice, uint64_t nQty1, uint64_t nQty2, uint64_t nAmount, bool nIsBid, 
+		std::string nHash, uint64_t nTradeProcessTime) :
+		nTradePairID(nTradePairID),
+		nUserPubKey(nUserPubKey),
+		nTradePrice(nTradePrice),
+		nQty1(nQty1),
+		nQty2(nQty2),
+		nAmount(nAmount),
+		nIsBid(nIsBid),
+		nHash(nHash),
+		nTradeProcessTime(nTradeProcessTime)
 	{}
 
 	CUserTradeHistory() :
 		nTradePairID(0),
-        nTradePrice(0),
-        nQuantity(0),
-        nTradeValue1(0),
-        nTradeValue2(0),
-        nTradeProcessTime(0)
+		nUserPubKey(""),
+		nTradePrice(0),
+		nQty1(0),
+		nQty2(0),
+		nAmount(0),
+		nIsBid(false),
+		nHash(""),
+		nTradeProcessTime(0)
 	{}
-
-	ADD_SERIALIZE_METHODS;
-
-	template <typename Stream, typename Operation>
-	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-		READWRITE(nTradePairID);
-		READWRITE(nTradePrice);
-		READWRITE(nQuantity);
-		READWRITE(nTradeValue1);
-        READWRITE(nTradeValue2);
-        READWRITE(nTradeProcessTime);
-		READWRITE(vchSig);
-	}
-
-	uint256 GetHash() const
-	{
-		CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-		ss << nTradePairID;
-		ss << nTradePrice;
-		ss << nQuantity;
-		ss << nTradeValue1;
-        ss << nTradeValue2;
-        ss << nTradeProcessTime;
-		return ss.GetHash();
-	}
-
-	bool Sign();
-	bool CheckSignature();
-	void Relay(CConnman& connman);
 };
 
 class CUserTradeHistoryManager
 {
 private:
-    std::vector<unsigned char> vchSig;
+	std::vector<unsigned char> vchSig;
 
 public:
-
-    CUserTradeHistoryManager() {}
+	CUserTradeHistoryManager() {}
+	void InputNewUserTradeHistory(CUserTradeHistory UTH);
+	bool GetUserTradeHistories(int TradePairID, std::string UserPubKey, mapHashUserTradeHistory& UserTradeHistories);
+	bool GetPairTradeHistories(int TradePairID, mapUserTradeHistories& PairTradeHistories);
 };
 
 #endif
