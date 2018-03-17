@@ -99,6 +99,7 @@ private:
 public:
 	CTradePairManager() {}
 	new_tradepair_enum ProcessNewTradePair(CTradePair TradePair);
+	bool IsValidTradePair(int TradePairID);
 	CTradePair GetTradePair(int TradePairID);
 	int GetAskSideCoinInfoID(int TradePairID);
 	int GetBidSideCoinInfoID(int TradePairID);

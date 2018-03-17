@@ -12,25 +12,34 @@
 class CChartData;
 class CChartDataManager;
 
+enum chart_period_enum {
+	MINUTE_CHART_DATA = 1,
+	HOUR_CHART_DATA = 2,
+	DAY_CHART_DATA = 3
+};
+
 typedef std::pair<uint64_t, uint64_t> TimeRange;
 typedef std::pair<TimeRange, CChartData> pairTimeData;
+typedef std::map<chart_period_enum, std::vector<pairTimeData>> mapPeriodTimeData;
+extern std::map<int, mapPeriodTimeData> mapChartData;
+extern CChartDataManager ChartDataManager;
 
 class CChartData
 {
 public:
 	int nTradePairID;
 	uint64_t nStartTime;
-    uint64_t nEndTime;
-    uint64_t nOpenPrice;
-    uint64_t nHighPrice;
-    uint64_t nLowPrice;
-    uint64_t nClosePrice;
-    uint64_t nAmount;
-    uint64_t nQty;
-    uint64_t nNoOfTrades;
+	uint64_t nEndTime;
+	uint64_t nOpenPrice;
+	uint64_t nHighPrice;
+	uint64_t nLowPrice;
+	uint64_t nClosePrice;
+	uint64_t nAmount;
+	uint64_t nQty;
+	uint64_t nNoOfTrades;
 
 	CChartData(int nTradePairID, uint64_t nStartTime, uint64_t nEndTime, uint64_t nOpenPrice, uint64_t nHighPrice, uint64_t nLowPrice,
-        uint64_t nClosePrice, uint64_t nAmount, uint64_t nQty, uint64_t nNoOfTrades) :
+		uint64_t nClosePrice, uint64_t nAmount, uint64_t nQty, uint64_t nNoOfTrades) :
 		nTradePairID(nTradePairID),
 		nStartTime(nStartTime),
 		nEndTime(nEndTime),
@@ -40,7 +49,7 @@ public:
 		nClosePrice(nClosePrice),
 		nAmount(nAmount),
 		nQty(nQty),
-        nNoOfTrades(nNoOfTrades)
+		nNoOfTrades(nNoOfTrades)
 	{}
 
 	CChartData() :
@@ -53,7 +62,7 @@ public:
 		nClosePrice(0),
 		nAmount(0),
 		nQty(0),
-        nNoOfTrades(0)
+		nNoOfTrades(0)
 	{}
 };
 
@@ -61,6 +70,8 @@ class CChartDataManager
 {
 public:
 	CChartDataManager() {}
+	bool InitTradePair(int TradePairID);
+	void InputNewTrade(int TradePairID, uint64_t Price, uint64_t Qty, uint64_t TradeTime);
 };
 
 #endif

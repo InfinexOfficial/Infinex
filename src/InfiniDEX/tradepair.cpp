@@ -124,3 +124,13 @@ int CTradePairManager::GetAskTradeFee(int TradePairID)
 	}
 	return 0;
 }
+
+bool CTradePairManager::IsValidTradePair(int TradePairID)
+{
+	for (int i = 0; i < vecCompleteTradePair.size(); i++)
+	{
+		if (vecCompleteTradePair[i].nTradePairID == TradePairID)
+			return true;
+	}
+	return false;
+}
