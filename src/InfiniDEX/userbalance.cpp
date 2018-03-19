@@ -1,13 +1,7 @@
-// Copyright (c) 2017-2018 The Infinex Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
-#include "messagesigner.h"
-#include "net_processing.h"
+#include "stdafx.h"
 #include "userbalance.h"
-
 #include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
 
 class CUserBalance;
 class CUserBalanceManager;
@@ -24,7 +18,12 @@ bool CUserBalanceManager::IsUserBalanceExist(int CoinID, std::string UserPubKey)
 //change to enum
 bool CUserBalanceManager::AddNewUserBalance(CUserBalance NewUserBalance)
 {
-	return true;
+	if (!IsUserBalanceExist(NewUserBalance.nCoinID, NewUserBalance.nUserPubKey))
+	{
+		mapCoinUserBalance.insert(std::make_pair(std::make_pair(NewUserBalance.nCoinID, NewUserBalance.nUserPubKey), NewUserBalance));
+		return true;
+	}
+	return false;
 }
 
 userbalance_to_exchange_enum_t CUserBalanceManager::BalanceToExchange(int CoinID, std::string UserPubKey, uint64_t amount)
@@ -67,27 +66,68 @@ exchange_to_userbalance_enum_t CUserBalanceManager::ExchangeToBalance(int CoinID
 
 int64_t CUserBalanceManager::GetUserAvailableBalance(int CoinID, std::string UserPubKey)
 {
+	pairCoinIDUserPubKey p1(std::make_pair(CoinID, UserPubKey));
+	if (mapCoinUserBalance.count(p1))
+	{
+		return mapCoinUserBalance[p1].nAvailableBalance;
+	}
 	return 0;
 }
 
 int64_t CUserBalanceManager::GetUserInExchangeBalance(int CoinID, std::string UserPubKey)
 {
+	pairCoinIDUserPubKey p1(std::make_pair(CoinID, UserPubKey));
+	if (mapCoinUserBalance.count(p1))
+	{
+		return mapCoinUserBalance[p1].nInExchangeBalance;
+	}
 	return 0;
 }
 
 int64_t CUserBalanceManager::GetUserPendingBalance(int CoinID, std::string UserPubKey)
 {
+	pairCoinIDUserPubKey p1(std::make_pair(CoinID, UserPubKey));
+	if (mapCoinUserBalance.count(p1))
+	{
+		return mapCoinUserBalance[p1].nPendingBalance;
+	}
 	return 0;
 }
 
-void CUserBalanceManager::UpdateUserAvailableBalance()
+void CUserBalanceManager::UpdateUserAvailableBalance(int CoinID, std::string UserPubKey, int64_t amount)
 {
-
+	pairCoinIDUserPubKey p1(std::make_pair(CoinID, UserPubKey));
+	if (mapCoinUserBalance.count(p1))
+	{
+		mapCoinUserBalance[p1].nAvailableBalance = amount;
+	}
 }
 
-void CUserBalanceManager::UpdateUserPendingBalance()
+void CUserBalanceManager::UpdateUserPendingBalance(int CoinID, std::string UserPubKey, int64_t amount)
 {
+	pairCoinIDUserPubKey p1(std::make_pair(CoinID, UserPubKey));
+	if (mapCoinUserBalance.count(p1))
+	{
+		mapCoinUserBalance[p1].nPendingBalance = amount;
+	}
+}
 
+void CUserBalanceManager::AdjustUserAvailableBalance(int CoinID, std::string UserPubKey, int64_t amount)
+{
+	pairCoinIDUserPubKey p1(std::make_pair(CoinID, UserPubKey));
+	if (mapCoinUserBalance.count(p1))
+	{
+		mapCoinUserBalance[p1].nAvailableBalance += amount;
+	}
+}
+
+void CUserBalanceManager::AdjustUserPendingBalance(int CoinID, std::string UserPubKey, int64_t amount)
+{
+	pairCoinIDUserPubKey p1(std::make_pair(CoinID, UserPubKey));
+	if (mapCoinUserBalance.count(p1))
+	{
+		mapCoinUserBalance[p1].nPendingBalance += amount;
+	}
 }
 
 bool CUserBalanceManager::UpdateAfterTradeBalance(std::string User1PubKey, std::string User2PubKey, int CoinID1, int CoinID2, int64_t User1EAdj, int64_t User1BAdj, int64_t User2EAdj, int64_t User2BAdj)

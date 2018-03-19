@@ -5,9 +5,9 @@
 #ifndef USERBALANCE_H
 #define USERBALANCE_H
 
-#include "hash.h"
-#include "net.h"
-#include "utilstrencodings.h"
+#include <iostream>
+#include <vector>
+#include <map>
 
 class CUserBalance;
 class CUserBalanceManager;
@@ -80,8 +80,10 @@ public:
 	int64_t GetUserAvailableBalance(int CoinID, std::string UserPubKey);
 	int64_t GetUserInExchangeBalance(int CoinID, std::string UserPubKey);
 	int64_t GetUserPendingBalance(int CoinID, std::string UserPubKey);
-	void UpdateUserAvailableBalance();
-	void UpdateUserPendingBalance();
+	void UpdateUserAvailableBalance(int CoinID, std::string UserPubKey, int64_t amount);
+	void UpdateUserPendingBalance(int CoinID, std::string UserPubKey, int64_t amount);
+	void AdjustUserAvailableBalance(int CoinID, std::string UserPubKey, int64_t amount);
+	void AdjustUserPendingBalance(int CoinID, std::string UserPubKey, int64_t amount);
 	bool UpdateAfterTradeBalance(std::string User1PubKey, std::string User2PubKey, int CoinID1, int CoinID2, int64_t User1EAdj, int64_t User1BAdj, int64_t User2EAdj, int64_t User2BAdj);
 };
 
