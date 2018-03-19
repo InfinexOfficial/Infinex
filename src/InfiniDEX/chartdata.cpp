@@ -5,7 +5,6 @@
 #include "stdafx.h"
 #include "chartdata.h"
 #include "tradepair.h"
-#include <chrono>
 
 class CChartData;
 class CChartDataManager;
@@ -51,9 +50,8 @@ void CChartDataManager::InputNewTrade(int TradePairID, uint64_t Price, uint64_t 
 	mapTimeData::reverse_iterator ri = mapChartData[TradePairID][MINUTE_CHART_DATA].rbegin();
 	if (ri == mapChartData[TradePairID][MINUTE_CHART_DATA].rend())
 	{
-		uint64_t CurrentTime = GetAdjustedTime();
-		int TimeRoundDown = CurrentTime % 60;
-		uint64_t newMinuteStart = CurrentTime - TimeRoundDown;
+		int TimeRoundDown = TradeTime % 60;
+		uint64_t newMinuteStart = TradeTime - TimeRoundDown;
 		uint64_t newMinuteEnd = newMinuteStart + 60;
 		TimeRange tr = std::make_pair(newMinuteStart, newMinuteEnd);
 		CChartData cd(TradePairID, newMinuteStart, newMinuteEnd, Price, Price, Price, Price, Price * Qty, Qty, 1);
@@ -68,9 +66,9 @@ void CChartDataManager::InputNewTrade(int TradePairID, uint64_t Price, uint64_t 
 			ri->second.nQty += Qty;
 			ri->second.nAmount += (Qty * Price);
 			ri->second.nClosePrice = Price;
-			if (Price > ri->second.nHighPrice || ri->second.nHighPrice == 0)
+			if (Price > ri->second.nHighPrice)
 				ri->second.nHighPrice = Price;
-			else if (Price < ri->second.nLowPrice)
+			else if (Price < ri->second.nLowPrice || ri->second.nLowPrice == 0)
 				ri->second.nLowPrice = Price;
 		}
 		else
@@ -87,9 +85,8 @@ void CChartDataManager::InputNewTrade(int TradePairID, uint64_t Price, uint64_t 
 	mapTimeData::reverse_iterator ri2 = mapChartData[TradePairID][HOUR_CHART_DATA].rbegin();
 	if (ri2 == mapChartData[TradePairID][HOUR_CHART_DATA].rend())
 	{
-		uint64_t CurrentTime = GetAdjustedTime();
-		int TimeRoundDown = CurrentTime % 3600;
-		uint64_t newHourStart = CurrentTime - TimeRoundDown;
+		int TimeRoundDown = TradeTime % 3600;
+		uint64_t newHourStart = TradeTime - TimeRoundDown;
 		uint64_t newHourEnd = newHourStart + 3600;
 		TimeRange tr = std::make_pair(newHourStart, newHourEnd);
 		CChartData cd(TradePairID, newHourStart, newHourEnd, Price, Price, Price, Price, Price * Qty, Qty, 1);
@@ -104,9 +101,9 @@ void CChartDataManager::InputNewTrade(int TradePairID, uint64_t Price, uint64_t 
 			ri2->second.nQty += Qty;
 			ri2->second.nAmount += (Qty * Price);
 			ri2->second.nClosePrice = Price;
-			if (Price > ri2->second.nHighPrice || ri->second.nHighPrice == 0)
+			if (Price > ri2->second.nHighPrice)
 				ri2->second.nHighPrice = Price;
-			else if (Price < ri2->second.nLowPrice)
+			else if (Price < ri2->second.nLowPrice || ri->second.nLowPrice == 0)
 				ri2->second.nLowPrice = Price;
 		}
 		else
@@ -123,9 +120,8 @@ void CChartDataManager::InputNewTrade(int TradePairID, uint64_t Price, uint64_t 
 	mapTimeData::reverse_iterator ri3 = mapChartData[TradePairID][DAY_CHART_DATA].rbegin();
 	if (ri3 == mapChartData[TradePairID][DAY_CHART_DATA].rend())
 	{
-		uint64_t CurrentTime = GetAdjustedTime();
-		int TimeRoundDown = CurrentTime % 86400;
-		uint64_t newDayStart = CurrentTime - TimeRoundDown;
+		int TimeRoundDown = TradeTime % 86400;
+		uint64_t newDayStart = TradeTime - TimeRoundDown;
 		uint64_t newDayEnd = newDayStart + 86400;
 		TimeRange tr = std::make_pair(newDayStart, newDayEnd);
 		CChartData cd(TradePairID, newDayStart, newDayEnd, Price, Price, Price, Price, Price * Qty, Qty, 1);
@@ -140,9 +136,9 @@ void CChartDataManager::InputNewTrade(int TradePairID, uint64_t Price, uint64_t 
 			ri3->second.nQty += Qty;
 			ri3->second.nAmount += (Qty * Price);
 			ri3->second.nClosePrice = Price;
-			if (Price > ri3->second.nHighPrice || ri->second.nHighPrice == 0)
+			if (Price > ri3->second.nHighPrice)
 				ri3->second.nHighPrice = Price;
-			else if (Price < ri3->second.nLowPrice)
+			else if (Price < ri3->second.nLowPrice || ri->second.nLowPrice == 0)
 				ri3->second.nLowPrice = Price;
 		}
 		else
@@ -154,9 +150,4 @@ void CChartDataManager::InputNewTrade(int TradePairID, uint64_t Price, uint64_t 
 			mapChartData[TradePairID][DAY_CHART_DATA].insert(std::make_pair(tr, cd));
 		}
 	}
-}
-
-uint64_t CChartDataManager::GetAdjustedTime()
-{
-	return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }

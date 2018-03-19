@@ -72,7 +72,6 @@ public:
 	CChartDataManager() {}
 	bool InitTradePair(int TradePairID);
 	void InputNewTrade(int TradePairID, uint64_t Price, uint64_t Qty, uint64_t TradeTime);
-	uint64_t GetAdjustedTime();
 };
 
 #endif
