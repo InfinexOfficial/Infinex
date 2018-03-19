@@ -19,8 +19,8 @@ enum chart_period_enum {
 };
 
 typedef std::pair<uint64_t, uint64_t> TimeRange;
-typedef std::pair<TimeRange, CChartData> pairTimeData;
-typedef std::map<chart_period_enum, std::vector<pairTimeData>> mapPeriodTimeData;
+typedef std::map<TimeRange, CChartData> mapTimeData;
+typedef std::map<chart_period_enum, mapTimeData> mapPeriodTimeData;
 extern std::map<int, mapPeriodTimeData> mapChartData;
 extern CChartDataManager ChartDataManager;
 
@@ -72,6 +72,7 @@ public:
 	CChartDataManager() {}
 	bool InitTradePair(int TradePairID);
 	void InputNewTrade(int TradePairID, uint64_t Price, uint64_t Qty, uint64_t TradeTime);
+	uint64_t GetAdjustedTime();
 };
 
 #endif

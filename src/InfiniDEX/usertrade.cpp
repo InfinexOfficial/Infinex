@@ -18,7 +18,7 @@ class CUserTradeManager;
 std::map<int, PairBidAskCUserTrade> mapUserTradeRequest; //trade pair and bid ask data
 CUserTradeManager userTradeManager;
 
-uint64_t COrderBookManager::GetAdjustedTime()
+uint64_t CUserTradeManager::GetAdjustedTime()
 {
 	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
