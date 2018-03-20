@@ -5,15 +5,17 @@
 #ifndef USERDEPOSIT_H
 #define USERDEPOSIT_H
 
-#include "hash.h"
-#include "net.h"
-#include "utilstrencodings.h"
-#include "userconnection.h"
+#include <iostream>
+#include <vector>
+#include <map>
 
 class CUserDeposit;
 class CUserDepositManager;
 
-
+typedef std::pair<int, std::string> pairCoinIDUserPubKey; //pair of coin id & user public key
+typedef std::map<std::string, CUserDeposit> mapHashUserDeposit;
+extern std::map<pairCoinIDUserPubKey, mapHashUserDeposit> mapCoinUserDeposit;
+extern CUserDepositManager userDepositManager;
 
 class CUserDeposit
 {
@@ -21,80 +23,54 @@ private:
 	std::vector<unsigned char> vchSig;
 
 public:
-    std::string nUserPubKey;
-	uint256 nCoinID;
-    uint64_t nDepositAmount;
+	int nUserDepositID;
+	std::string nUserPubKey;
+	int nCoinID;
+	uint64_t nDepositAmount;
 	uint64_t nBlockNumber;
 	uint64_t nDepositTime;
-    bool nValidDeposit;
-    std::string nRemark;
-    uint64_t nLastUpdateTime;
+	bool nValidDeposit;
+	std::string nRemark;
+	std::string nHash;
+	uint64_t nLastUpdateTime;
 
-	CUserDeposit(std::string nUserPubKey, uint256 nCoinID, uint64_t nDepositAmount, uint64_t nBlockNumber, uint64_t nDepositTime, bool nValidDeposit, std::string nRemark, uint64_t nLastUpdateTime) :
+	CUserDeposit(int nUserDepositID, std::string nUserPubKey, int nCoinID, uint64_t nDepositAmount, uint64_t nBlockNumber, uint64_t nDepositTime, bool nValidDeposit, std::string nRemark, std::string nHash, uint64_t nLastUpdateTime) :
+		nUserDepositID(nUserDepositID),
 		nUserPubKey(nUserPubKey),
-        nCoinID(nCoinID),
-        nDepositAmount(nDepositAmount),
+		nCoinID(nCoinID),
+		nDepositAmount(nDepositAmount),
 		nBlockNumber(nBlockNumber),
-        nDepositTime(nDepositTime),
-        nValidDeposit(nValidDeposit),
-        nRemark(nRemark),
-        nLastUpdateTime(nLastUpdateTime)
+		nDepositTime(nDepositTime),
+		nValidDeposit(nValidDeposit),
+		nRemark(nRemark),
+		nHash(nHash),
+		nLastUpdateTime(nLastUpdateTime)
 	{}
 
 	CUserDeposit() :
+		nUserDepositID(0),
 		nUserPubKey(""),
-        nCoinID(0),
-        nDepositAmount(0),
+		nCoinID(0),
+		nDepositAmount(0),
 		nBlockNumber(0),
-        nDepositTime(0),
-        nValidDeposit(false),
-        nRemark(""),
-        nLastUpdateTime(0)
+		nDepositTime(0),
+		nValidDeposit(false),
+		nRemark(""),
+		nHash(""),
+		nLastUpdateTime(0)
 	{}
-
-	ADD_SERIALIZE_METHODS;
-
-	template <typename Stream, typename Operation>
-	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-		READWRITE(nUserPubKey);
-		READWRITE(nCoinID);
-		READWRITE(nDepositAmount);
-		READWRITE(nBlockNumber);
-		READWRITE(nDepositTime);
-        READWRITE(nValidDeposit);
-        READWRITE(nRemark);
-        READWRITE(nLastUpdateTime);
-        READWRITE(vchSig);
-	}
-
-	uint256 GetHash() const
-	{
-		CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-		ss << nUserPubKey;
-		ss << nCoinID;
-		ss << nDepositAmount;
-		ss << nBlockNumber;
-		ss << nDepositTime;
-        ss << nValidDeposit;
-        ss << nRemark;
-        ss << nLastUpdateTime;
-		return ss.GetHash();
-	}
-	
-	bool CheckSignature();
-	void RelayTo(CUserConnection user);
 };
 
 class CUserDepositManager
 {
 private:
-    std::vector<unsigned char> vchSig;
+	std::vector<unsigned char> vchSig;
 
 public:
-    CUserDepositManager() {}
+	CUserDepositManager() {}
+	bool IsUserDepositInList(std::string UserPubKey, int CoinID);
 	bool AddNewDeposit(CUserDeposit UserDeposit);
-	bool ReflectDepositToBalance(std::string DepositHash);
-	bool UpdateDepositStatus(std::string DepositHash, bool ValidDeposit, std::string Remark);
+	bool DepositConfirmation(std::string UserPubKey, int CoinID, std::string Hash, uint64_t LastUpdateTime);
 };
 
 #endif
