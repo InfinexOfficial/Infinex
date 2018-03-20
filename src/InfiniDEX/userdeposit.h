@@ -14,7 +14,8 @@ class CUserDepositManager;
 
 typedef std::pair<int, std::string> pairCoinIDUserPubKey; //pair of coin id & user public key
 typedef std::map<std::string, CUserDeposit> mapHashUserDeposit;
-extern std::map<pairCoinIDUserPubKey, mapHashUserDeposit> mapCoinUserDeposit;
+extern std::map<pairCoinIDUserPubKey, mapHashUserDeposit> mapCoinUserConfirmDeposit;
+extern std::map<pairCoinIDUserPubKey, mapHashUserDeposit> mapCoinUserPendingDeposit;
 extern CUserDepositManager userDepositManager;
 
 class CUserDeposit
@@ -69,7 +70,8 @@ private:
 public:
 	CUserDepositManager() {}
 	bool IsUserDepositInList(std::string UserPubKey, int CoinID);
-	bool AddNewDeposit(CUserDeposit UserDeposit);
+	bool AddNewPendingDeposit(CUserDeposit UserDeposit);
+	bool AddNewConfirmDeposit(CUserDeposit UserDeposit);
 	bool DepositConfirmation(std::string UserPubKey, int CoinID, std::string Hash, uint64_t LastUpdateTime);
 };
 
