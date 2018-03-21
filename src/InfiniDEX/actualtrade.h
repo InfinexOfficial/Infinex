@@ -1,35 +1,48 @@
 // Copyright (c) 2017-2018 The Infinex Core developers
-// Distributed under the MIT software license, see the accompanying
+// Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef ACTUALTRADE_H
 #define ACTUALTRADE_H
 
-#include "hash.h"
-#include "net.h"
-#include "utilstrencodings.h"
+#include <iostream>
+#include <vector>
+#include <map>
+#include "userconnection.h"
 
 class CActualTrade;
 class CActualTradeManager;
 
-extern std::map<int, std::vector<CActualTrade>> mapActualTrade; //trade pair ID & actual trade list
+typedef std::map<int, CActualTrade> mapActualTrade;
+extern std::map<int, mapActualTrade> mapTradePairActualTrade;
+extern std::map<int, std::vector<CActualTrade>> mapTradePairConflictTrade;
+extern std::map<int, std::pair<bool, std::vector<std::string>>> mapActualTradeChecker;
 extern CActualTradeManager actualTradeManager;
 
 class CActualTrade
 {
+private:
+	std::vector<unsigned char> vchSig;
+
 public:
-    std::string nUserPubKey1;
-    std::string nUserPubKey2;
-    int nTradePairID;
+	int nActualTradeID;
+	int nTradePairID;
     uint64_t nTradePrice;
     uint64_t nTradeQty;
     uint64_t nTradeAmount;
+	std::string nUserPubKey1;
+	std::string nUserPubKey2;
     int64_t nFee1; //during promo period, we can provide rebate instead of trade fee to user
     int nFee1CoinID;
     int64_t nFee2; //during promo period, we can provide rebate instead of trade fee to user
     int nFee2CoinID;
     std::string nMasternodeInspector;
+	std::string nCurrentHash;
 	uint64_t nTradeTime;
+
+	CActualTrade(int nActualTradeID) :
+		nActualTradeID(nActualTradeID)
+	{}
 
 	CActualTrade(std::string nUserPubKey1, std::string nUserPubKey2, int nTradePairID, uint64_t nTradePrice, uint64_t nTradeQty, 
         uint64_t nTradeAmount, int64_t nFee1, int nFee1CoinID, int64_t nFee2, int nFee2CoinID, 
@@ -62,13 +75,28 @@ public:
         nMasternodeInspector(""),
         nTradeTime(0)
 	{}
+
+	std::string GetHash();
+	bool CheckSignature();
+	bool Sign();
+	bool InformActualTrade();
+	bool InformConflictTrade(CNode* node);
 };
 
 class CActualTradeManager
 {
+private:
+	bool RunSecurityCheck(int TradePairID, std::string Hash);
+	int nLastActualTradeID;
+	std::string nLastHash;
+	void InputNewTradePair(int TradePairID, bool SecurityCheck = false);
+
 public:
     CActualTradeManager() {}
-    void TradeMatchingEngine();
+	bool SetSecurityCheck(int TradePairID, bool SecurityCheck);
+	bool GetActualTrade(CNode* node, int ActualTradeID, int TradePairID);
+	bool AddNewActualTrade(CActualTrade ActualTrade); //process by same node
+	bool AddNewActualTrade(CNode* node, CActualTrade ActualTrade); //data from other node
 };
 
 #endif

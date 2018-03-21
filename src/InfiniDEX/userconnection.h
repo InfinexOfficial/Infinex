@@ -1,13 +1,13 @@
 // Copyright (c) 2017-2018 The Infinex Core developers
-// Distributed under the MIT software license, see the accompanying
+// Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef USERCONNECTION_H
 #define USERCONNECTION_H
 
-#include "hash.h"
-#include "net.h"
-#include "utilstrencodings.h"
+#include <iostream>
+#include <vector>
+#include <map>
 
 class CUserConnection;
 class CUserConnectionManager;
@@ -15,6 +15,21 @@ class CUserConnectionManager;
 extern std::map<std::string, CUserConnection> mapUserConnection; //user public key & connection info
 extern std::map<std::string, CUserConnection> mapMNConnection; //MN IP address & connection info
 extern CUserConnectionManager userConnectionManager;
+
+class CNode
+{
+
+};
+
+class CDataStream
+{
+
+};
+
+class CConnman
+{
+
+};
 
 class CUserConnection
 {
