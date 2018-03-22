@@ -12,6 +12,7 @@
 #include "userconnection.h"
 
 class CActualTrade;
+class CActualTradeSetting;
 class CActualTradeManager;
 
 typedef std::map<int, CActualTrade> mapActualTrade; //trade id & detail details;
@@ -19,10 +20,6 @@ typedef std::pair<CActualTradeSetting, std::set<std::string>> pairSettingSecurit
 typedef std::pair<pairSettingSecurity, mapActualTrade> ActualTradeContainer;
 extern std::map<int, ActualTradeContainer> mapTradePairActualTradeContainer;
 extern std::map<int, std::vector<CActualTrade>> mapTradePairConflictTrade;
-
-extern std::map<int, mapActualTrade> mapTradePairActualTrade;
-
-extern std::map<int, std::pair<bool, std::vector<std::string>>> mapActualTradeChecker;
 extern CActualTradeManager actualTradeManager;
 
 class CActualTradeSetting
