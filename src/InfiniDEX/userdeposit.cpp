@@ -53,6 +53,7 @@ bool CUserDepositManager::AddNewPendingDeposit(CUserDeposit UserDeposit)
 			}
 		}
 	}
+	return true;
 }
 
 bool CUserDepositManager::AddNewConfirmDeposit(CUserDeposit UserDeposit)
@@ -92,6 +93,7 @@ bool CUserDepositManager::AddNewConfirmDeposit(CUserDeposit UserDeposit)
 			}
 		}
 	}
+	return true;
 }
 
 bool CUserDepositManager::DepositConfirmation(std::string UserPubKey, int CoinID, std::string Hash, uint64_t LastUpdateTime)

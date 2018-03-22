@@ -5,9 +5,9 @@
 #ifndef USERWITHDRAW_H
 #define USERWITHDRAW_H
 
-#include "hash.h"
-#include "net.h"
-#include "utilstrencodings.h"
+#include <iostream>
+#include <vector>
+#include <map>
 
 class CUserWithdraw;
 class CUserWithdrawManager;

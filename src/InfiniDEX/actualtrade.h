@@ -7,17 +7,49 @@
 
 #include <iostream>
 #include <vector>
+#include <set>
 #include <map>
 #include "userconnection.h"
 
 class CActualTrade;
 class CActualTradeManager;
 
-typedef std::map<int, CActualTrade> mapActualTrade;
-extern std::map<int, mapActualTrade> mapTradePairActualTrade;
+typedef std::map<int, CActualTrade> mapActualTrade; //trade id & detail details;
+typedef std::pair<CActualTradeSetting, std::set<std::string>> pairSettingSecurity; //trade pair setting & trade hash record
+typedef std::pair<pairSettingSecurity, mapActualTrade> ActualTradeContainer;
+extern std::map<int, ActualTradeContainer> mapTradePairActualTradeContainer;
 extern std::map<int, std::vector<CActualTrade>> mapTradePairConflictTrade;
+
+extern std::map<int, mapActualTrade> mapTradePairActualTrade;
+
 extern std::map<int, std::pair<bool, std::vector<std::string>>> mapActualTradeChecker;
 extern CActualTradeManager actualTradeManager;
+
+class CActualTradeSetting
+{
+public:
+	int nTradePairID;
+	bool nSecurityCheck;
+	bool nSyncInProgress;
+	int nLastTradeMaxPreTimeDistance;
+	int nToStoreLowerLimit;
+	int nToStoreUpperLimit;
+	int nLastActualTradeID;
+	std::string nLastHash;
+
+	CActualTradeSetting(int nTradePairID, bool nSecurityCheck) :
+		nTradePairID(nTradePairID),
+		nSecurityCheck(nSecurityCheck),
+		nSyncInProgress(false),
+		nLastTradeMaxPreTimeDistance(3000),
+		nToStoreLowerLimit(50),
+		nToStoreUpperLimit(100),
+		nLastActualTradeID(0),
+		nLastHash("")
+	{}
+
+	bool GetSecurityCheck() { return nSecurityCheck; }
+};
 
 class CActualTrade
 {
@@ -87,9 +119,6 @@ class CActualTradeManager
 {
 private:
 	bool RunSecurityCheck(int TradePairID, std::string Hash);
-	int nLastActualTradeID;
-	std::string nLastHash;
-	void InputNewTradePair(int TradePairID, bool SecurityCheck = false);
 
 public:
     CActualTradeManager() {}
@@ -97,6 +126,10 @@ public:
 	bool GetActualTrade(CNode* node, int ActualTradeID, int TradePairID);
 	bool AddNewActualTrade(CActualTrade ActualTrade); //process by same node
 	bool AddNewActualTrade(CNode* node, CActualTrade ActualTrade); //data from other node
+	std::vector<std::string> FindDuplicateTrade(int TradePairID);
+	void InitiateCompleteResync(int TradePairID);
+	void InitialSync(int TradePairID);
+	void InputNewTradePair(int TradePairID, bool SecurityCheck);
 };
 
 #endif

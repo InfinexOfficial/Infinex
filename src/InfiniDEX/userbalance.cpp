@@ -167,4 +167,5 @@ bool CUserBalanceManager::UpdateAfterTradeBalance(std::string User1PubKey, std::
 		mapCoinUserBalance[p3].nInExchangeBalance += User2BAdj;
 		mapCoinUserBalance[p4].nAvailableBalance += User2EAdj;
 	}
+	return true;
 }
