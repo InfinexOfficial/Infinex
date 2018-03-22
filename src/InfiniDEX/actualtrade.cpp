@@ -139,6 +139,7 @@ bool CActualTradeManager::AddNewActualTrade(CActualTrade ActualTrade)
 	}
 	ActualTrade.nActualTradeID = (++mapTradePairActualTradeContainer[ActualTrade.nTradePairID].first.first.nLastActualTradeID);
 	mapTradePairActualTradeContainer[ActualTrade.nTradePairID].second.insert(std::make_pair(ActualTrade.nActualTradeID, ActualTrade));
+	mapTradePairActualTradeContainer[ActualTrade.nTradePairID].first.second.insert(ActualTrade.nCurrentHash);
 	mapTradePairActualTradeContainer[ActualTrade.nTradePairID].first.first.nLastHash = ActualTrade.nCurrentHash;
 	ActualTrade.InformActualTrade();
 	return true;
@@ -146,6 +147,40 @@ bool CActualTradeManager::AddNewActualTrade(CActualTrade ActualTrade)
 
 bool CActualTradeManager::AddNewActualTrade(CNode* node, CActualTrade ActualTrade)
 {
+	if (!mapTradePairActualTradeContainer.count(ActualTrade.nTradePairID))
+	{
+		//check whether current node is in charge of current trade pair
+		if (true)
+		{
+			InputNewTradePair(ActualTrade.nTradePairID, true);
+		}
+		else
+		{
+
+		}
+		return false;
+	}
+
+	mapActualTrade::iterator temp = mapTradePairActualTradeContainer[ActualTrade.nTradePairID].second.find(ActualTrade.nActualTradeID);
+	if (temp != mapTradePairActualTradeContainer[ActualTrade.nTradePairID].second.end)
+	{
+		if (temp->second.nCurrentHash == ActualTrade.nCurrentHash)
+			return true;
+		else
+		{
+			//resync required to make sure network running the same data
+		}
+	}
+	else if (mapTradePairActualTradeContainer[ActualTrade.nTradePairID].first.second.count(ActualTrade.nCurrentHash))
+	{
+		//resync required to make sure network running the same data
+	}
+	else
+	{
+		mapTradePairActualTradeContainer[ActualTrade.nTradePairID].second.insert(std::make_pair(ActualTrade.nActualTradeID, ActualTrade));
+		mapTradePairActualTradeContainer[ActualTrade.nTradePairID].first.second.insert(ActualTrade.nCurrentHash);
+		mapTradePairActualTradeContainer[ActualTrade.nTradePairID].first.first.nLastHash = ActualTrade.nCurrentHash;
+	}
 	return true;
 }
 
