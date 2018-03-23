@@ -8,9 +8,15 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <userconnection.h>
 
 class CUserWithdraw;
 class CUserWithdrawManager;
+
+typedef std::pair<std::string, std::shared_ptr<CUserWithdraw>> PairHashUserWithdraw; //node signature and user withdraw request
+typedef std::pair<std::string, PairHashUserWithdraw> PairPubKeyUserWithdraw;
+extern std::map<int, PairPubKeyUserWithdraw> mapCoinUserWithdraw; //coin ID and users withdraw details
+extern CUserWithdrawManager userWithdrawManager;
 
 class CUserWithdraw
 {
@@ -21,16 +27,25 @@ public:
     std::string nUserPubKey;
 	int nCoinID;
     uint64_t nWithdrawAmount;
-	uint64_t nWithdrawBlock;
-	uint64_t nWithdrawTime;
-    std::string nTransactionID;
-    bool nValidWithdraw;
+	uint64_t nWithdrawRequestTime;
+	std::string nUserHash;
+	int nUserWithdrawID;
+	std::string nMNPubKey;
+	bool nValidWithdraw;
+	uint64_t nWithdrawCheckTime;	
+	std::string nMNHash;
+	uint64_t nWithdrawProcessTime;
+    std::string nTransactionID;    
     std::string nRemark;
+	std::string nFinalHash;
     uint64_t nLastUpdateTime;
-
-	bool Sign(std::string strSignKey);
-	bool CheckSignature();
-	void RelayTo(CNode* pnode, CConnman& connman);
+		
+	bool VerifyWithdrawalSignature();
+	bool VerifyMasternodeSignature();
+	bool VerifyFinalSignature();
+	void RelayToUser();
+	void RelayToMN();
+	void RelayToNetwork();
 };
 
 class CUserWithdrawManager
@@ -40,6 +55,10 @@ private:
 
 public:
     CUserWithdrawManager() {}
+	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	void ProcessUserWithdrawRequest(CUserWithdraw UserWithdrawRequest);
+	void SendUserWithdrawalRecords(std::string UserPubKey, int CoinID);
+	void SendUsersWithdrawalRecords(CNode* node, CConnman& connman, int CoinID);
 };
 
 #endif

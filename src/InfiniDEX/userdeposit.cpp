@@ -5,11 +5,13 @@
 #include "stdafx.h"
 #include "userdeposit.h"
 #include "userbalance.h"
+#include "noderole.h"
 
 class CUserDeposit;
+class CUserDepositSetting;
 class CUserDepositManager;
 
-std::map<pairCoinIDUserPubKey, pairConfirmPendingDeposit> mapCoinUserDeposit;
+std::map<int, pairSettingUserDeposit> mapUserDeposit;
 CUserDepositManager userDepositManager;
 
 std::string CUserDeposit::GetHash()
@@ -22,68 +24,148 @@ bool CUserDeposit::Verify()
 	return true;
 }
 
-bool CUserDepositManager::AddNewUserDepositIntoList(std::string UserPubKey, int CoinID)
+void CUserDepositManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
-	pairConfirmPendingDeposit temp = std::make_pair(mapHashUserDeposit(), mapHashUserDeposit());
-	pairCoinIDUserPubKey temp2 = std::make_pair(CoinID, UserPubKey);
-	mapCoinUserDeposit.insert(std::make_pair(temp2, temp));
-	return true;
+
 }
 
-bool CUserDepositManager::IsUserDepositInList(std::string UserPubKey, int CoinID)
+void CUserDepositManager::ToProvideUserDepositInfo(int CoinID, bool toProcess)
 {
-	return mapCoinUserDeposit.count(std::make_pair(CoinID, UserPubKey));
+	mapUserDeposit[CoinID].first.ProvideUserDepositInfo = toProcess;
 }
 
-bool CUserDepositManager::AddNewPendingDeposit(CUserDeposit UserDeposit)
+void CUserDepositManager::SetSyncInProgress(int CoinID, bool status)
+{
+	mapUserDeposit[CoinID].first.SyncInProgress = status;
+}
+
+void CUserDepositManager::AddCoinToList(int CoinID)
+{
+	mapUserDeposit.insert(std::make_pair(CoinID, pairSettingUserDeposit()));
+}
+
+bool CUserDepositManager::IsCoinInList(int CoinID)
+{
+	return mapUserDeposit.count(CoinID);
+}
+
+void CUserDepositManager::AddNewUser(std::string UserPubKey, int CoinID)
+{
+	mapUserDeposit[CoinID].second.insert(std::make_pair(UserPubKey, pairConfirmPendingDeposit()));
+}
+
+bool CUserDepositManager::IsUserInList(std::string UserPubKey, int CoinID)
+{
+	return mapUserDeposit[CoinID].second.count(UserPubKey);
+}
+
+void CUserDepositManager::RequestPendingDepositData(int StartingID)
+{
+
+}
+
+void CUserDepositManager::AddNewPendingDeposit(CUserDeposit UserDeposit)
 {
 	if (!UserDeposit.Verify())
 	{
-		return false;
+		return;
 	}
 
-	if (!IsUserDepositInList(UserDeposit.nUserPubKey, UserDeposit.nCoinID))
+	if (!IsUserInList(UserDeposit.nUserPubKey, UserDeposit.nCoinID))
 	{
-		if (!AddNewUserDepositIntoList(UserDeposit.nUserPubKey, UserDeposit.nCoinID))
-			return false;
-	}	
-
-	pairCoinIDUserPubKey temp = std::make_pair(UserDeposit.nCoinID, UserDeposit.nUserPubKey);
-	if (mapCoinUserDeposit[temp].second.count(UserDeposit.nUserDepositID))
-	{
-		return true;
+		AddNewUser(UserDeposit.nUserPubKey, UserDeposit.nCoinID);
+		if (UserDeposit.nUserDepositID != 1)
+		{
+			SetSyncInProgress(UserDeposit.nCoinID, true);
+			//need to request data from other node
+			return;
+		}
 	}
-	
+	else if (IsUserPendingDepositInList(UserDeposit))
+	{
+		return;
+	}
+
+	int UserLastPendingDepositID = GetLastUserPendingDepositID(UserDeposit.nUserPubKey, UserDeposit.nCoinID);
+	if (UserLastPendingDepositID != (UserDeposit.nUserDepositID - 1))
+	{
+		SetSyncInProgress(UserDeposit.nCoinID, true);
+		//need to request data from other node
+		return;
+	}
+
 	userBalanceManager.UpdateUserPendingBalance(UserDeposit.nCoinID, UserDeposit.nUserPubKey, UserDeposit.nDepositAmount);
-	mapCoinUserDeposit[temp].second.insert(std::make_pair(UserDeposit.nUserDepositID, UserDeposit));
-	return true;
+	mapUserDeposit[UserDeposit.nCoinID].second[UserDeposit.nUserPubKey].second.insert(std::make_pair(UserDeposit.nUserDepositID, UserDeposit));
 }
 
-bool CUserDepositManager::AddNewConfirmDeposit(CUserDeposit UserDeposit)
+bool CUserDepositManager::IsUserPendingDepositInList(CUserDeposit UserDeposit)
+{
+	return mapUserDeposit[UserDeposit.nCoinID].second[UserDeposit.nUserPubKey].second.count(UserDeposit.nUserDepositID);
+}
+
+int CUserDepositManager::GetLastUserPendingDepositID(std::string UserPubKey, int CoinID)
+{
+	mapUserDepositWithID::reverse_iterator it = mapUserDeposit[CoinID].second[UserPubKey].second.rbegin();
+	if (it == mapUserDeposit[CoinID].second[UserPubKey].second.rend())
+		return 0;
+
+	return it->second.nUserDepositID;
+}
+
+void CUserDepositManager::RequestConfirmDepositData(int StartingID)
+{
+
+}
+
+void CUserDepositManager::AddNewConfirmDeposit(CUserDeposit UserDeposit)
 {
 	if (!UserDeposit.Verify())
 	{
-		return false;
+		return;
 	}
 
-	if (!IsUserDepositInList(UserDeposit.nUserPubKey, UserDeposit.nCoinID))
+	if (!IsUserInList(UserDeposit.nUserPubKey, UserDeposit.nCoinID))
 	{
-		if (!AddNewUserDepositIntoList(UserDeposit.nUserPubKey, UserDeposit.nCoinID))
-			return false;
+		AddNewUser(UserDeposit.nUserPubKey, UserDeposit.nCoinID);
+		if (UserDeposit.nUserDepositID != 1)
+		{
+			SetSyncInProgress(UserDeposit.nCoinID, true);
+			//need to request data from other node
+			return;
+		}
+	}
+	else if (IsUserConfirmDepositInList(UserDeposit))
+	{
+		return;
 	}
 
-	pairCoinIDUserPubKey temp = std::make_pair(UserDeposit.nCoinID, UserDeposit.nUserPubKey);
-	if (mapCoinUserDeposit[temp].first.count(UserDeposit.nUserDepositID))
+	int UserLastConfirmDepositID = GetLastUserConfirmDepositID(UserDeposit.nUserPubKey, UserDeposit.nCoinID);
+	if (UserLastConfirmDepositID != (UserDeposit.nUserDepositID - 1))
 	{
-		return true;
+		SetSyncInProgress(UserDeposit.nCoinID, true);
+		//need to request data from other node
+		return;
 	}
 
 	userBalanceManager.UpdateUserAvailableBalance(UserDeposit.nCoinID, UserDeposit.nUserPubKey, UserDeposit.nDepositAmount);
-	mapCoinUserDeposit[temp].first.insert(std::make_pair(UserDeposit.nUserDepositID, UserDeposit));
-	return true;
+	mapUserDeposit[UserDeposit.nCoinID].second[UserDeposit.nUserPubKey].first.insert(std::make_pair(UserDeposit.nUserDepositID, UserDeposit));
 }
 
-bool CUserDepositManager::DepositConfirmation(std::string UserPubKey, int CoinID, std::string Hash, uint64_t LastUpdateTime)
+bool CUserDepositManager::IsUserConfirmDepositInList(CUserDeposit UserDeposit)
 {
-	return true;
+	return mapUserDeposit[UserDeposit.nCoinID].second[UserDeposit.nUserPubKey].first.count(UserDeposit.nUserDepositID);
+}
+
+int CUserDepositManager::GetLastUserConfirmDepositID(std::string UserPubKey, int CoinID)
+{
+	mapUserDepositWithID::reverse_iterator it = mapUserDeposit[CoinID].second[UserPubKey].first.rbegin();
+	if (it == mapUserDeposit[CoinID].second[UserPubKey].first.rend())
+		return 0;
+
+	return it->second.nUserDepositID;
+}
+
+void CUserDepositManager::DepositConfirmation(std::string UserPubKey, int CoinID, std::string Hash, uint64_t LastUpdateTime)
+{
+	
 }

@@ -8,15 +8,30 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include "userconnection.h"
 
 class CUserDeposit;
+class CUserDepositSetting;
 class CUserDepositManager;
 
-typedef std::pair<int, std::string> pairCoinIDUserPubKey; //pair of coin id & user public key
-typedef std::map<int, CUserDeposit> mapHashUserDeposit;
-typedef std::pair<mapHashUserDeposit, mapHashUserDeposit> pairConfirmPendingDeposit;
-extern std::map<pairCoinIDUserPubKey, pairConfirmPendingDeposit> mapCoinUserDeposit;
+typedef std::map<int, CUserDeposit> mapUserDepositWithID;
+typedef std::pair<mapUserDepositWithID, mapUserDepositWithID> pairConfirmPendingDeposit;
+typedef std::map<std::string, pairConfirmPendingDeposit> mapPubKeyConfirmPendingDeposit;
+typedef std::pair<CUserDepositSetting, mapPubKeyConfirmPendingDeposit> pairSettingUserDeposit;
+extern std::map<int, pairSettingUserDeposit> mapUserDeposit;
 extern CUserDepositManager userDepositManager;
+
+class CUserDepositSetting
+{
+public:
+	bool ProvideUserDepositInfo;
+	bool SyncInProgress;
+
+	CUserDepositSetting() :
+		ProvideUserDepositInfo(false),
+		SyncInProgress(false)
+	{}
+};
 
 class CUserDeposit
 {
@@ -72,11 +87,22 @@ private:
 
 public:
 	CUserDepositManager() {}
-	bool AddNewUserDepositIntoList(std::string UserPubKey, int CoinID);
-	bool IsUserDepositInList(std::string UserPubKey, int CoinID);
-	bool AddNewPendingDeposit(CUserDeposit UserDeposit);
-	bool AddNewConfirmDeposit(CUserDeposit UserDeposit);
-	bool DepositConfirmation(std::string UserPubKey, int CoinID, std::string Hash, uint64_t LastUpdateTime);
+	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	void ToProvideUserDepositInfo(int CoinID, bool toProcess);
+	void SetSyncInProgress(int CoinID, bool status);
+	void AddCoinToList(int CoinID);
+	bool IsCoinInList(int CoinID);
+	void AddNewUser(std::string UserPubKey, int CoinID);
+	bool IsUserInList(std::string UserPubKey, int CoinID);
+	void RequestPendingDepositData(int StartingID);
+	void AddNewPendingDeposit(CUserDeposit UserDeposit);	
+	bool IsUserPendingDepositInList(CUserDeposit UserDeposit);
+	int GetLastUserPendingDepositID(std::string UserPubKey, int CoinID);
+	void RequestConfirmDepositData(int StartingID);
+	void AddNewConfirmDeposit(CUserDeposit UserDeposit);
+	bool IsUserConfirmDepositInList(CUserDeposit UserDeposit);
+	int GetLastUserConfirmDepositID(std::string UserPubKey, int CoinID);
+	void DepositConfirmation(std::string UserPubKey, int CoinID, std::string Hash, uint64_t LastUpdateTime);
 };
 
 #endif
