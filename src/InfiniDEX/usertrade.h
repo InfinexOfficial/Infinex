@@ -13,7 +13,7 @@
 class CUserTrade;
 class CUserTradeManager;
 
-typedef std::pair<std::string, std::shared_ptr<CUserTrade>> PairSignatureUserTrade; //user signature (change to uint256 on actual implementation) and trade details
+typedef std::pair<std::string, std::shared_ptr<CUserTrade>> PairSignatureUserTrade; //user signature and trade details
 typedef std::map<uint64_t, std::vector<PairSignatureUserTrade>> MapPriceCUserTrade; //price and user trade map
 typedef std::map<std::string, std::vector<PairSignatureUserTrade>> MapPubKeyCUserTrade; //user public key and user trade map
 typedef std::pair<MapPriceCUserTrade, MapPubKeyCUserTrade> PairPricePubKeyCUserTrade;
@@ -33,7 +33,7 @@ public:
 	uint64_t nAmount;
 	std::string nUserPubKey;
 	uint64_t nTimeSubmit;
-	std::string nUserSignature; //change to uint256 on actual implementation
+	std::string nUserSignature;
 	int nTradeFee; //this is here to compare with trade pair fee & apply to whichever lower fee (benefit user)	
 	int64_t nBalanceQty;
 	int64_t nBalanceAmount;

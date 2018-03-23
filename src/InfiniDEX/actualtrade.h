@@ -10,6 +10,7 @@
 #include <set>
 #include <map>
 #include "userconnection.h"
+#include "noderole.h"
 
 class CActualTrade;
 class CActualTradeSetting;

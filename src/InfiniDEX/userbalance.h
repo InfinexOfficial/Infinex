@@ -73,6 +73,7 @@ private:
 
 public:
 	CUserBalanceManager() {}
+	void VerifyUserBalance(CUserBalance UserBalance);
 	bool AddNewUserBalance(CUserBalance NewUserBalance);
 	bool IsUserBalanceExist(int CoinID, std::string UserPubKey);
 	userbalance_to_exchange_enum_t BalanceToExchange(int CoinID, std::string UserPubKey, uint64_t amount);

@@ -1,3 +1,7 @@
+// Copyright (c) 2017-2018 The Infinex Core developers
+// Distributed under the MIT/X11 software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #include "stdafx.h"
 #include "userbalance.h"
 #include <boost/lexical_cast.hpp>
@@ -168,4 +172,14 @@ bool CUserBalanceManager::UpdateAfterTradeBalance(std::string User1PubKey, std::
 		mapCoinUserBalance[p4].nAvailableBalance += User2EAdj;
 	}
 	return true;
+}
+
+void CUserBalanceManager::VerifyUserBalance(CUserBalance UserBalance)
+{
+	if (!IsUserBalanceExist(UserBalance.nCoinID,UserBalance.nUserPubKey))
+	{
+		return;
+	}
+
+
 }

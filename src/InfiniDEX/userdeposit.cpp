@@ -4,12 +4,31 @@
 
 #include "stdafx.h"
 #include "userdeposit.h"
+#include "userbalance.h"
 
 class CUserDeposit;
 class CUserDepositManager;
 
-std::map<pairCoinIDUserPubKey, mapHashUserDeposit> mapCoinUserDeposit;
+std::map<pairCoinIDUserPubKey, pairConfirmPendingDeposit> mapCoinUserDeposit;
 CUserDepositManager userDepositManager;
+
+std::string CUserDeposit::GetHash()
+{
+	return "";
+}
+
+bool CUserDeposit::Verify()
+{
+	return true;
+}
+
+bool CUserDepositManager::AddNewUserDepositIntoList(std::string UserPubKey, int CoinID)
+{
+	pairConfirmPendingDeposit temp = std::make_pair(mapHashUserDeposit(), mapHashUserDeposit());
+	pairCoinIDUserPubKey temp2 = std::make_pair(CoinID, UserPubKey);
+	mapCoinUserDeposit.insert(std::make_pair(temp2, temp));
+	return true;
+}
 
 bool CUserDepositManager::IsUserDepositInList(std::string UserPubKey, int CoinID)
 {
@@ -18,100 +37,53 @@ bool CUserDepositManager::IsUserDepositInList(std::string UserPubKey, int CoinID
 
 bool CUserDepositManager::AddNewPendingDeposit(CUserDeposit UserDeposit)
 {
+	if (!UserDeposit.Verify())
+	{
+		return false;
+	}
+
 	if (!IsUserDepositInList(UserDeposit.nUserPubKey, UserDeposit.nCoinID))
 	{
-		pairCoinIDUserPubKey temp = std::make_pair(UserDeposit.nCoinID, UserDeposit.nUserPubKey);
-		mapHashUserDeposit temp2;
-		temp2.insert(std::make_pair(UserDeposit.nHash, UserDeposit));
-		mapCoinUserDeposit.insert(std::make_pair(temp, temp2));
-	}
-	else
+		if (!AddNewUserDepositIntoList(UserDeposit.nUserPubKey, UserDeposit.nCoinID))
+			return false;
+	}	
+
+	pairCoinIDUserPubKey temp = std::make_pair(UserDeposit.nCoinID, UserDeposit.nUserPubKey);
+	if (mapCoinUserDeposit[temp].second.count(UserDeposit.nUserDepositID))
 	{
-		pairCoinIDUserPubKey temp = std::make_pair(UserDeposit.nCoinID, UserDeposit.nUserPubKey);
-		mapHashUserDeposit UserDeposits = mapCoinUserDeposit[temp];
-		mapHashUserDeposit::reverse_iterator rit = UserDeposits.rbegin();
-		if (rit == UserDeposits.rend())
-		{
-			if (UserDeposit.nUserDepositID == 1)
-			{
-				mapCoinUserDeposit[temp].insert(std::make_pair(UserDeposit.nHash, UserDeposit));
-			}
-			else
-			{
-				//need to sync from seed server to download previous deposit
-			}
-		}
-		else
-		{
-			if (rit->second.nUserDepositID == (UserDeposit.nUserDepositID - 1))
-			{
-				mapCoinUserDeposit[temp].insert(std::make_pair(UserDeposit.nHash, UserDeposit));
-			}
-			else
-			{
-				//need to sync from seed server to download previous deposit
-			}
-		}
+		return true;
 	}
+	
+	userBalanceManager.UpdateUserPendingBalance(UserDeposit.nCoinID, UserDeposit.nUserPubKey, UserDeposit.nDepositAmount);
+	mapCoinUserDeposit[temp].second.insert(std::make_pair(UserDeposit.nUserDepositID, UserDeposit));
 	return true;
 }
 
 bool CUserDepositManager::AddNewConfirmDeposit(CUserDeposit UserDeposit)
 {
+	if (!UserDeposit.Verify())
+	{
+		return false;
+	}
+
 	if (!IsUserDepositInList(UserDeposit.nUserPubKey, UserDeposit.nCoinID))
 	{
-		pairCoinIDUserPubKey temp = std::make_pair(UserDeposit.nCoinID, UserDeposit.nUserPubKey);
-		mapHashUserDeposit temp2;
-		temp2.insert(std::make_pair(UserDeposit.nHash, UserDeposit));
-		mapCoinUserDeposit.insert(std::make_pair(temp, temp2));
+		if (!AddNewUserDepositIntoList(UserDeposit.nUserPubKey, UserDeposit.nCoinID))
+			return false;
 	}
-	else
+
+	pairCoinIDUserPubKey temp = std::make_pair(UserDeposit.nCoinID, UserDeposit.nUserPubKey);
+	if (mapCoinUserDeposit[temp].first.count(UserDeposit.nUserDepositID))
 	{
-		pairCoinIDUserPubKey temp = std::make_pair(UserDeposit.nCoinID, UserDeposit.nUserPubKey);
-		mapHashUserDeposit UserDeposits = mapCoinUserDeposit[temp];
-		mapHashUserDeposit::reverse_iterator rit = UserDeposits.rbegin();
-		if (rit == UserDeposits.rend())
-		{
-			if (UserDeposit.nUserDepositID == 1)
-			{
-				mapCoinUserDeposit[temp].insert(std::make_pair(UserDeposit.nHash, UserDeposit));
-			}
-			else
-			{
-				//need to sync from seed server to download previous deposit
-			}
-		}
-		else
-		{
-			if (rit->second.nUserDepositID == (UserDeposit.nUserDepositID - 1))
-			{
-				mapCoinUserDeposit[temp].insert(std::make_pair(UserDeposit.nHash, UserDeposit));
-			}
-			else
-			{
-				//need to sync from seed server to download previous deposit
-			}
-		}
+		return true;
 	}
+
+	userBalanceManager.UpdateUserAvailableBalance(UserDeposit.nCoinID, UserDeposit.nUserPubKey, UserDeposit.nDepositAmount);
+	mapCoinUserDeposit[temp].first.insert(std::make_pair(UserDeposit.nUserDepositID, UserDeposit));
 	return true;
 }
 
 bool CUserDepositManager::DepositConfirmation(std::string UserPubKey, int CoinID, std::string Hash, uint64_t LastUpdateTime)
 {
-	if (!IsUserDepositInList(UserPubKey, CoinID))
-	{
-		//need to sync from seed server
-		return false;
-	}
-
-	pairCoinIDUserPubKey temp = std::make_pair(CoinID, UserPubKey);
-	if (!mapCoinUserDeposit[temp].count(Hash))
-	{
-		//need to sync from seed server
-		return false;
-	}
-
-	CUserDeposit* temp2 = &mapCoinUserDeposit[temp][Hash];
-	temp2->nValidDeposit = true;
-	temp2->nLastUpdateTime = LastUpdateTime;	
+	return true;
 }
