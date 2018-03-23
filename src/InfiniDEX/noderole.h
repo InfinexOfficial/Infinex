@@ -59,6 +59,18 @@ public:
 		AppointTime(AppointTime),
 		AuthorisedSignature(AuthorisedSignature)
 	{}
+
+	CNodeRole() :
+		NodeRoleID(0),
+		TradePairID(0),
+		NodeRole(INFINIDEX_NOTHING),
+		NodeIP(""),
+		NodePubKey(""),
+		IsValid(false),
+		ToReplaceNodeRoleID(0),
+		AppointTime(0),
+		AuthorisedSignature("")
+	{}
 };
 
 class CNodeRoleManager
