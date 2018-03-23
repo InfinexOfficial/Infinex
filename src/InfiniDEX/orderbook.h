@@ -10,13 +10,27 @@
 #include <map>
 
 class COrderBook;
+class COrderBookSetting;
 class COrderBookManager;
 
 typedef std::map<uint64_t, COrderBook> PriceOrderBook; //price and order data
-extern std::map<int, PriceOrderBook> orderBidBook; //trade pair and bid data
-extern std::map<int, PriceOrderBook> orderAskBook; //trade pair and ask data
+typedef std::pair<PriceOrderBook, PriceOrderBook> BidAskOrderBook;
+typedef std::pair<COrderBookSetting, BidAskOrderBook> OrderBookInfo;
+extern std::map<int, OrderBookInfo> mapOrderBook;
 extern COrderBookManager orderBookManager;
 
+class COrderBookSetting
+{	
+	bool IsInChargeOfBroadcast;
+	bool SyncInProgress;
+	uint64_t LastBroadcastTime;
+
+	COrderBookSetting():
+		IsInChargeOfBroadcast(true),
+		SyncInProgress(true),
+		LastBroadcastTime(0)
+	{}
+};
 
 class COrderBook
 {
@@ -54,10 +68,10 @@ private:
 	bool InsertNewAskOrder(int TradePairID, uint64_t Price, int64_t Qty);
 
 public:
+	void AssignRole(int TradePairID);
 	void AdjustBidQuantity(int TradePairID, uint64_t Price, int64_t Qty);
 	void AdjustAskQuantity(int TradePairID, uint64_t Price, int64_t Qty);
 	void UpdateBidOrder(int TradePairID, uint64_t Price, uint64_t Quantity);
-	void UpdateAskOrder(int TradePairID, uint64_t Price, uint64_t Quantity);	
-	void CheckForTradePossibility(int TradePairID);
+	void UpdateAskOrder(int TradePairID, uint64_t Price, uint64_t Quantity);
 };
 #endif

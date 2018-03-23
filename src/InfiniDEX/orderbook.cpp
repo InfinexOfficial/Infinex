@@ -9,8 +9,7 @@
 class COrderBook;
 class COrderBookManager;
 
-std::map<int, PriceOrderBook> orderBidBook; //trade pair and bid data
-std::map<int, PriceOrderBook> orderAskBook; //trade pair and ask data
+std::map<int, OrderBookInfo> mapOrderBook;
 COrderBookManager orderBookManager;
 
 uint64_t COrderBookManager::GetAdjustedTime()
@@ -20,27 +19,33 @@ uint64_t COrderBookManager::GetAdjustedTime()
 
 bool COrderBookManager::InsertNewBidOrder(int TradePairID, uint64_t Price, int64_t Qty)
 {
-	if (orderBidBook[TradePairID].count(Price))
+	if (!mapOrderBook.count(TradePairID))
 		return false;
 
+	if (mapOrderBook[TradePairID].second.first.count(Price))
+		return false;
+	
 	COrderBook NewOrder(Price, Qty, Price*Qty, GetAdjustedTime());
-	orderBidBook[TradePairID].insert(std::make_pair(Price, NewOrder));
+	mapOrderBook[TradePairID].second.first.insert(std::make_pair(Price, NewOrder));
 	return true;
 }
 
 bool COrderBookManager::InsertNewAskOrder(int TradePairID, uint64_t Price, int64_t Qty)
 {
-	if (orderAskBook[TradePairID].count(Price))
+	if (!mapOrderBook.count(TradePairID))
+		return false;
+
+	if (mapOrderBook[TradePairID].second.second.count(Price))
 		return false;
 
 	COrderBook NewOrder(Price, Qty, Price*Qty, GetAdjustedTime());
-	orderAskBook[TradePairID].insert(std::make_pair(Price, NewOrder));
+	mapOrderBook[TradePairID].second.second.insert(std::make_pair(Price, NewOrder));
 	return true;
 }
 
 void COrderBookManager::AdjustBidQuantity(int TradePairID, uint64_t Price, int64_t Qty)
 {
-	if (!orderBidBook.count(TradePairID))
+	if (!mapOrderBook.count(TradePairID))
 	{
 		//need to sync with seed server or check node task
 	}
@@ -48,19 +53,19 @@ void COrderBookManager::AdjustBidQuantity(int TradePairID, uint64_t Price, int64
 	if (InsertNewBidOrder(TradePairID, Price, Qty))
 		return;
 
-	int finalQty = orderBidBook[TradePairID][Price].nQuantity + Qty;
+	int finalQty = mapOrderBook[TradePairID].second.first[Price].nQuantity + Qty;
 	if (finalQty < 0)
 	{
 		//some check need to be done here
 		finalQty = 0;
 	}
 
-	orderBidBook[TradePairID][Price].nQuantity = finalQty;
+	mapOrderBook[TradePairID].second.first[Price].nQuantity = finalQty;
 }
 
 void COrderBookManager::AdjustAskQuantity(int TradePairID, uint64_t Price, int64_t Qty)
 {
-	if (!orderAskBook.count(TradePairID))
+	if (!mapOrderBook.count(TradePairID))
 	{
 		//need to sync with seed server or check node task
 	}
@@ -68,19 +73,19 @@ void COrderBookManager::AdjustAskQuantity(int TradePairID, uint64_t Price, int64
 	if (InsertNewAskOrder(TradePairID, Price, Qty))
 		return;
 
-	int finalQty = orderAskBook[TradePairID][Price].nQuantity + Qty;
+	int finalQty = mapOrderBook[TradePairID].second.second[Price].nQuantity + Qty;
 	if (finalQty < 0)
 	{
 		//some check need to be done here
 		finalQty = 0;
 	}
 
-	orderAskBook[TradePairID][Price].nQuantity = finalQty;
+	mapOrderBook[TradePairID].second.second[Price].nQuantity = finalQty;
 }
 
 void COrderBookManager::UpdateBidOrder(int TradePairID, uint64_t Price, uint64_t Qty)
 {
-	if (!orderBidBook.count(TradePairID))
+	if (!mapOrderBook.count(TradePairID))
 	{
 		//need to sync with seed server or check node task
 	}
@@ -88,12 +93,12 @@ void COrderBookManager::UpdateBidOrder(int TradePairID, uint64_t Price, uint64_t
 	if (InsertNewBidOrder(TradePairID, Price, Qty))
 		return;
 
-	orderBidBook[TradePairID][Price].nQuantity = Qty;
+	mapOrderBook[TradePairID].second.first[Price].nQuantity = Qty;
 }
 
 void COrderBookManager::UpdateAskOrder(int TradePairID, uint64_t Price, uint64_t Qty)
 {
-	if (!orderAskBook.count(TradePairID))
+	if (!mapOrderBook.count(TradePairID))
 	{
 		//need to sync with seed server or check node task
 	}
@@ -101,16 +106,13 @@ void COrderBookManager::UpdateAskOrder(int TradePairID, uint64_t Price, uint64_t
 	if (InsertNewAskOrder(TradePairID, Price, Qty))
 		return;
 
-	orderAskBook[TradePairID][Price].nQuantity = Qty;
+	mapOrderBook[TradePairID].second.second[Price].nQuantity = Qty;
 }
 
-void ::COrderBookManager::CheckForTradePossibility(int TradePairID)
+void COrderBookManager::AssignRole(int TradePairID)
 {
-	std::map<int, PriceOrderBook>::iterator bidit = orderBidBook.find(TradePairID);
-	std::map<int, PriceOrderBook>::iterator askit = orderAskBook.find(TradePairID);
-
-	if (bidit != orderBidBook.end() && askit != orderAskBook.end())
+	if (!mapOrderBook.count(TradePairID))
 	{
-
+		
 	}
 }
