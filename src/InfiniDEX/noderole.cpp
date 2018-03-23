@@ -7,5 +7,4 @@
 
 std::map<int, pairIPPubKeyNodeRole> mapTradePairGlobalRoleByIPPubKey;
 std::map<int, pairNodeRoleByRole> mapTradePairGlobalRoleByRole;
-std::map<int, std::vector<CNodeRole*>> mapTradePairNodeRole;
-CNodeRoleManager nodeRoleManager;
+std::map<int, std::vector<std::shared_ptr<CNodeRole>>> mapTradePairNodeRole;

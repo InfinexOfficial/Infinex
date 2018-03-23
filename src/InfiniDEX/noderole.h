@@ -8,17 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
-
-class CNodeRole;
-class CNodeRoleManager;
-
-typedef std::pair <std::string, std::string> pairIPPubkey;
-typedef std::pair <pairIPPubkey, std::vector<CNodeRole*>> pairIPPubKeyNodeRole;
-typedef std::pair <infinidex_node_role_enum, std::vector<CNodeRole*>> pairNodeRoleByRole;
-extern std::map<int, pairIPPubKeyNodeRole> mapTradePairGlobalRoleByIPPubKey;
-extern std::map<int, pairNodeRoleByRole> mapTradePairGlobalRoleByRole;
-extern std::map<int, std::vector<CNodeRole*>> mapTradePairNodeRole;
-extern CNodeRoleManager nodeRoleManager;
+#include <memory>
 
 enum infinidex_node_role_enum {
 	INFINIDEX_NOTHING = 0,
@@ -32,8 +22,15 @@ enum infinidex_node_role_enum {
 	INFINIDEX_BACKUP_NODE = 8
 };
 
+class CNodeRole;
+
+typedef std::pair <std::string, std::string> pairIPPubkey;
+typedef std::pair <pairIPPubkey, std::vector<std::shared_ptr<CNodeRole>>> pairIPPubKeyNodeRole;
+typedef std::pair <infinidex_node_role_enum, std::vector<std::shared_ptr<CNodeRole>>> pairNodeRoleByRole;
+extern std::map<int, pairIPPubKeyNodeRole> mapTradePairGlobalRoleByIPPubKey;
+extern std::map<int, pairNodeRoleByRole> mapTradePairGlobalRoleByRole;
+extern std::map<int, std::vector<std::shared_ptr<CNodeRole>>> mapTradePairNodeRole;
 extern std::map<int, std::vector<infinidex_node_role_enum>> mapCoinIDNodeRoles;
-extern CNodeRoleManager nodeRoleManager;
 
 class CNodeRole
 {
@@ -71,11 +68,6 @@ public:
 		AppointTime(0),
 		AuthorisedSignature("")
 	{}
-};
-
-class CNodeRoleManager
-{
-	
 };
 
 #endif
