@@ -8,20 +8,23 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include "userconnection.h"
 
 class CTradePair;
 class CTradePairManager;
 
-extern std::vector<CTradePair> vecCompleteTradePair;
+extern std::map<int, CTradePair> mapCompleteTradePair;
 extern CTradePairManager tradePairManager;
 
-enum new_tradepair_enum {
-	NEW_TRADEPAIR_ADDED = 0,
-	NEW_TRADEPAIR_EXIST = 1,
-	NEW_TRADEPAIR_COINID_EXIST = 2,
-	NEW_TRADEPAIR_REVERSE_COINID_EXIST = 3,
-	NEW_TRADEPAIR_SYMBOL_EXIST = 4,
-	NEW_TRADEPAIR_REVERSE_SYMBOL_EXIST = 5
+enum tradepair_enum {
+	TRADEPAIR_INVALID = 0,
+	TRADEPAIR_EXIST = 1,
+	TRADEPAIR_ADDED = 2,
+	TRADEPAIR_UPDATED = 3,
+	TRADEPAIR_COINID_EXIST = 4,
+	TRADEPAIR_REVERSE_COINID_EXIST = 5,
+	TRADEPAIR_SYMBOL_EXIST = 6,
+	TRADEPAIR_REVERSE_SYMBOL_EXIST = 7
 };
 
 class CTradePair
@@ -32,9 +35,9 @@ private:
 public:
 	int nTradePairID;
 	std::string nName;
-	int nCoinInfoID1;
+	int nCoinID1;
 	std::string nSymbol1;
-	int nCoinInfoID2;
+	int nCoinID2;
 	std::string nSymbol2;
 	bool nTradeEnabled;
 	uint64_t nMinimumTradeQuantity;
@@ -47,15 +50,16 @@ public:
 	int nAskTradeFeeCoinID; //trade fee coin type payout for ask
 	std::string nStatus;
 	uint64_t nLastUpdate;
+	std::string nHash;
 
-	CTradePair(int nTradePairID, std::string nName, int nCoinInfoID1, std::string nSymbol1, int nCoinInfoID2, std::string nSymbol2,
+	CTradePair(int nTradePairID, std::string nName, int nCoinID1, std::string nSymbol1, int nCoinID2, std::string nSymbol2,
 		bool nTradeEnabled, uint64_t nMinimumTradeQuantity, uint64_t nMaximumTradeQuantity, uint64_t nMinimumTradeAmount, uint64_t nMaximumTradeAmount,
-		int nBidTradeFee, int nBidTradeFeeCoinID, int nAskTradeFee, int nAskTradeFeeCoinID, std::string nStatus, uint64_t nLastUpdate) :
+		int nBidTradeFee, int nBidTradeFeeCoinID, int nAskTradeFee, int nAskTradeFeeCoinID, std::string nStatus, uint64_t nLastUpdate, std::string nHash) :
 		nTradePairID(nTradePairID),
 		nName(nName),
-		nCoinInfoID1(nCoinInfoID1),
+		nCoinID1(nCoinID1),
 		nSymbol1(nSymbol1),
-		nCoinInfoID2(nCoinInfoID2),
+		nCoinID2(nCoinID2),
 		nSymbol2(nSymbol2),
 		nTradeEnabled(nTradeEnabled),
 		nMinimumTradeQuantity(nMinimumTradeQuantity),
@@ -67,15 +71,16 @@ public:
 		nAskTradeFee(nAskTradeFee),
 		nAskTradeFeeCoinID(nAskTradeFeeCoinID),
 		nStatus(nStatus),
-		nLastUpdate(nLastUpdate)
+		nLastUpdate(nLastUpdate),
+		nHash(nHash)
 	{}
 
 	CTradePair() :
 		nTradePairID(0),
 		nName(""),
-		nCoinInfoID1(0),
+		nCoinID1(0),
 		nSymbol1(""),
-		nCoinInfoID2(0),
+		nCoinID2(0),
 		nSymbol2(""),
 		nTradeEnabled(false),
 		nMinimumTradeQuantity(0),
@@ -87,8 +92,12 @@ public:
 		nAskTradeFee(0),
 		nAskTradeFeeCoinID(0),
 		nStatus(""),
-		nLastUpdate(0)
+		nLastUpdate(0),
+		nHash("")
 	{}
+
+	bool Verify();
+	bool RelayTo(CNode* node, CConnman& connman);
 };
 
 class CTradePairManager
@@ -98,11 +107,16 @@ private:
 
 public:
 	CTradePairManager() {}
-	new_tradepair_enum ProcessNewTradePair(CTradePair TradePair);
-	bool IsValidTradePair(int TradePairID);
+	void ProcessMessage(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	void SendCompleteTradePairs(CNode* node, CConnman& connman);
+	void SendTradePair(CTradePair TradePair, CNode* node, CConnman& connman);
+	tradepair_enum ProcessTradePair(CTradePair TradePair);
+	bool IsValidTradePairID(int TradePairID);
 	CTradePair GetTradePair(int TradePairID);
-	int GetAskSideCoinInfoID(int TradePairID);
-	int GetBidSideCoinInfoID(int TradePairID);
+	bool IsTradeEnabled(int TradePairID);
+	std::string GetTradePairStatus(int TradePairID);
+	int GetAskSideCoinID(int TradePairID);
+	int GetBidSideCoinID(int TradePairID);
 	void GetTradeFee(int TradePairID, int &BuyFee, int &SellFee);
 	int GetBidTradeFee(int TradePairID);
 	int GetAskTradeFee(int TradePairID);
