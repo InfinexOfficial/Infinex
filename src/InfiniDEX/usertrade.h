@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include "tradepair.h"
 
 class CUserTrade;
 class CUserTradeManager;
