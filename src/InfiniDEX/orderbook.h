@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include "userconnection.h"
 
 class COrderBook;
 class COrderBookSetting;
@@ -25,9 +26,15 @@ class COrderBookSetting
 	bool SyncInProgress;
 	uint64_t LastBroadcastTime;
 
+	COrderBookSetting(bool IsInChargeOfBroadcast, bool SyncInProgress, uint64_t LastBroadcastTime):
+		IsInChargeOfBroadcast(IsInChargeOfBroadcast),
+		SyncInProgress(SyncInProgress),
+		LastBroadcastTime(LastBroadcastTime)
+	{}
+
 	COrderBookSetting():
-		IsInChargeOfBroadcast(true),
-		SyncInProgress(true),
+		IsInChargeOfBroadcast(false),
+		SyncInProgress(false),
 		LastBroadcastTime(0)
 	{}
 };
@@ -41,22 +48,32 @@ public:
 	uint64_t nOrderPrice;
 	uint64_t nQuantity;
 	uint64_t nAmount;
+	std::string nMNPubKey;
 	uint64_t nLastUpdateTime;
+	std::string nHash;
 
-	COrderBook(uint64_t nOrderPrice, uint64_t nQuantity, uint64_t nAmount, uint64_t nLastUpdateTime) :
+	COrderBook(uint64_t nOrderPrice, uint64_t nQuantity, uint64_t nAmount, std::string nMNPubKey, uint64_t nLastUpdateTime, std::string nHash) :
 		nOrderPrice(nOrderPrice),
 		nQuantity(nQuantity),
 		nAmount(nAmount),
-		nLastUpdateTime(nLastUpdateTime)
+		nMNPubKey(nMNPubKey),
+		nLastUpdateTime(nLastUpdateTime),
+		nHash(nHash)
 	{}
 
 	COrderBook() :
 		nOrderPrice(0),
 		nQuantity(0),
 		nAmount(0),
-		nLastUpdateTime(0)
+		nMNPubKey(""),
+		nLastUpdateTime(0),
+		nHash("")
 	{}
 
+	bool Verify();
+	std::string Sign();
+	void RelayTo(CNode* node, CConnman& connman);
+	void Relay(CConnman& connman);
 };
 
 class COrderBookManager
