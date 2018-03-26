@@ -24,11 +24,13 @@ class CActualTradeManager;
 typedef std::map<int, std::shared_ptr<CUserTrade>> mUTIUT; //user trade id and trade details
 typedef std::map<uint64_t, mUTIUT> mUTPIUTV; //price and user trade container
 typedef std::map<std::string, mUTIUT> mUTPKUTV; //user public key and user trade container
-typedef std::pair<mUTPIUTV, mUTPKUTV> pUTPUTPKUTV; //user trade container by price and public key
-typedef std::pair<pUTPUTPKUTV, pUTPUTPKUTV> pUTBA; //bid & ask container
-typedef std::pair<std::set<std::string>, pUTBA> pUTHUTBA; //user trade hash & bid ask data
-typedef std::pair<CUserTradeSetting, pUTHUTBA> pUTSUTHBA; //user trade setting & hash bid ask data
-extern std::map<int, pUTSUTHBA> mapUserTrade;
+extern std::map<int, mUTPIUTV> mapBidUserTradeByPrice;
+extern std::map<int, mUTPIUTV> mapAskUserTradeByPrice;
+extern std::map<int, mUTPKUTV> mapBidUserTradeByPubkey;
+extern std::map<int, mUTPKUTV> mapAskUserTradeByPubkey;
+extern std::map<int, CUserTradeSetting> mapUserTradeSetting;
+extern std::map<int, std::set<std::string>> mapUserTradeHash;
+
 extern CUserTradeManager userTradeManager;
 
 typedef std::map<std::shared_ptr<int>, std::shared_ptr<CActualTrade>> mATIAT;
@@ -50,6 +52,8 @@ public:
 	uint16_t nToStoreLowerLimit;
 	uint16_t nToStoreUpperLimit;
 	int nLastUserTradeID;
+	uint64_t nLastUserTradeTime;
+	std::string nMNPubKey;
 	bool nSyncInProgress;
 	bool nIsInChargeOfProcessUserTrade;
 	bool nIsInChargeOfMatchUserTrade;
@@ -60,10 +64,13 @@ public:
 		nToStoreLowerLimit(50),
 		nToStoreUpperLimit(100),
 		nLastUserTradeID(0),
+		nMNPubKey(""),
 		nSyncInProgress(false),
 		nIsInChargeOfProcessUserTrade(false),
 		nIsInChargeOfMatchUserTrade(false)
 	{}
+
+	bool IsValidSubmissionTimeAndUpdate(uint64_t time);
 };
 
 class CUserTrade
@@ -149,14 +156,24 @@ private:
 	uint64_t GetAdjustedTime();
 
 public:
-	bool nIsInChargeOfProcessUserTrade(int TradePairID);
+	bool IsTradePairInList(int TradePairID);
+	bool IsSyncInProgress(int TradePairID);
+	bool IsInChargeOfProcessUserTrade(int TradePairID);
 	bool IsInChargeOfMatchUserTrade(int TradePairID);
+	bool IsUserTradeInList(int TradePairID, std::string UserHash);
+	void AddToUserTradeList(int TradePairID, std::string UserHash);
+	bool IsProcessedUserTradeInList(CUserTrade UserTrade);
+	int IsProcessedUserTradeInSequence(CUserTrade UserTrade);
 	bool IsSubmittedBidValid(CUserTrade UserTrade, CTradePair TradePair);
 	bool IsSubmittedAskValid(CUserTrade UserTrade, CTradePair TradePair);
 	bool IsSubmittedBidAmountValid(CUserTrade userTrade, int nTradeFee);
 	bool IsSubmittedAskAmountValid(CUserTrade userTrade, int nTradeFee);
 	void UserSellRequest(CUserTrade userTrade);
 	void UserBuyRequest(CUserTrade userTrade);
+	void ProcessUserBuyRequest(CConnman& connman, CUserTrade& userTrade);
+	void ProcessUserSellRequest(CConnman& connman, CUserTrade& userTrade);
+	void InputMatchUserBuyRequest(CUserTrade userTrade);
+	void InputMatchUserSellRequest(CUserTrade userTrade);
 	uint64_t GetBidRequiredAmount(uint64_t Price, uint64_t Qty, int TradeFee);
 	uint64_t GetAskExpectedAmount(uint64_t Price, uint64_t Qty, int TradeFee);
 };

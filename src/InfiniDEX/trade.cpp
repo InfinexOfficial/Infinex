@@ -19,11 +19,27 @@ class CActualTrade;
 class CActualTradeSetting;
 class CActualTradeManager;
 
-std::map<int, pUTSUTHBA> mapUserTrade; 
+std::map<int, mUTPIUTV> mapBidUserTradeByPrice;
+std::map<int, mUTPIUTV> mapAskUserTradeByPrice;
+std::map<int, mUTPKUTV> mapBidUserTradeByPubkey;
+std::map<int, mUTPKUTV> mapAskUserTradeByPubkey;
+std::map<int, CUserTradeSetting> mapUserTradeSetting;
+std::map<int, std::set<std::string>> mapUserTradeHash;
+
 std::map<int, ActualTradeContainer> mapActualTrade;
 std::map<int, std::vector<CActualTrade>> mapConflicTrade;
 CActualTradeManager actualTradeManager;
 CUserTradeManager userTradeManager;
+
+bool CUserTradeSetting::IsValidSubmissionTimeAndUpdate(uint64_t time)
+{
+	int diff = nLastUserTradeTime - time;
+	if (diff > nMaxSubmissionTimeDiff)
+		return false;
+
+	nLastUserTradeTime = time;
+	return true;
+}
 
 bool CUserTrade::VerifyUserSignature()
 {
@@ -120,6 +136,153 @@ bool CUserTradeManager::IsSubmittedAskValid(CUserTrade UserTrade, CTradePair Tra
 		return false;
 
 	return true;
+}
+
+bool CUserTradeManager::IsTradePairInList(int TradePairID)
+{
+	return mapUserTradeSetting.count(TradePairID);
+}
+
+bool CUserTradeManager::IsSyncInProgress(int TradePairID)
+{
+	return mapUserTradeSetting[TradePairID].nSyncInProgress;
+}
+
+bool CUserTradeManager::IsInChargeOfProcessUserTrade(int TradePairID)
+{
+	return mapUserTradeSetting[TradePairID].nIsInChargeOfProcessUserTrade;
+}
+
+bool CUserTradeManager::IsInChargeOfMatchUserTrade(int TradePairID)
+{
+	return mapUserTradeSetting[TradePairID].nIsInChargeOfMatchUserTrade;
+}
+
+bool CUserTradeManager::IsUserTradeInList(int TradePairID, std::string UserHash)
+{
+	return mapUserTradeHash[TradePairID].count(UserHash);
+}
+
+void CUserTradeManager::AddToUserTradeList(int TradePairID, std::string UserHash)
+{
+	mapUserTradeHash[TradePairID].insert(UserHash);
+}
+
+void CUserTradeManager::ProcessUserBuyRequest(CConnman& connman, CUserTrade& userTrade)
+{
+	if (!IsTradePairInList(userTrade.nTradePairID))
+		return;
+
+	if (IsSyncInProgress(userTrade.nTradePairID))
+		return;
+
+	if (!IsInChargeOfProcessUserTrade(userTrade.nTradePairID))
+		return;
+
+	if (!userTrade.VerifyUserSignature())
+		return;
+
+	if (IsUserTradeInList(userTrade.nTradePairID, userTrade.nUserHash))
+		return;
+
+	if (!mapUserTradeSetting[userTrade.nTradePairID].IsValidSubmissionTimeAndUpdate(userTrade.nTimeSubmit))
+		return;
+
+	int TradeFee = tradePairManager.GetBidTradeFee(userTrade.nTradePairID);
+	if (TradeFee > userTrade.nTradeFee)
+		return;
+
+	if (!IsSubmittedBidAmountValid(userTrade, TradeFee))
+		return;
+
+	AddToUserTradeList(userTrade.nTradePairID, userTrade.nUserHash);
+	userTrade.nUserTradeID = ++mapUserTradeSetting[userTrade.nTradePairID].nLastUserTradeID;
+	userTrade.nBalanceAmount = userTrade.nAmount;
+	userTrade.nBalanceQty = userTrade.nQuantity;
+	userTrade.nMNPubKey = mapUserTradeSetting[userTrade.nTradePairID].nMNPubKey;
+	userTrade.nLastUpdate = GetAdjustedTime();
+	userTrade.MNSign();	
+	mapBidUserTradeByPrice[userTrade.nTradePairID][userTrade.nPrice].insert(std::make_pair(userTrade.nUserTradeID, &userTrade));
+	mapBidUserTradeByPubkey[userTrade.nTradePairID][userTrade.nUserPubKey].insert(std::make_pair(userTrade.nUserTradeID, &userTrade));
+	userTrade.RelayToHandler(connman);
+}
+
+void CUserTradeManager::ProcessUserSellRequest(CConnman& connman, CUserTrade& userTrade)
+{
+	if (!IsTradePairInList(userTrade.nTradePairID))
+		return;
+
+	if (IsSyncInProgress(userTrade.nTradePairID))
+		return;
+
+	if (!IsInChargeOfProcessUserTrade(userTrade.nTradePairID))
+		return;
+
+	if (!userTrade.VerifyUserSignature())
+		return;
+
+	if (IsUserTradeInList(userTrade.nTradePairID, userTrade.nUserHash))
+		return;
+
+	if (!mapUserTradeSetting[userTrade.nTradePairID].IsValidSubmissionTimeAndUpdate(userTrade.nTimeSubmit))
+		return;
+
+	int TradeFee = tradePairManager.GetAskTradeFee(userTrade.nTradePairID);
+	if (TradeFee > userTrade.nTradeFee)
+		return;
+
+	if (!IsSubmittedAskAmountValid(userTrade, TradeFee))
+		return;
+
+	AddToUserTradeList(userTrade.nTradePairID, userTrade.nUserHash);
+	userTrade.nUserTradeID = ++mapUserTradeSetting[userTrade.nTradePairID].nLastUserTradeID;
+	userTrade.nBalanceAmount = userTrade.nAmount;
+	userTrade.nBalanceQty = userTrade.nQuantity;
+	userTrade.nMNPubKey = mapUserTradeSetting[userTrade.nTradePairID].nMNPubKey;
+	userTrade.nLastUpdate = GetAdjustedTime();
+	userTrade.MNSign();
+	mapAskUserTradeByPrice[userTrade.nTradePairID][userTrade.nPrice].insert(std::make_pair(userTrade.nUserTradeID, &userTrade));
+	mapAskUserTradeByPubkey[userTrade.nTradePairID][userTrade.nUserPubKey].insert(std::make_pair(userTrade.nUserTradeID, &userTrade));
+	userTrade.RelayToHandler(connman);
+}
+
+bool CUserTradeManager::IsProcessedUserTradeInList(CUserTrade UserTrade)
+{
+	return (mapUserTradeSetting[UserTrade.nUserTradeID].nLastUserTradeID >= UserTrade.nUserTradeID);
+}
+
+int CUserTradeManager::IsProcessedUserTradeInSequence(CUserTrade UserTrade)
+{
+	return UserTrade.nUserTradeID - mapUserTradeSetting[UserTrade.nUserTradeID].nLastUserTradeID;
+}
+
+void CUserTradeManager::InputMatchUserBuyRequest(CUserTrade userTrade)
+{
+	if (!IsTradePairInList(userTrade.nTradePairID))
+		return;
+
+	if (IsSyncInProgress(userTrade.nTradePairID))
+		return;
+
+	if (!IsInChargeOfMatchUserTrade(userTrade.nTradePairID))
+		return;
+
+	if (!userTrade.VerifyMNSignature())
+		return;
+
+	int sequence = IsProcessedUserTradeInSequence(userTrade);
+	if (sequence <= 0)
+		return;
+
+	if (sequence > 1)
+	{
+		return;
+	}
+}
+
+void CUserTradeManager::InputMatchUserSellRequest(CUserTrade userTrade)
+{
+
 }
 
 //to convert into enum return
