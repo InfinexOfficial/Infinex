@@ -30,18 +30,18 @@ extern std::map<int, mUTPKUTV> mapBidUserTradeByPubkey;
 extern std::map<int, mUTPKUTV> mapAskUserTradeByPubkey;
 extern std::map<int, CUserTradeSetting> mapUserTradeSetting;
 extern std::map<int, std::set<std::string>> mapUserTradeHash;
-
+extern std::map<int, std::set<std::shared_ptr<CUserTrade>>> mapPendingUserTrade;
 extern CUserTradeManager userTradeManager;
 
-typedef std::map<std::shared_ptr<int>, std::shared_ptr<CActualTrade>> mATIAT;
-typedef std::map<std::shared_ptr<int>, mATIAT> mUTIATIAT;
-typedef std::map<std::shared_ptr<std::string>, mATIAT> mUPKATIAT;
-typedef std::pair<mUTIATIAT, mUPKATIAT> pUTIUPKATIAT;
-typedef std::pair<mATIAT, pUTIUPKATIAT> pActualTrade;
-typedef std::pair<CActualTradeSetting, std::set<std::string>> pairSettingSecurity; //trade pair setting & trade hash record
-typedef std::pair<pairSettingSecurity, pActualTrade> ActualTradeContainer;
-extern std::map<int, ActualTradeContainer> mapActualTrade;
-extern std::map<int, std::vector<CActualTrade>> mapConflicTrade;
+typedef std::map<int, std::shared_ptr<CActualTrade>> mATIAT;
+typedef std::map<std::string, mATIAT> mUPKAT;
+typedef std::map<int, mATIAT> mUTIAT;
+extern std::map<int, mATIAT> mapActualTradeByActualTradeID;
+extern std::map<int, mUPKAT> mapActualTradeByUserPublicKey;
+extern std::map<int, mUTIAT> mapActualTradeByUserTradeID;
+extern std::map<int, std::vector<CActualTrade>> mapConflictTrade;
+extern std::map<int, CActualTradeSetting> mapActualTradeSetting;
+extern std::map<int, std::set<std::string>> mapActualTradeHash;
 extern CActualTradeManager actualTradeManager;
 
 class CUserTradeSetting
@@ -212,6 +212,8 @@ private:
 public:
 	int nActualTradeID;
 	int nTradePairID;
+	int nUserTrade1;
+	int nUserTrade2;
 	uint64_t nTradePrice;
 	uint64_t nTradeQty;
 	uint64_t nTradeAmount;
@@ -224,40 +226,43 @@ public:
 	std::string nMasternodeInspector;
 	std::string nCurrentHash;
 	uint64_t nTradeTime;
-
-	CActualTrade(int nActualTradeID) :
-		nActualTradeID(nActualTradeID)
-	{}
-
-	CActualTrade(std::string nUserPubKey1, std::string nUserPubKey2, int nTradePairID, uint64_t nTradePrice, uint64_t nTradeQty,
-		uint64_t nTradeAmount, int64_t nFee1, int nFee1CoinID, int64_t nFee2, int nFee2CoinID,
-		std::string nMasternodeInspector, uint64_t nTradeTime) :
-		nUserPubKey1(nUserPubKey1),
-		nUserPubKey2(nUserPubKey2),
+	
+	CActualTrade(int nActualTradeID, int nTradePairID, int nUserTrade1, int nUserTrade2, uint64_t nTradePrice, uint64_t nTradeQty, uint64_t nTradeAmount, std::string nUserPubKey1,
+		std::string nUserPubKey2, int64_t nFee1, int nFee1CoinID, int64_t nFee2, int nFee2CoinID, std::string nMasternodeInspector, std::string nCurrentHash, uint64_t nTradeTime) :
+		nActualTradeID(nActualTradeID),
 		nTradePairID(nTradePairID),
+		nUserTrade1(nUserTrade1),
+		nUserTrade2(nUserTrade2),
 		nTradePrice(nTradePrice),
 		nTradeQty(nTradeQty),
 		nTradeAmount(nTradeAmount),
+		nUserPubKey1(nUserPubKey1),
+		nUserPubKey2(nUserPubKey2),
 		nFee1(nFee1),
 		nFee1CoinID(nFee1CoinID),
 		nFee2(nFee2),
 		nFee2CoinID(nFee2CoinID),
 		nMasternodeInspector(nMasternodeInspector),
+		nCurrentHash(nCurrentHash),
 		nTradeTime(nTradeTime)
 	{}
 
 	CActualTrade() :
-		nUserPubKey1(""),
-		nUserPubKey2(""),
+		nActualTradeID(0),
 		nTradePairID(0),
+		nUserTrade1(0),
+		nUserTrade2(0),
 		nTradePrice(0),
 		nTradeQty(0),
 		nTradeAmount(0),
+		nUserPubKey1(""),
+		nUserPubKey2(""),
 		nFee1(0),
 		nFee1CoinID(0),
 		nFee2(0),
 		nFee2CoinID(0),
 		nMasternodeInspector(""),
+		nCurrentHash(""),
 		nTradeTime(0)
 	{}
 
@@ -270,19 +275,17 @@ public:
 
 class CActualTradeManager
 {
-private:
-	bool RunSecurityCheck(int TradePairID, std::string Hash);
-
 public:
 	CActualTradeManager() {}
 	bool SetSecurityCheck(int TradePairID, bool SecurityCheck);
 	bool GetActualTrade(CNode* node, int ActualTradeID, int TradePairID);
 	bool AddNewActualTrade(CActualTrade ActualTrade); //process by same node
-	bool AddNewActualTrade(CNode* node, CActualTrade ActualTrade); //data from other node
+	bool AddNewActualTrade(CNode* node, CConnman& connman, CActualTrade ActualTrade); //data from other node
 	std::vector<std::string> FindDuplicateTrade(int TradePairID);
 	void InitiateCompleteResync(int TradePairID);
 	void InitialSync(int TradePairID);
 	void InputNewTradePair(int TradePairID, bool SecurityCheck);
+	bool IsActualTradeInList(CActualTrade ActualTrade);
 };
 
 #endif

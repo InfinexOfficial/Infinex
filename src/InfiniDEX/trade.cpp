@@ -25,9 +25,12 @@ std::map<int, mUTPKUTV> mapBidUserTradeByPubkey;
 std::map<int, mUTPKUTV> mapAskUserTradeByPubkey;
 std::map<int, CUserTradeSetting> mapUserTradeSetting;
 std::map<int, std::set<std::string>> mapUserTradeHash;
-
-std::map<int, ActualTradeContainer> mapActualTrade;
-std::map<int, std::vector<CActualTrade>> mapConflicTrade;
+std::map<int, mATIAT> mapActualTradeByActualTradeID;
+std::map<int, mUPKAT> mapActualTradeByUserPublicKey;
+std::map<int, mUTIAT> mapActualTradeByUserTradeID;
+std::map<int, std::vector<CActualTrade>> mapConflictTrade;
+std::map<int, CActualTradeSetting> mapActualTradeSetting;
+std::map<int, std::set<std::string>> mapActualTradeHash;
 CActualTradeManager actualTradeManager;
 CUserTradeManager userTradeManager;
 
@@ -629,8 +632,23 @@ bool CActualTradeManager::AddNewActualTrade(CActualTrade ActualTrade)
 	return true;
 }
 
-bool CActualTradeManager::AddNewActualTrade(CNode* node, CActualTrade ActualTrade)
+bool CActualTradeManager::IsActualTradeInList(CActualTrade ActualTrade)
 {
+	if (!mapActualTradeByActualTradeID[ActualTrade.nTradePairID].count(ActualTrade.nActualTradeID))
+		return false;
+
+	if (mapActualTradeByActualTradeID[ActualTrade.nTradePairID][ActualTrade.nActualTradeID]->nCurrentHash != ActualTrade.nCurrentHash)
+	{
+		//inform of differences
+		return false;
+	}
+
+	return true;
+}
+
+bool CActualTradeManager::AddNewActualTrade(CNode* node, CConnman& connman, CActualTrade ActualTrade)
+{
+
 	if (!mapTradePairActualTradeContainer.count(ActualTrade.nTradePairID))
 	{
 		//check whether current node is in charge of current trade pair
@@ -668,26 +686,16 @@ bool CActualTradeManager::AddNewActualTrade(CNode* node, CActualTrade ActualTrad
 	return true;
 }
 
-bool CActualTradeManager::RunSecurityCheck(int TradePairID, std::string Hash)
-{
-	for (auto const& a : mapTradePairActualTradeContainer[TradePairID].first.second)
-	{
-		if (a == Hash)
-			return false;
-	}
-	return true;
-}
-
 std::vector<std::string> CActualTradeManager::FindDuplicateTrade(int TradePairID)
 {
 	std::vector<std::string> DuplicatedTrade;
 	std::vector<std::string> HashContainer;
-	for (auto &a : mapTradePairActualTradeContainer[TradePairID].second)
+	for (auto &a : mapActualTradeByActualTradeID[TradePairID])
 	{
 		bool Conflict = false;
 		for (auto &b : HashContainer)
 		{
-			if (a.second.nCurrentHash == b)
+			if (a.second->nCurrentHash == b)
 			{
 				DuplicatedTrade.push_back(b);
 				Conflict = true;
@@ -695,7 +703,7 @@ std::vector<std::string> CActualTradeManager::FindDuplicateTrade(int TradePairID
 			}
 		}
 		if (!Conflict)
-			HashContainer.push_back(a.second.nCurrentHash);
+			HashContainer.push_back(a.second->nCurrentHash);
 	}
 	return DuplicatedTrade;
 }
