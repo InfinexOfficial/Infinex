@@ -12,24 +12,13 @@
 class CUserConnection;
 class CUserConnectionManager;
 
-extern std::map<std::string, CUserConnection> mapUserConnection; //user public key & connection info
+extern std::map<std::string, std::vector<CUserConnection>> mapUserConnections; //user public key & connection info
 extern std::map<std::string, CUserConnection> mapMNConnection; //MN IP address & connection info
 extern CUserConnectionManager userConnectionManager;
 
-class CNode
-{
-
-};
-
-class CDataStream
-{
-
-};
-
-class CConnman
-{
-
-};
+class CNode{};
+class CDataStream{};
+class CConnman{};
 
 class CUserConnection
 {
@@ -40,8 +29,8 @@ public:
     std::string nPort;
 	uint64_t nLastSeenTime;
 
-	CUserConnection(CNode* nNode, std::string nUserPubKey, std::string nIP, std::string nPort, uint64_t nLastSeenTime) :
-        nNode(nNode),
+	CUserConnection(CNode& Node, std::string nUserPubKey, std::string nIP, std::string nPort, uint64_t nLastSeenTime) :
+		nNode(&Node),
 		nUserPubKey(nUserPubKey),
         nIP(nIP),
         nPort(nPort),
@@ -54,26 +43,19 @@ public:
         nPort(""),
         nLastSeenTime(0)
 	{}
-
-    void UpdateUserConnectionInfo(std::string IPIn, std::string PortIn, uint64_t LastSeenTimeIn)
-    {
-        nIP = IPIn;
-        nPort = PortIn;
-        nLastSeenTime = LastSeenTimeIn;
-    }
-
-    std::string getIP() { return nIP; }
 };
 
 class CUserConnectionManager
 {
+private:
+	bool IsUserInList(std::string PubKey);
+
 public:
     CUserConnectionManager() {}
-
-    void ProcessUserConnection(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
-
-    void UserDisconnected(std::string IPAddress);
-
+    void ProcessUserConnection(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	void AddUserConnection(CNode* node, std::string IP, std::string port, std::string PubKey); //to remove IP & port on actual implementation
+	bool GetUserConnection(std::string PubKey, std::vector<CUserConnection>& nodes);
+    void UserDisconnected(std::string PubKey, std::string IPAddress);
     void MNDisconnected(std::string IPAddress);
 };
 

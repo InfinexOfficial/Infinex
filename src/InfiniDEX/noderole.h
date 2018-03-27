@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include "userconnection.h"
 
 enum infinidex_node_role_enum {
 	INFINIDEX_NOTHING = 0,
@@ -19,16 +20,18 @@ enum infinidex_node_role_enum {
 	INFINIDEX_MARKET_HISTORY_PROVIDER = 5,
 	INFINIDEX_CHART_DATA_PROVIDER = 6,
 	INFINIDEX_TRADE_PROCESSOR = 7,
-	INFINIDEX_BALANCE_INFO = 8,
-	INFINIDEX_WITHDRAW_INFO = 9,
-	INFINIDEX_WITHDRAW_PROCESSOR = 10,
-	INFINIDEX_DEPOSIT_INFO = 11,
-	INFINIDEX_TRUSTED_NODE = 12,
-	INFINIDEX_VERIFICATOR = 13,
-	INFINIDEX_BACKUP_NODE = 14
+	INFINIDEX_WALLET_ADDRESS = 8,
+	INFINIDEX_BALANCE_INFO = 9,
+	INFINIDEX_WITHDRAW_INFO = 10,
+	INFINIDEX_WITHDRAW_PROCESSOR = 11,
+	INFINIDEX_DEPOSIT_INFO = 12,
+	INFINIDEX_TRUSTED_NODE = 13,
+	INFINIDEX_VERIFICATOR = 14,
+	INFINIDEX_BACKUP_NODE = 15
 };
 
 class CNodeRole;
+class CNodeRoleManager;
 
 typedef std::pair <std::string, std::string> pairIPPubkey;
 typedef std::pair <pairIPPubkey, std::vector<std::shared_ptr<CNodeRole>>> pairIPPubKeyNodeRole;
@@ -40,6 +43,9 @@ extern std::map<int, std::vector<infinidex_node_role_enum>> mapCoinIDNodeRoles;
 
 class CNodeRole
 {
+private:
+	std::vector<unsigned char> vchSig;
+
 public:
 	int NodeRoleID;
 	int TradePairID;
@@ -49,9 +55,8 @@ public:
 	bool IsValid;
 	int ToReplaceNodeRoleID;
 	uint64_t AppointTime;
-	std::string AuthorisedSignature;
 
-	CNodeRole(int NodeRoleID, int TradePairID, infinidex_node_role_enum NodeRole, std::string NodeIP, std::string NodePubKey, bool IsValid, int ToReplaceNodeRoleID, uint64_t AppointTime, std::string AuthorisedSignature):
+	CNodeRole(int NodeRoleID, int TradePairID, infinidex_node_role_enum NodeRole, std::string NodeIP, std::string NodePubKey, bool IsValid, int ToReplaceNodeRoleID, uint64_t AppointTime):
 		NodeRoleID(NodeRoleID),
 		TradePairID(TradePairID),
 		NodeRole(NodeRole),
@@ -59,8 +64,7 @@ public:
 		NodePubKey(NodePubKey),
 		IsValid(IsValid),
 		ToReplaceNodeRoleID(ToReplaceNodeRoleID),
-		AppointTime(AppointTime),
-		AuthorisedSignature(AuthorisedSignature)
+		AppointTime(AppointTime)
 	{}
 
 	CNodeRole() :
@@ -71,9 +75,16 @@ public:
 		NodePubKey(""),
 		IsValid(false),
 		ToReplaceNodeRoleID(0),
-		AppointTime(0),
-		AuthorisedSignature("")
+		AppointTime(0)
 	{}
+
+	bool Verify();
+};
+
+class CNodeRoleManager
+{
+public:
+	
 };
 
 #endif

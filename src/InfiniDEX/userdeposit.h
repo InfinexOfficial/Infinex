@@ -14,11 +14,12 @@ class CUserDeposit;
 class CUserDepositSetting;
 class CUserDepositManager;
 
-typedef std::map<int, CUserDeposit> mapUserDepositWithID;
-typedef std::pair<mapUserDepositWithID, mapUserDepositWithID> pairConfirmPendingDeposit;
-typedef std::map<std::string, pairConfirmPendingDeposit> mapPubKeyConfirmPendingDeposit;
-typedef std::pair<CUserDepositSetting, mapPubKeyConfirmPendingDeposit> pairSettingUserDeposit;
-extern std::map<int, pairSettingUserDeposit> mapUserDeposit;
+typedef std::map<std::string, uint64_t> mapLastRequestTimeByPubKey;
+typedef std::map<int, CUserDeposit> mapUserDepositByID;
+typedef std::map<std::string, mapUserDepositByID> mapUserDepositByPubKey;
+extern std::map<int, mapUserDepositByPubKey> mapUserDeposit;
+extern std::map<int, mapLastRequestTimeByPubKey> mapUserLastRequestTime;
+extern std::map<int, CUserDepositSetting> mapUserDepositSetting;
 extern CUserDepositManager userDepositManager;
 
 class CUserDepositSetting
@@ -26,10 +27,16 @@ class CUserDepositSetting
 public:
 	bool ProvideUserDepositInfo;
 	bool SyncInProgress;
+	int MaxNoOfUserDepositInfo;
+	int MinTimeToLastRequest;
+	int LastDepositID;
 
 	CUserDepositSetting() :
 		ProvideUserDepositInfo(false),
-		SyncInProgress(false)
+		SyncInProgress(false),
+		MaxNoOfUserDepositInfo(100),
+		MinTimeToLastRequest(3000),
+		LastDepositID(0)
 	{}
 };
 
@@ -47,10 +54,9 @@ public:
 	uint64_t nDepositTime;
 	bool nValidDeposit;
 	std::string nRemark;
-	std::string nHash;
 	uint64_t nLastUpdateTime;
 
-	CUserDeposit(int nUserDepositID, std::string nUserPubKey, int nCoinID, uint64_t nDepositAmount, uint64_t nBlockNumber, uint64_t nDepositTime, bool nValidDeposit, std::string nRemark, std::string nHash, uint64_t nLastUpdateTime) :
+	CUserDeposit(int nUserDepositID, std::string nUserPubKey, int nCoinID, uint64_t nDepositAmount, uint64_t nBlockNumber, uint64_t nDepositTime, bool nValidDeposit, std::string nRemark, uint64_t nLastUpdateTime) :
 		nUserDepositID(nUserDepositID),
 		nUserPubKey(nUserPubKey),
 		nCoinID(nCoinID),
@@ -59,7 +65,6 @@ public:
 		nDepositTime(nDepositTime),
 		nValidDeposit(nValidDeposit),
 		nRemark(nRemark),
-		nHash(nHash),
 		nLastUpdateTime(nLastUpdateTime)
 	{}
 
@@ -72,12 +77,12 @@ public:
 		nDepositTime(0),
 		nValidDeposit(false),
 		nRemark(""),
-		nHash(""),
 		nLastUpdateTime(0)
 	{}
 
-	std::string GetHash();
 	bool Verify();
+	void RelayTo(CNode* node, CConnman& connman);
+	void RelayToCoOpNode(CConnman& connman);
 };
 
 class CUserDepositManager
@@ -87,7 +92,7 @@ private:
 
 public:
 	CUserDepositManager() {}
-	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	void ProcessMessage(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void ToProvideUserDepositInfo(int CoinID, bool toProcess);
 	void SetSyncInProgress(int CoinID, bool status);
 	void AddCoinToList(int CoinID);
@@ -102,7 +107,6 @@ public:
 	void AddNewConfirmDeposit(CUserDeposit UserDeposit);
 	bool IsUserConfirmDepositInList(CUserDeposit UserDeposit);
 	int GetLastUserConfirmDepositID(std::string UserPubKey, int CoinID);
-	void DepositConfirmation(std::string UserPubKey, int CoinID, std::string Hash, uint64_t LastUpdateTime);
 };
 
 #endif
