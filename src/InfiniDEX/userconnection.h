@@ -29,8 +29,8 @@ public:
     std::string nPort;
 	uint64_t nLastSeenTime;
 
-	CUserConnection(CNode& Node, std::string nUserPubKey, std::string nIP, std::string nPort, uint64_t nLastSeenTime) :
-		nNode(&Node),
+	CUserConnection(CNode* Node, std::string nUserPubKey, std::string nIP, std::string nPort, uint64_t nLastSeenTime) :
+		nNode(Node),
 		nUserPubKey(nUserPubKey),
         nIP(nIP),
         nPort(nPort),
@@ -55,6 +55,7 @@ public:
     void ProcessUserConnection(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void AddUserConnection(CNode* node, std::string IP, std::string port, std::string PubKey); //to remove IP & port on actual implementation
 	bool GetUserConnection(std::string PubKey, std::vector<CUserConnection>& nodes);
+	bool GetUsersBroadcastList();
     void UserDisconnected(std::string PubKey, std::string IPAddress);
     void MNDisconnected(std::string IPAddress);
 };

@@ -29,9 +29,9 @@ void CUserConnectionManager::AddUserConnection(CNode* node, std::string IP, std:
 	if (!IsUserInList(PubKey))
 	{
 		CUserConnection cuc(node, PubKey, IP, port, 0);
-		cuc.nNode = node;
+		//node->AddRef();
 		std::vector<CUserConnection> temp;
-		temp.push_back(CUserConnection(PubKey, IP, port, 0));
+		temp.push_back(cuc);
 		mapUserConnections.insert(std::make_pair(PubKey, temp));
 	}
 }
