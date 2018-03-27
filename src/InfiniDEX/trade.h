@@ -34,11 +34,11 @@ extern std::map<int, std::set<std::shared_ptr<CUserTrade>>> mapPendingUserTrade;
 extern CUserTradeManager userTradeManager;
 
 typedef std::map<int, std::shared_ptr<CActualTrade>> mATIAT;
-typedef std::map<std::string, mATIAT> mUPKAT;
-typedef std::map<int, mATIAT> mUTIAT;
+typedef std::map<int, mATIAT> mUTImAT;
+typedef std::map<std::string, mUTImAT> mUPKmUTAT;
 extern std::map<int, mATIAT> mapActualTradeByActualTradeID;
-extern std::map<int, mUPKAT> mapActualTradeByUserPublicKey;
-extern std::map<int, mUTIAT> mapActualTradeByUserTradeID;
+extern std::map<int, mUTImAT> mapActualTradeByUserTradeID;
+extern std::map<int, mUPKmUTAT> mapActualTradeByUserPubKey;
 extern std::map<int, std::vector<CActualTrade>> mapConflictTrade;
 extern std::map<int, CActualTradeSetting> mapActualTradeSetting;
 extern std::map<int, std::set<std::string>> mapActualTradeHash;
@@ -176,29 +176,30 @@ public:
 	uint64_t GetAskExpectedAmount(uint64_t Price, uint64_t Qty, int TradeFee);
 	bool AddUserBuyTradeIntoList(const std::shared_ptr<CUserTrade>& userTrade);
 	bool AddUserSellTradeIntoList(const std::shared_ptr<CUserTrade>& userTrade);
+	int64_t GetBalanceAmount(int TradePairID, uint64_t Price, int UserTradeID);
 };
 
 class CActualTradeSetting
 {
 public:
 	int nTradePairID;
-	bool nSecurityCheck;
 	bool nSyncInProgress;
 	uint32_t nLastTradeMaxPreTimeDistance;
 	uint16_t nToStoreLowerLimit;
 	uint16_t nToStoreUpperLimit;
 	int nLastActualTradeID;
 	std::string nLastHash;
+	bool ToVerifyActualTrade;
 
-	CActualTradeSetting(int nTradePairID, bool nSecurityCheck) :
+	CActualTradeSetting(int nTradePairID) :
 		nTradePairID(nTradePairID),
-		nSecurityCheck(nSecurityCheck),
 		nSyncInProgress(false),
 		nLastTradeMaxPreTimeDistance(3000),
 		nToStoreLowerLimit(50),
 		nToStoreUpperLimit(100),
 		nLastActualTradeID(0),
-		nLastHash("")
+		nLastHash(""),
+		ToVerifyActualTrade(false)
 	{}
 };
 
@@ -265,7 +266,7 @@ public:
 	{}
 
 	std::string GetHash();
-	bool CheckSignature();
+	bool VerifySignature();
 	bool Sign();
 	bool InformActualTrade();
 	bool InformConflictTrade(CNode* node);
@@ -275,15 +276,19 @@ class CActualTradeManager
 {
 public:
 	CActualTradeManager() {}
-	bool SetSecurityCheck(int TradePairID, bool SecurityCheck);
+	bool IsTradePairInList(int TradePairID);
+	bool IsActualTradeInList(int TradePairID, int ActualTradeID);
+	bool ToVerifyActualTrade(int TradePairID);
+	int IsActualTradeInSequence(CActualTrade ActualTrade);
 	bool GetActualTrade(CNode* node, int ActualTradeID, int TradePairID);
 	bool AddNewActualTrade(CActualTrade ActualTrade); //process by same node
 	bool AddNewActualTrade(CNode* node, CConnman& connman, CActualTrade ActualTrade); //data from other node
 	std::vector<std::string> FindDuplicateTrade(int TradePairID);
 	void InitiateCompleteResync(int TradePairID);
 	void InitialSync(int TradePairID);
-	void InputNewTradePair(int TradePairID, bool SecurityCheck);
+	void InputNewTradePair(int TradePairID);
 	bool IsActualTradeInList(CActualTrade ActualTrade);
+	void ProcessActualTrade(CActualTrade ActualTrade);
 };
 
 #endif

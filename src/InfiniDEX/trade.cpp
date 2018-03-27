@@ -26,8 +26,8 @@ std::map<int, mUTPKUTV> mapAskUserTradeByPubkey;
 std::map<int, CUserTradeSetting> mapUserTradeSetting;
 std::map<int, std::set<std::string>> mapUserTradeHash;
 std::map<int, mATIAT> mapActualTradeByActualTradeID;
-std::map<int, mUPKAT> mapActualTradeByUserPublicKey;
-std::map<int, mUTIAT> mapActualTradeByUserTradeID;
+std::map<int, mUTImAT> mapActualTradeByUserTradeID;
+std::map<int, mUPKmUTAT> mapActualTradeByUserPubKey;
 std::map<int, std::vector<CActualTrade>> mapConflictTrade;
 std::map<int, CActualTradeSetting> mapActualTradeSetting;
 std::map<int, std::set<std::string>> mapActualTradeHash;
@@ -103,7 +103,6 @@ bool CUserTradeManager::IsSubmittedAskAmountValid(CUserTrade userTrade, int nTra
 		return true;
 	return false;
 }
-
 
 //change to enum for more return info
 bool CUserTradeManager::IsSubmittedBidValid(CUserTrade UserTrade, CTradePair TradePair)
@@ -490,7 +489,7 @@ bool CActualTrade::Sign()
 	return true;
 }
 
-bool CActualTrade::CheckSignature()
+bool CActualTrade::VerifySignature()
 {
 	return true;
 }
@@ -509,98 +508,66 @@ bool CActualTrade::InformConflictTrade(CNode* node)
 	return true;
 }
 
-void CActualTradeManager::InputNewTradePair(int TradePairID, bool SecurityCheck)
+void CActualTradeManager::InputNewTradePair(int TradePairID)
 {
-	if (!mapTradePairActualTradeContainer.count(TradePairID))
+	if (!mapActualTradeByActualTradeID.count(TradePairID))
 	{
-		pairSettingSecurity temp(std::make_pair(CActualTradeSetting(TradePairID, SecurityCheck), std::set<std::string>()));
-		mapTradePairActualTradeContainer.insert(std::make_pair(TradePairID, std::make_pair(temp, mapActualTrade())));
+		mapActualTradeByActualTradeID.insert(std::make_pair(TradePairID, mATIAT()));
+		mapActualTradeByUserTradeID.insert(std::make_pair(TradePairID, mUTImAT()));
+		mapActualTradeByUserPubKey.insert(std::make_pair(TradePairID, mUPKmUTAT()));
+		mapConflictTrade.insert(std::make_pair(TradePairID, std::vector<CActualTrade>()));
+		mapActualTradeSetting.insert(std::make_pair(TradePairID, CActualTradeSetting(TradePairID)));
+		mapActualTradeHash.insert(std::make_pair(TradePairID, std::set<std::string>()));
 	}
-	if (!mapTradePairToResolveTrade.count(TradePairID))
-	{
-		mapTradePairToResolveTrade.insert(std::make_pair(TradePairID, std::vector<CActualTrade>()));
-	}
-}
-
-bool CActualTradeManager::SetSecurityCheck(int TradePairID, bool SecurityCheck)
-{
-	if (!mapTradePairActualTradeContainer.count(TradePairID))
-	{
-
-	}
-
-	if (mapTradePairActualTradeContainer[TradePairID].first.first.nSecurityCheck == SecurityCheck)
-		return true;
-
-	if (SecurityCheck)
-	{
-		for (auto &a : mapTradePairActualTradeContainer[TradePairID].second)
-		{
-			bool NoConflict = true;
-			if (mapTradePairActualTradeContainer[TradePairID].first.second.count(a.second.nCurrentHash))
-			{
-				NoConflict = false;
-				//to resolve duplicated trade
-			}
-			else
-			{
-				mapTradePairActualTradeContainer[TradePairID].first.second.insert(a.second.nCurrentHash);
-			}
-		}
-		mapTradePairActualTradeContainer[TradePairID].first.first.nSecurityCheck = SecurityCheck;
-	}
-	else
-	{
-		mapTradePairActualTradeContainer[TradePairID].first.second.clear();
-		mapTradePairActualTradeContainer[TradePairID].first.first.nSecurityCheck = SecurityCheck;
-	}
-
-	return false;
 }
 
 bool CActualTradeManager::GetActualTrade(CNode* node, int ActualTradeID, int TradePairID)
 {
-	if (!mapTradePairActualTradeContainer.count(TradePairID))
+	if (!mapActualTradeByActualTradeID.count(TradePairID))
 	{
 		//inform other node that we don't carry this trade pair
 		return false;
 	}
 
-	if (!mapTradePairActualTradeContainer[TradePairID].second.count(ActualTradeID))
+	if (!mapActualTradeByActualTradeID[TradePairID].count(ActualTradeID))
 	{
 		//inform other node that we don't have this trade data		
 		return false;
 	}
 
 	//send this trade data to other node
-	CActualTrade temp(mapTradePairActualTradeContainer[TradePairID].second[ActualTradeID]);
+	CActualTrade temp = *mapActualTradeByActualTradeID[TradePairID][ActualTradeID];
 
 	return true;
 }
 
 bool CActualTradeManager::AddNewActualTrade(CActualTrade ActualTrade)
 {
-	if (!mapTradePairActualTradeContainer.count(ActualTrade.nTradePairID))
+	if (!IsTradePairInList(ActualTrade.nTradePairID))
 	{
 		//its not possible to be here
 		//if here, we would need to switch this node to passive & resync
 		return false;
 	}
-
-	ActualTrade.nCurrentHash = ActualTrade.GetHash();
-	bool SecurityCheck = mapTradePairActualTradeContainer[ActualTrade.nTradePairID].first.first.nSecurityCheck;
-	if (SecurityCheck)
+	
+	std::string tempHash(ActualTrade.GetHash());
+	if (mapActualTradeHash[ActualTrade.nTradePairID].count(tempHash))
 	{
-		if (!RunSecurityCheck(ActualTrade.nTradePairID, ActualTrade.nCurrentHash))
-		{
-			return false;
-		}
-		mapTradePairActualTradeContainer[ActualTrade.nTradePairID].first.second.insert(ActualTrade.nCurrentHash);
+		return false;
 	}
-	ActualTrade.nActualTradeID = (++mapTradePairActualTradeContainer[ActualTrade.nTradePairID].first.first.nLastActualTradeID);
-	mapTradePairActualTradeContainer[ActualTrade.nTradePairID].second.insert(std::make_pair(ActualTrade.nActualTradeID, ActualTrade));
-	mapTradePairActualTradeContainer[ActualTrade.nTradePairID].first.second.insert(ActualTrade.nCurrentHash);
-	mapTradePairActualTradeContainer[ActualTrade.nTradePairID].first.first.nLastHash = ActualTrade.nCurrentHash;
+	mapActualTradeHash[ActualTrade.nTradePairID].insert(tempHash);
+	std::shared_ptr<CActualTrade> temp = std::make_shared<CActualTrade>(ActualTrade);
+	temp->nCurrentHash = tempHash;	
+	temp->nActualTradeID = ++mapActualTradeSetting[ActualTrade.nTradePairID].nLastActualTradeID;
+	std::pair<int, std::shared_ptr<CActualTrade>> temp2(std::make_pair(temp->nActualTradeID, temp));
+	mapActualTradeByActualTradeID[ActualTrade.nTradePairID].insert(std::make_pair(ActualTrade.nActualTradeID, temp));
+	
+	if (mapActualTradeByUserTradeID[ActualTrade.nTradePairID].count(ActualTrade.nUserTrade1))
+		mapActualTradeByUserTradeID[ActualTrade.nTradePairID][ActualTrade.nUserTrade1].insert(temp2);
+	else
+	{
+
+	}
 	ActualTrade.InformActualTrade();
 	return true;
 }
@@ -621,41 +588,6 @@ bool CActualTradeManager::IsActualTradeInList(CActualTrade ActualTrade)
 
 bool CActualTradeManager::AddNewActualTrade(CNode* node, CConnman& connman, CActualTrade ActualTrade)
 {
-
-	if (!mapTradePairActualTradeContainer.count(ActualTrade.nTradePairID))
-	{
-		//check whether current node is in charge of current trade pair
-		if (true)
-		{
-			InputNewTradePair(ActualTrade.nTradePairID, true);
-		}
-		else
-		{
-
-		}
-		return false;
-	}
-
-	mapActualTrade::iterator temp = mapTradePairActualTradeContainer[ActualTrade.nTradePairID].second.find(ActualTrade.nActualTradeID);
-	if (temp != mapTradePairActualTradeContainer[ActualTrade.nTradePairID].second.end)
-	{
-		if (temp->second.nCurrentHash == ActualTrade.nCurrentHash)
-			return true;
-		else
-		{
-			//resync required to make sure network running the same data
-		}
-	}
-	else if (mapTradePairActualTradeContainer[ActualTrade.nTradePairID].first.second.count(ActualTrade.nCurrentHash))
-	{
-		//resync required to make sure network running the same data
-	}
-	else
-	{
-		mapTradePairActualTradeContainer[ActualTrade.nTradePairID].second.insert(std::make_pair(ActualTrade.nActualTradeID, ActualTrade));
-		mapTradePairActualTradeContainer[ActualTrade.nTradePairID].first.second.insert(ActualTrade.nCurrentHash);
-		mapTradePairActualTradeContainer[ActualTrade.nTradePairID].first.first.nLastHash = ActualTrade.nCurrentHash;
-	}
 	return true;
 }
 
@@ -679,4 +611,41 @@ std::vector<std::string> CActualTradeManager::FindDuplicateTrade(int TradePairID
 			HashContainer.push_back(a.second->nCurrentHash);
 	}
 	return DuplicatedTrade;
+}
+
+bool CActualTradeManager::ToVerifyActualTrade(int TradePairID)
+{
+	return mapActualTradeSetting[TradePairID].ToVerifyActualTrade;
+}
+
+int CActualTradeManager::IsActualTradeInSequence(CActualTrade ActualTrade)
+{
+	return ActualTrade.nActualTradeID - mapActualTradeSetting[ActualTrade.nTradePairID].nLastActualTradeID;
+}
+
+void CActualTradeManager::ProcessActualTrade(CActualTrade ActualTrade)
+{
+	if (!IsTradePairInList(ActualTrade.nTradePairID))
+		return;
+
+	if (!ActualTrade.VerifySignature())
+		return;
+
+	int sequence = IsActualTradeInSequence(ActualTrade);
+	if (sequence <= 0)
+		return;
+
+	if (sequence > 1)
+	{
+		//need to do something more here
+		return;
+	}
+
+	if (IsActualTradeInList(ActualTrade.nTradePairID, ActualTrade.nActualTradeID))
+		return;
+
+	if (ToVerifyActualTrade(ActualTrade.nTradePairID))
+	{
+
+	}
 }
