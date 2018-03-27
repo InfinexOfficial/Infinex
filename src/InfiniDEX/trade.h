@@ -145,8 +145,8 @@ public:
 	bool VerifyUserSignature();
 	bool VerifyMNSignature();
 	bool MNSign();
-	void RelayTo(CNode* node, CConnman& connman);
-	void RelayToHandler(CConnman& connman);
+	void RelayTo(CUserConnection& conn);
+	void RelayToHandler();
 };
 
 class CUserTradeManager
@@ -168,14 +168,14 @@ public:
 	bool IsSubmittedAskValid(CUserTrade UserTrade, CTradePair TradePair);
 	bool IsSubmittedBidAmountValid(CUserTrade userTrade, int nTradeFee);
 	bool IsSubmittedAskAmountValid(CUserTrade userTrade, int nTradeFee);
-	void UserSellRequest(CUserTrade userTrade);
-	void UserBuyRequest(CUserTrade userTrade);
-	void ProcessUserBuyRequest(CConnman& connman, CUserTrade& userTrade);
-	void ProcessUserSellRequest(CConnman& connman, CUserTrade& userTrade);
+	void ProcessUserBuyRequest(CUserTrade userTrade);
+	void ProcessUserSellRequest(CUserTrade userTrade);
 	void InputMatchUserBuyRequest(CUserTrade userTrade);
 	void InputMatchUserSellRequest(CUserTrade userTrade);
 	uint64_t GetBidRequiredAmount(uint64_t Price, uint64_t Qty, int TradeFee);
 	uint64_t GetAskExpectedAmount(uint64_t Price, uint64_t Qty, int TradeFee);
+	bool AddUserBuyTradeIntoList(const std::shared_ptr<CUserTrade>& userTrade);
+	bool AddUserSellTradeIntoList(const std::shared_ptr<CUserTrade>& userTrade);
 };
 
 class CActualTradeSetting
@@ -200,8 +200,6 @@ public:
 		nLastActualTradeID(0),
 		nLastHash("")
 	{}
-
-	bool GetSecurityCheck() { return nSecurityCheck; }
 };
 
 class CActualTrade

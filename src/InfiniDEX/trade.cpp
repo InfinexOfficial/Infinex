@@ -59,12 +59,12 @@ bool CUserTrade::MNSign()
 	return true;
 }
 
-void CUserTrade::RelayTo(CNode* node, CConnman& connman)
+void CUserTrade::RelayTo(CUserConnection& conn)
 {
 
 }
 
-void CUserTrade::RelayToHandler(CConnman& connman)
+void CUserTrade::RelayToHandler()
 {
 
 }
@@ -171,7 +171,67 @@ void CUserTradeManager::AddToUserTradeList(int TradePairID, std::string UserHash
 	mapUserTradeHash[TradePairID].insert(UserHash);
 }
 
-void CUserTradeManager::ProcessUserBuyRequest(CConnman& connman, CUserTrade& userTrade)
+bool CUserTradeManager::AddUserBuyTradeIntoList(const std::shared_ptr<CUserTrade>& userTrade)
+{
+	userbalance_to_exchange_enum_t result = userBalanceManager.BalanceToExchange(userTrade->nTradePairID, userTrade->nUserPubKey, userTrade->nAmount);
+	if (result != USER_BALANCE_DEDUCTED)
+	{
+		//we should not be here
+		//for future user banning
+		return false;
+	}
+
+	if (!mapBidUserTradeByPrice[userTrade->nTradePairID].count(userTrade->nPrice))
+	{
+		mUTIUT temp;
+		temp.insert(std::make_pair(userTrade->nUserTradeID, userTrade));
+		mapBidUserTradeByPrice[userTrade->nTradePairID].insert(std::make_pair(userTrade->nPrice, temp));
+	}
+	else
+		mapBidUserTradeByPrice[userTrade->nTradePairID][userTrade->nPrice].insert(std::make_pair(userTrade->nUserTradeID, userTrade));
+
+	if (!mapBidUserTradeByPubkey[userTrade->nTradePairID].count(userTrade->nUserPubKey))
+	{
+		mUTIUT temp;
+		temp.insert(std::make_pair(userTrade->nUserTradeID, userTrade));
+		mapBidUserTradeByPubkey[userTrade->nTradePairID].insert(std::make_pair(userTrade->nUserPubKey, temp));
+	}
+	else
+		mapBidUserTradeByPubkey[userTrade->nTradePairID][userTrade->nUserPubKey].insert(std::make_pair(userTrade->nUserTradeID, userTrade));
+	return true;
+}
+
+bool CUserTradeManager::AddUserSellTradeIntoList(const std::shared_ptr<CUserTrade>& userTrade)
+{
+	userbalance_to_exchange_enum_t result = userBalanceManager.BalanceToExchange(userTrade->nTradePairID, userTrade->nUserPubKey, userTrade->nAmount);
+	if (result != USER_BALANCE_DEDUCTED)
+	{
+		//we should not be here
+		//for future user banning
+		return false;
+	}
+
+	if (!mapAskUserTradeByPrice[userTrade->nTradePairID].count(userTrade->nPrice))
+	{
+		mUTIUT temp;
+		temp.insert(std::make_pair(userTrade->nUserTradeID, userTrade));
+		mapAskUserTradeByPrice[userTrade->nTradePairID].insert(std::make_pair(userTrade->nPrice, temp));
+	}
+	else
+		mapAskUserTradeByPrice[userTrade->nTradePairID][userTrade->nPrice].insert(std::make_pair(userTrade->nUserTradeID, userTrade));
+
+	if (!mapAskUserTradeByPubkey[userTrade->nTradePairID].count(userTrade->nUserPubKey))
+	{
+		mUTIUT temp;
+		temp.insert(std::make_pair(userTrade->nUserTradeID, userTrade));
+		mapAskUserTradeByPubkey[userTrade->nTradePairID].insert(std::make_pair(userTrade->nUserPubKey, temp));
+	}
+	else
+		mapAskUserTradeByPubkey[userTrade->nTradePairID][userTrade->nUserPubKey].insert(std::make_pair(userTrade->nUserTradeID, userTrade));
+	return true;
+}
+
+void CUserTradeManager::ProcessUserBuyRequest(CUserTrade userTrade)
 {
 	if (!IsTradePairInList(userTrade.nTradePairID))
 		return;
@@ -198,19 +258,21 @@ void CUserTradeManager::ProcessUserBuyRequest(CConnman& connman, CUserTrade& use
 	if (!IsSubmittedBidAmountValid(userTrade, TradeFee))
 		return;
 
-	AddToUserTradeList(userTrade.nTradePairID, userTrade.nUserHash);
 	userTrade.nUserTradeID = ++mapUserTradeSetting[userTrade.nTradePairID].nLastUserTradeID;
 	userTrade.nBalanceAmount = userTrade.nAmount;
 	userTrade.nBalanceQty = userTrade.nQuantity;
 	userTrade.nMNPubKey = mapUserTradeSetting[userTrade.nTradePairID].nMNPubKey;
 	userTrade.nLastUpdate = GetAdjustedTime();
-	userTrade.MNSign();	
-	mapBidUserTradeByPrice[userTrade.nTradePairID][userTrade.nPrice].insert(std::make_pair(userTrade.nUserTradeID, &userTrade));
-	mapBidUserTradeByPubkey[userTrade.nTradePairID][userTrade.nUserPubKey].insert(std::make_pair(userTrade.nUserTradeID, &userTrade));
-	userTrade.RelayToHandler(connman);
+	userTrade.MNSign();
+
+	std::shared_ptr<CUserTrade> ut = std::make_shared<CUserTrade>(userTrade);
+	if (!AddUserBuyTradeIntoList(ut))
+		return;
+	AddToUserTradeList(userTrade.nTradePairID, userTrade.nUserHash);
+	ut->RelayToHandler();
 }
 
-void CUserTradeManager::ProcessUserSellRequest(CConnman& connman, CUserTrade& userTrade)
+void CUserTradeManager::ProcessUserSellRequest(CUserTrade userTrade)
 {
 	if (!IsTradePairInList(userTrade.nTradePairID))
 		return;
@@ -237,16 +299,18 @@ void CUserTradeManager::ProcessUserSellRequest(CConnman& connman, CUserTrade& us
 	if (!IsSubmittedAskAmountValid(userTrade, TradeFee))
 		return;
 
-	AddToUserTradeList(userTrade.nTradePairID, userTrade.nUserHash);
 	userTrade.nUserTradeID = ++mapUserTradeSetting[userTrade.nTradePairID].nLastUserTradeID;
 	userTrade.nBalanceAmount = userTrade.nAmount;
 	userTrade.nBalanceQty = userTrade.nQuantity;
 	userTrade.nMNPubKey = mapUserTradeSetting[userTrade.nTradePairID].nMNPubKey;
 	userTrade.nLastUpdate = GetAdjustedTime();
 	userTrade.MNSign();
-	mapAskUserTradeByPrice[userTrade.nTradePairID][userTrade.nPrice].insert(std::make_pair(userTrade.nUserTradeID, &userTrade));
-	mapAskUserTradeByPubkey[userTrade.nTradePairID][userTrade.nUserPubKey].insert(std::make_pair(userTrade.nUserTradeID, &userTrade));
-	userTrade.RelayToHandler(connman);
+
+	std::shared_ptr<CUserTrade> ut = std::make_shared<CUserTrade>(userTrade);
+	if (!AddUserSellTradeIntoList(ut))
+		return;
+	AddToUserTradeList(userTrade.nTradePairID, userTrade.nUserHash);
+	ut->RelayToHandler();
 }
 
 bool CUserTradeManager::IsProcessedUserTradeInList(CUserTrade UserTrade)
@@ -261,6 +325,86 @@ int CUserTradeManager::IsProcessedUserTradeInSequence(CUserTrade UserTrade)
 
 void CUserTradeManager::InputMatchUserBuyRequest(CUserTrade userTrade)
 {
+	CTradePair tradePair = tradePairManager.GetTradePair(userTrade.nTradePairID);
+	if (tradePair.nTradePairID != userTrade.nTradePairID)
+		return;
+
+	if (!IsTradePairInList(userTrade.nTradePairID))
+		return;
+
+	if (IsSyncInProgress(userTrade.nTradePairID))
+		return;
+
+	if (!IsInChargeOfMatchUserTrade(userTrade.nTradePairID))
+		return;
+
+	if (!userTrade.VerifyMNSignature())
+		return;
+
+	int sequence = IsProcessedUserTradeInSequence(userTrade);
+	if (sequence <= 0)
+		return;
+
+	if (sequence > 1) 
+	{
+		//need to do something more here
+		return;
+	}
+
+	std::shared_ptr<CUserTrade> ut = std::make_shared<CUserTrade>(userTrade);
+	if (!AddUserBuyTradeIntoList(ut)) 
+	{
+		//need to know why its here
+		return;
+	}
+
+	mUTPIUTV::iterator Sellers = mapAskUserTradeByPrice[ut->nTradePairID].begin();
+	while (Sellers != mapAskUserTradeByPrice[ut->nTradePairID].end() && Sellers->first <= ut->nPrice)
+	{
+		mUTIUT::iterator Seller = Sellers->second.begin();
+		while (Seller != Sellers->second.end())
+		{
+			std::shared_ptr<CUserTrade> ExistingTrade = Seller->second;
+			int qty = 0;
+			if (ut->nBalanceQty <= ExistingTrade->nBalanceQty)
+			{
+				qty = ut->nBalanceQty;
+			}
+			else
+			{
+				qty = ExistingTrade->nBalanceQty;
+			}
+
+			if (qty <= 0)
+			{
+				//should not be here, let's think what should we do
+			}
+
+			ExistingTrade->nBalanceQty -= qty;
+			ut->nBalanceQty -= qty;
+			int bidTradeFee = (ut->nTradeFee < tradePair.nAskTradeFee) ? ut->nTradeFee : tradePair.nAskTradeFee;
+			int askTradeFee = (ExistingTrade->nTradeFee < tradePair.nBidTradeFee) ? ExistingTrade->nTradeFee : tradePair.nBidTradeFee;
+			uint64_t bidAmount = GetBidRequiredAmount(ut->nPrice, qty, bidTradeFee);
+			uint64_t askAmount = GetAskExpectedAmount(ExistingTrade->nPrice, qty, askTradeFee);			
+			uint64_t actualAmount = ut->nPrice*qty;
+			//userBalanceManager.UpdateAfterTradeBalance(ExistingTrade->nUserPubKey, cut->nUserPubKey, tradePair.nCoinInfoID1, tradePair.nCoinInfoID2, -bidAmount, qty, -qty, askAmount);
+			orderBookManager.AdjustAskQuantity(tradePair.nTradePairID, ExistingTrade->nPrice, qty);
+			//actualTradeManager.InputNewCompletedTrade(CActualTrade(ExistingTrade->nUserPubKey, cut->nUserPubKey, tradePair.nTradePairID, ExistingTrade->nPrice, qty, actualAmount, bidAmount - actualAmount, tradePair.nBidTradeFeeCoinID, actualAmount - askAmount, tradePair.nAskTradeFeeCoinID, "", GetAdjustedTime()));
+			if (ut->nBalanceQty == 0)
+				return;
+
+			++Seller;
+		}
+		++Sellers;
+	}
+}
+
+void CUserTradeManager::InputMatchUserSellRequest(CUserTrade userTrade)
+{
+	CTradePair tradePair = tradePairManager.GetTradePair(userTrade.nTradePairID);
+	if (tradePair.nTradePairID != userTrade.nTradePairID)
+		return;
+
 	if (!IsTradePairInList(userTrade.nTradePairID))
 		return;
 
@@ -279,227 +423,56 @@ void CUserTradeManager::InputMatchUserBuyRequest(CUserTrade userTrade)
 
 	if (sequence > 1)
 	{
+		//need to do something more here
 		return;
 	}
-}
 
-void CUserTradeManager::InputMatchUserSellRequest(CUserTrade userTrade)
-{
-
-}
-
-//to convert into enum return
-void CUserTradeManager::UserSellRequest(CUserTrade userTrade)
-{
-	CTradePair tradePair = tradePairManager.GetTradePair(userTrade.nTradePairID);
-	if (tradePair.nTradePairID != userTrade.nTradePairID)
-		return;
-
-	std::shared_ptr<CUserTrade> cut = std::make_shared<CUserTrade>(userTrade);
-	MapPriceCUserTrade mpcut;
-	MapPubKeyCUserTrade mucut;
-
-	std::map<int, PairBidAskCUserTrade>::iterator it = mapUserTradeRequest.find(cut->nTradePairID);
-	if (it != mapUserTradeRequest.end())
+	std::shared_ptr<CUserTrade> ut = std::make_shared<CUserTrade>(userTrade);
+	if (!AddUserSellTradeIntoList(ut))
 	{
-		if (!IsSubmittedAskValid(userTrade, tradePair))
-			return;
+		//need to know why its here
+		return;
+	}
 
-		userbalance_to_exchange_enum_t result = userBalanceManager.BalanceToExchange(tradePair.nCoinID1, cut->nUserPubKey, cut->nAmount);
-		if (result != USER_BALANCE_DEDUCTED)
+	mUTPIUTV::reverse_iterator Buyers = mapBidUserTradeByPrice[ut->nTradePairID].rbegin();
+	while (Buyers != mapBidUserTradeByPrice[ut->nTradePairID].rend() && Buyers->first >= ut->nPrice)
+	{
+		mUTIUT::iterator Buyer = Buyers->second.begin();
+		while (Buyer != Buyers->second.end())
 		{
-			//we should not be here
-			//for future user banning
-			return;
-		}
-
-		MapPriceCUserTrade buySideRequest = it->second.first.first;
-		MapPriceCUserTrade::reverse_iterator itBuySideRequest = buySideRequest.rbegin();
-		while (itBuySideRequest != buySideRequest.rend())
-		{
-			if (cut->nQuantity == 0)
+			std::shared_ptr<CUserTrade> ExistingTrade = Buyer->second;
+			int qty = 0;
+			if (ut->nBalanceQty <= ExistingTrade->nBalanceQty)
 			{
+				qty = ut->nBalanceQty;
+			}
+			else
+			{
+				qty = ExistingTrade->nBalanceQty;
+			}
+
+			if (qty <= 0)
+			{
+				//should not be here, let's think what should we do
+			}
+
+			ExistingTrade->nBalanceQty -= qty;
+			ut->nBalanceQty -= qty;
+			int bidTradeFee = (ExistingTrade->nTradeFee < tradePair.nBidTradeFee) ? ExistingTrade->nTradeFee : tradePair.nBidTradeFee;
+			int askTradeFee = (ut->nTradeFee < tradePair.nAskTradeFee) ? ut->nTradeFee : tradePair.nAskTradeFee;
+			uint64_t bidAmount = GetBidRequiredAmount(ExistingTrade->nPrice, qty, bidTradeFee);
+			uint64_t askAmount = GetAskExpectedAmount(ut->nPrice, qty, askTradeFee);
+
+			uint64_t actualAmount = ut->nPrice*qty;
+			//userBalanceManager.UpdateAfterTradeBalance(ExistingTrade->nUserPubKey, cut->nUserPubKey, tradePair.nCoinInfoID1, tradePair.nCoinInfoID2, -bidAmount, qty, -qty, askAmount);
+			orderBookManager.AdjustAskQuantity(tradePair.nTradePairID, ExistingTrade->nPrice, qty);
+			//actualTradeManager.InputNewCompletedTrade(CActualTrade(ExistingTrade->nUserPubKey, cut->nUserPubKey, tradePair.nTradePairID, ExistingTrade->nPrice, qty, actualAmount, bidAmount - actualAmount, tradePair.nBidTradeFeeCoinID, actualAmount - askAmount, tradePair.nAskTradeFeeCoinID, "", GetAdjustedTime()));
+			if (ut->nBalanceQty == 0)
 				return;
-			}
 
-			if (itBuySideRequest->first >= cut->nPrice)
-			{
-				for (int i = 0; i < itBuySideRequest->second.size(); i++)
-				{
-					std::shared_ptr<CUserTrade> ExistingTrade = itBuySideRequest->second[i].second;
-					int qty = 0;
-					if (cut->nBalanceQty <= ExistingTrade->nBalanceQty)
-					{
-						qty = cut->nBalanceQty;
-					}
-					else
-					{
-						qty = ExistingTrade->nBalanceQty;
-					}
-
-					if (qty <= 0)
-					{
-						//should not be here, let's think what should we do
-					}
-
-					ExistingTrade->nBalanceQty -= qty;
-					cut->nBalanceQty -= qty;
-					int bidTradeFee = (ExistingTrade->nTradeFee < tradePair.nBidTradeFee) ? ExistingTrade->nTradeFee : tradePair.nBidTradeFee;
-					int askTradeFee = (cut->nTradeFee < tradePair.nAskTradeFee) ? cut->nTradeFee : tradePair.nAskTradeFee;
-					uint64_t bidAmount = GetBidRequiredAmount(ExistingTrade->nPrice, qty, bidTradeFee);
-					uint64_t askAmount = GetAskExpectedAmount(cut->nPrice, qty, askTradeFee);
-					uint64_t actualAmount = cut->nPrice*qty;
-					//userBalanceManager.UpdateAfterTradeBalance(ExistingTrade->nUserPubKey, cut->nUserPubKey, tradePair.nCoinInfoID1, tradePair.nCoinInfoID2, -bidAmount, qty, -qty, askAmount);
-					orderBookManager.AdjustAskQuantity(tradePair.nTradePairID, ExistingTrade->nPrice, qty);
-					//actualTradeManager.InputNewCompletedTrade(CActualTrade(ExistingTrade->nUserPubKey, cut->nUserPubKey, tradePair.nTradePairID, ExistingTrade->nPrice, qty, actualAmount, bidAmount - actualAmount, tradePair.nBidTradeFeeCoinID, actualAmount - askAmount, tradePair.nAskTradeFeeCoinID, "", GetAdjustedTime()));
-					if (cut->nBalanceQty == 0)
-						return;
-				}
-				++itBuySideRequest;
-			}
-			else
-			{
-				break;
-			}
+			++Buyer;
 		}
-
-		PairPricePubKeyCUserTrade sellSidePairPricePubKeyContainer = it->second.second;
-		mpcut = sellSidePairPricePubKeyContainer.first;
-		mucut = sellSidePairPricePubKeyContainer.second;
-
-		if (mpcut.count(cut->nPrice))
-		{
-			mapUserTradeRequest[cut->nTradePairID].second.first[cut->nPrice].push_back(std::make_pair(cut->nUserTradeID, cut));
-		}
-		else
-		{
-			std::vector<PairSignatureUserTrade> vecCut;
-			vecCut.push_back(std::make_pair(cut->nUserTradeID, cut));
-			mapUserTradeRequest[cut->nTradePairID].second.first.insert(std::make_pair(cut->nPrice, vecCut));
-		}
-		if (mucut.count(cut->nUserPubKey))
-		{
-			mapUserTradeRequest[cut->nTradePairID].second.second[cut->nUserPubKey].push_back(std::make_pair(cut->nUserTradeID, cut));
-		}
-		else
-		{
-			std::vector<PairSignatureUserTrade> vecCut;
-			vecCut.push_back(std::make_pair(cut->nUserTradeID, cut));
-			mapUserTradeRequest[cut->nTradePairID].second.second.insert(std::make_pair(cut->nUserPubKey, vecCut));
-		}
-	}
-	else
-	{
-		//for testing purpose
-		//to remove on actual implementation
-		std::vector<PairSignatureUserTrade> vecCut;
-		vecCut.push_back(std::make_pair(cut->nUserTradeID, cut));
-		mpcut.insert(std::make_pair(cut->nPrice, vecCut));
-		mucut.insert(std::make_pair(cut->nUserPubKey, vecCut));
-		PairPricePubKeyCUserTrade sellSide = std::make_pair(mpcut, mucut);
-
-		MapPriceCUserTrade mpcut2;
-		MapPubKeyCUserTrade mucut2;
-		PairPricePubKeyCUserTrade buySide = std::make_pair(mpcut2, mucut2);
-
-		mapUserTradeRequest.insert(std::make_pair(cut->nTradePairID, std::make_pair(buySide, sellSide)));
-	}
-}
-
-//to convert into enum return
-void CUserTradeManager::UserBuyRequest(CUserTrade userTrade)
-{
-	int BuySideCoinID = tradePairManager.GetBidSideCoinID(userTrade.nTradePairID);
-	if (BuySideCoinID < 0)
-		return;
-
-	//to shift into if loop after remove else on actual implementation	
-	std::shared_ptr<CUserTrade> cut = std::make_shared<CUserTrade>(userTrade);
-	MapPriceCUserTrade mpcut;
-	MapPubKeyCUserTrade mucut;
-
-	std::map<int, PairBidAskCUserTrade>::iterator it = mapUserTradeRequest.find(cut->nTradePairID);
-	if (it != mapUserTradeRequest.end())
-	{
-		userbalance_to_exchange_enum_t result = userBalanceManager.BalanceToExchange(BuySideCoinID, cut->nUserPubKey, cut->nAmount);
-		if (result != USER_BALANCE_DEDUCTED)
-		{
-			//we should not be here
-			//for future user banning
-			return;
-		}
-
-		MapPriceCUserTrade sellSideRequest = it->second.first.first;
-		MapPriceCUserTrade::iterator itSellSideRequest = sellSideRequest.begin();
-		while (itSellSideRequest != sellSideRequest.end())
-		{
-			if (itSellSideRequest->first <= cut->nPrice)
-			{
-				for (int i = 0; i < itSellSideRequest->second.size(); i++)
-				{
-					std::shared_ptr<CUserTrade> ExistingTrade = itSellSideRequest->second[i].second;
-					if (cut->nBalanceQty <= ExistingTrade->nBalanceQty)
-					{
-						int qty = cut->nBalanceQty;
-						ExistingTrade->nBalanceQty -= qty;
-						cut->nBalanceQty -= qty;
-						return;
-					}
-					else
-					{
-						int qty = ExistingTrade->nBalanceQty;
-						ExistingTrade->nBalanceQty -= qty;
-						cut->nBalanceQty -= qty;
-					}
-				}
-				++itSellSideRequest;
-			}
-			else
-			{
-				break;
-			}
-		}
-
-		PairPricePubKeyCUserTrade buySidePairPricePubKeyContainer = it->second.first;
-		mpcut = buySidePairPricePubKeyContainer.first;
-		mucut = buySidePairPricePubKeyContainer.second;
-
-		if (mpcut.count(cut->nPrice))
-		{
-			mapUserTradeRequest[cut->nTradePairID].first.first[cut->nPrice].push_back(std::make_pair(cut->nUserTradeID, cut));
-		}
-		else
-		{
-			std::vector<PairSignatureUserTrade> vecCut;
-			vecCut.push_back(std::make_pair(cut->nUserTradeID, cut));
-			mapUserTradeRequest[cut->nTradePairID].first.first.insert(std::make_pair(cut->nPrice, vecCut));
-		}
-		if (mucut.count(cut->nUserPubKey))
-		{
-			mapUserTradeRequest[cut->nTradePairID].first.second[cut->nUserPubKey].push_back(std::make_pair(cut->nUserTradeID, cut));
-		}
-		else
-		{
-			std::vector<PairSignatureUserTrade> vecCut;
-			vecCut.push_back(std::make_pair(cut->nUserTradeID, cut));
-			mapUserTradeRequest[cut->nTradePairID].first.second.insert(std::make_pair(cut->nUserPubKey, vecCut));
-		}
-	}
-	else
-	{
-		//for testing purpose
-		//to remove on actual implementation
-		std::vector<PairSignatureUserTrade> vecCut;
-		vecCut.push_back(std::make_pair(cut->nUserTradeID, cut));
-		mpcut.insert(std::make_pair(cut->nPrice, vecCut));
-		mucut.insert(std::make_pair(cut->nUserPubKey, vecCut));
-		PairPricePubKeyCUserTrade buySide = std::make_pair(mpcut, mucut);
-
-		MapPriceCUserTrade mpcut2;
-		MapPubKeyCUserTrade mucut2;
-		PairPricePubKeyCUserTrade sellSide = std::make_pair(mpcut2, mucut2);
-
-		mapUserTradeRequest.insert(std::make_pair(cut->nTradePairID, std::make_pair(buySide, sellSide)));
+		++Buyers;
 	}
 }
 
