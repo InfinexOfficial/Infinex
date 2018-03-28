@@ -10,14 +10,25 @@ class CChartData;
 class CChartDataManager;
 
 std::map<int, mapPeriodTimeData> mapChartData;
+std::map<int, CChartDataSetting> mapChartDataSetting;
 CChartDataManager ChartDataManager;
+
+bool CChartDataManager::IsInChargeOfChartData(int TradePairID)
+{
+	return mapChartDataSetting[TradePairID].IsInChargeOfChartData;
+}
+
+bool CChartDataManager::IsTradePairInList(int TradePairID)
+{
+	return mapChartData.count(TradePairID);
+}
 
 bool CChartDataManager::InitTradePair(int TradePairID)
 {
-	//if (!tradePairManager.IsValidTradePair(TradePairID))
-		//return false;
+	if (!tradePairManager.IsValidTradePairID(TradePairID))
+		return false;
 
-	if (!mapChartData.count(TradePairID))
+	if (!IsTradePairInList(TradePairID))
 	{
 		mapPeriodTimeData init;
 		init.insert(std::make_pair(MINUTE_CHART_DATA, mapTimeData()));
@@ -43,7 +54,7 @@ bool CChartDataManager::InitTradePair(int TradePairID)
 
 void CChartDataManager::InputNewTrade(int TradePairID, uint64_t Price, uint64_t Qty, uint64_t TradeTime)
 {
-	if (!InitTradePair(TradePairID))
+	if (!IsTradePairInList(TradePairID))
 		return;
 
 	//process minute range	

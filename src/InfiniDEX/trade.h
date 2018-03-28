@@ -35,10 +35,8 @@ extern CUserTradeManager userTradeManager;
 
 typedef std::map<int, std::shared_ptr<CActualTrade>> mATIAT;
 typedef std::map<int, mATIAT> mUTImAT;
-typedef std::map<std::string, mUTImAT> mUPKmUTAT;
 extern std::map<int, mATIAT> mapActualTradeByActualTradeID;
 extern std::map<int, mUTImAT> mapActualTradeByUserTradeID;
-extern std::map<int, mUPKmUTAT> mapActualTradeByUserPubKey;
 extern std::map<int, std::vector<CActualTrade>> mapConflictTrade;
 extern std::map<int, CActualTradeSetting> mapActualTradeSetting;
 extern std::map<int, std::set<std::string>> mapActualTradeHash;
@@ -153,9 +151,9 @@ class CUserTradeManager
 {
 private:
 	std::vector<unsigned char> vchSig;
-	uint64_t GetAdjustedTime();
 
 public:
+	uint64_t GetAdjustedTime();
 	bool IsTradePairInList(int TradePairID);
 	bool IsSyncInProgress(int TradePairID);
 	bool IsInChargeOfProcessUserTrade(int TradePairID);
@@ -321,6 +319,7 @@ public:
 	bool IsActualTradeInList(CActualTrade ActualTrade);
 	void ProcessActualTrade(CActualTrade ActualTrade);
 	bool GenerateActualTrade(CActualTrade& ActualTrade);
+	uint64_t GetTotalTradedQuantity(int TradePairID, int UserTradeID);
 };
 
 #endif

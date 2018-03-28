@@ -11,6 +11,7 @@
 
 class CChartData;
 class CChartDataManager;
+class CChartDataSetting;
 
 enum chart_period_enum {
 	MINUTE_CHART_DATA = 1,
@@ -22,6 +23,7 @@ typedef std::pair<uint64_t, uint64_t> TimeRange;
 typedef std::map<TimeRange, CChartData> mapTimeData;
 typedef std::map<chart_period_enum, mapTimeData> mapPeriodTimeData;
 extern std::map<int, mapPeriodTimeData> mapChartData;
+extern std::map<int, CChartDataSetting> mapChartDataSetting;
 extern CChartDataManager ChartDataManager;
 
 class CChartData
@@ -70,8 +72,20 @@ class CChartDataManager
 {
 public:
 	CChartDataManager() {}
+	bool IsInChargeOfChartData(int TradePairID);
+	bool IsTradePairInList(int TradePairID);
 	bool InitTradePair(int TradePairID);
 	void InputNewTrade(int TradePairID, uint64_t Price, uint64_t Qty, uint64_t TradeTime);
+};
+
+class CChartDataSetting 
+{
+public:
+	bool IsInChargeOfChartData;
+
+	CChartDataSetting():
+		IsInChargeOfChartData(false)
+	{}
 };
 
 #endif

@@ -4,6 +4,7 @@
 
 #include "stdafx.h"
 #include "trade.h"
+#include "chartdata.h"
 #include "orderbook.h"
 #include "tradepair.h"
 #include "userbalance.h"
@@ -27,7 +28,6 @@ std::map<int, CUserTradeSetting> mapUserTradeSetting;
 std::map<int, std::set<std::string>> mapUserTradeHash;
 std::map<int, mATIAT> mapActualTradeByActualTradeID;
 std::map<int, mUTImAT> mapActualTradeByUserTradeID;
-std::map<int, mUPKmUTAT> mapActualTradeByUserPubKey;
 std::map<int, std::vector<CActualTrade>> mapConflictTrade;
 std::map<int, CActualTradeSetting> mapActualTradeSetting;
 std::map<int, std::set<std::string>> mapActualTradeHash;
@@ -467,7 +467,7 @@ void CUserTradeManager::InputMatchUserSellRequest(CUserTrade userTrade)
 			CActualTrade actualTrade(tradePair.nTradePairID, ExistingTrade->nUserTradeID, ut->nUserTradeID, ut->nPrice, qty, ExistingTrade->nUserPubKey, ut->nUserPubKey, bidTradeFee, 0, askTradeFee, 0, GetAdjustedTime());
 			if (actualTradeManager.GenerateActualTrade(actualTrade))
 			{
-				userBalanceManager.UpdateAfterTradeBalance(ExistingTrade->nUserPubKey, ut->nUserPubKey, tradePair.nCoinID1, tradePair.nCoinID2, 0-bidAmount, qty, 0-qty, askAmount);
+				userBalanceManager.UpdateAfterTradeBalance(ExistingTrade->nUserPubKey, ut->nUserPubKey, tradePair.nCoinID1, tradePair.nCoinID2, 0 - bidAmount, qty, 0 - qty, askAmount);
 			}
 			
 			if (ut->nBalanceQty == 0)
@@ -526,8 +526,7 @@ void CActualTradeManager::InputNewTradePair(int TradePairID)
 	if (!mapActualTradeByActualTradeID.count(TradePairID))
 	{
 		mapActualTradeByActualTradeID.insert(std::make_pair(TradePairID, mATIAT()));
-		mapActualTradeByUserTradeID.insert(std::make_pair(TradePairID, mUTImAT()));
-		mapActualTradeByUserPubKey.insert(std::make_pair(TradePairID, mUPKmUTAT()));
+		mapActualTradeByUserTradeID.insert(std::make_pair(TradePairID, mUTImAT()));		
 		mapConflictTrade.insert(std::make_pair(TradePairID, std::vector<CActualTrade>()));
 		mapActualTradeSetting.insert(std::make_pair(TradePairID, CActualTradeSetting(TradePairID)));
 		mapActualTradeHash.insert(std::make_pair(TradePairID, std::set<std::string>()));
@@ -565,24 +564,49 @@ bool CActualTradeManager::AddNewActualTrade(CActualTrade ActualTrade)
 	
 	std::string tempHash(ActualTrade.GetHash());
 	if (mapActualTradeHash[ActualTrade.nTradePairID].count(tempHash))
-	{
 		return false;
-	}
-	mapActualTradeHash[ActualTrade.nTradePairID].insert(tempHash);
-	std::shared_ptr<CActualTrade> temp = std::make_shared<CActualTrade>(ActualTrade);
-	temp->nCurrentHash = tempHash;	
-	temp->nActualTradeID = ++mapActualTradeSetting[ActualTrade.nTradePairID].nLastActualTradeID;
-	std::pair<int, std::shared_ptr<CActualTrade>> temp2(std::make_pair(temp->nActualTradeID, temp));
-	mapActualTradeByActualTradeID[ActualTrade.nTradePairID].insert(std::make_pair(ActualTrade.nActualTradeID, temp));
+	mapActualTradeHash[ActualTrade.nTradePairID].insert(tempHash);	
+	ActualTrade.nCurrentHash = tempHash;	
+	ActualTrade.nActualTradeID = ++mapActualTradeSetting[ActualTrade.nTradePairID].nLastActualTradeID;
+	std::pair<int, std::shared_ptr<CActualTrade>> temp(std::make_pair(ActualTrade.nActualTradeID, &ActualTrade));
+	mapActualTradeByActualTradeID[ActualTrade.nTradePairID].insert(temp);
 	
+	if (ChartDataManager.IsInChargeOfChartData(ActualTrade.nTradePairID))
+		ChartDataManager.InputNewTrade(ActualTrade.nTradePairID, ActualTrade.nTradePrice, ActualTrade.nTradeQty, userTradeManager.GetAdjustedTime());
+
 	if (mapActualTradeByUserTradeID[ActualTrade.nTradePairID].count(ActualTrade.nUserTrade1))
-		mapActualTradeByUserTradeID[ActualTrade.nTradePairID][ActualTrade.nUserTrade1].insert(temp2);
+		mapActualTradeByUserTradeID[ActualTrade.nTradePairID][ActualTrade.nUserTrade1].insert(temp);
 	else
 	{
-
+		mATIAT temp2;
+		temp2.insert(temp);		
+		mapActualTradeByUserTradeID[ActualTrade.nTradePairID].insert(std::make_pair(ActualTrade.nUserTrade1, temp2));
 	}
+
+	if (mapActualTradeByUserTradeID[ActualTrade.nTradePairID].count(ActualTrade.nUserTrade2))
+		mapActualTradeByUserTradeID[ActualTrade.nTradePairID][ActualTrade.nUserTrade2].insert(temp);
+	else
+	{
+		mATIAT temp2;
+		temp2.insert(temp);
+		mapActualTradeByUserTradeID[ActualTrade.nTradePairID].insert(std::make_pair(ActualTrade.nUserTrade2, temp2));
+	}
+
 	ActualTrade.InformActualTrade();
 	return true;
+}
+
+uint64_t CActualTradeManager::GetTotalTradedQuantity(int TradePairID, int UserTradeID)
+{
+	mATIAT* temp = &mapActualTradeByUserTradeID[TradePairID][UserTradeID];
+	mATIAT::iterator it = temp->begin();
+	uint64_t qty = 0;
+	while (it != temp->end())
+	{
+		qty += it->second->nTradeQty;
+		it++;
+	}
+	return qty;
 }
 
 bool CActualTradeManager::IsActualTradeInList(CActualTrade ActualTrade)
