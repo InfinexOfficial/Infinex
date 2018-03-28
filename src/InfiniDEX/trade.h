@@ -225,6 +225,26 @@ public:
 	std::string nMasternodeInspector;
 	std::string nCurrentHash;
 	uint64_t nTradeTime;
+
+	CActualTrade(int nTradePairID, int nUserTrade1, int nUserTrade2, uint64_t nTradePrice, uint64_t nTradeQty, std::string nUserPubKey1,
+		std::string nUserPubKey2, int64_t nFee1, int nFee1CoinID, int64_t nFee2, int nFee2CoinID, uint64_t nTradeTime) :
+		nActualTradeID(0),
+		nTradePairID(nTradePairID),
+		nUserTrade1(nUserTrade1),
+		nUserTrade2(nUserTrade2),
+		nTradePrice(nTradePrice),
+		nTradeQty(nTradeQty),
+		nTradeAmount(nTradePrice * nTradeQty),
+		nUserPubKey1(nUserPubKey1),
+		nUserPubKey2(nUserPubKey2),
+		nFee1(nFee1),
+		nFee1CoinID(nFee1CoinID),
+		nFee2(nFee2),
+		nFee2CoinID(nFee2CoinID),
+		nMasternodeInspector(""),
+		nCurrentHash(""),
+		nTradeTime(nTradeTime)
+	{}
 	
 	CActualTrade(int nActualTradeID, int nTradePairID, int nUserTrade1, int nUserTrade2, uint64_t nTradePrice, uint64_t nTradeQty, uint64_t nTradeAmount, std::string nUserPubKey1,
 		std::string nUserPubKey2, int64_t nFee1, int nFee1CoinID, int64_t nFee2, int nFee2CoinID, std::string nMasternodeInspector, std::string nCurrentHash, uint64_t nTradeTime) :
@@ -289,6 +309,7 @@ public:
 	void InputNewTradePair(int TradePairID);
 	bool IsActualTradeInList(CActualTrade ActualTrade);
 	void ProcessActualTrade(CActualTrade ActualTrade);
+	bool GenerateActualTrade(CActualTrade& ActualTrade);
 };
 
 #endif

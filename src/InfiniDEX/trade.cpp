@@ -324,6 +324,9 @@ int CUserTradeManager::IsProcessedUserTradeInSequence(CUserTrade UserTrade)
 
 void CUserTradeManager::InputMatchUserBuyRequest(CUserTrade userTrade)
 {
+	if (userTrade.nBalanceQty <= 0)
+		return;
+
 	CTradePair tradePair = tradePairManager.GetTradePair(userTrade.nTradePairID);
 	if (tradePair.nTradePairID != userTrade.nTradePairID)
 		return;
@@ -364,6 +367,9 @@ void CUserTradeManager::InputMatchUserBuyRequest(CUserTrade userTrade)
 		while (Seller != Sellers->second.end())
 		{
 			std::shared_ptr<CUserTrade> ExistingTrade = Seller->second;
+			if (ExistingTrade->nBalanceQty <= 0)
+				continue;
+
 			int qty = 0;
 			if (ut->nBalanceQty <= ExistingTrade->nBalanceQty)
 			{
@@ -372,11 +378,6 @@ void CUserTradeManager::InputMatchUserBuyRequest(CUserTrade userTrade)
 			else
 			{
 				qty = ExistingTrade->nBalanceQty;
-			}
-
-			if (qty <= 0)
-			{
-				//should not be here, let's think what should we do
 			}
 
 			ExistingTrade->nBalanceQty -= qty;
@@ -400,6 +401,9 @@ void CUserTradeManager::InputMatchUserBuyRequest(CUserTrade userTrade)
 
 void CUserTradeManager::InputMatchUserSellRequest(CUserTrade userTrade)
 {
+	if (userTrade.nBalanceQty <= 0)
+		return;
+
 	CTradePair tradePair = tradePairManager.GetTradePair(userTrade.nTradePairID);
 	if (tradePair.nTradePairID != userTrade.nTradePairID)
 		return;
@@ -440,6 +444,9 @@ void CUserTradeManager::InputMatchUserSellRequest(CUserTrade userTrade)
 		while (Buyer != Buyers->second.end())
 		{
 			std::shared_ptr<CUserTrade> ExistingTrade = Buyer->second;
+			if (ExistingTrade->nBalanceQty <= 0)
+				continue;
+
 			int qty = 0;
 			if (ut->nBalanceQty <= ExistingTrade->nBalanceQty)
 			{
@@ -450,22 +457,19 @@ void CUserTradeManager::InputMatchUserSellRequest(CUserTrade userTrade)
 				qty = ExistingTrade->nBalanceQty;
 			}
 
-			if (qty <= 0)
-			{
-				//should not be here, let's think what should we do
-			}
-
 			ExistingTrade->nBalanceQty -= qty;
 			ut->nBalanceQty -= qty;
 			int bidTradeFee = (ExistingTrade->nTradeFee < tradePair.nBidTradeFee) ? ExistingTrade->nTradeFee : tradePair.nBidTradeFee;
 			int askTradeFee = (ut->nTradeFee < tradePair.nAskTradeFee) ? ut->nTradeFee : tradePair.nAskTradeFee;
 			uint64_t bidAmount = GetBidRequiredAmount(ExistingTrade->nPrice, qty, bidTradeFee);
 			uint64_t askAmount = GetAskExpectedAmount(ut->nPrice, qty, askTradeFee);
-
 			uint64_t actualAmount = ut->nPrice*qty;
-			//userBalanceManager.UpdateAfterTradeBalance(ExistingTrade->nUserPubKey, cut->nUserPubKey, tradePair.nCoinInfoID1, tradePair.nCoinInfoID2, -bidAmount, qty, -qty, askAmount);
-			orderBookManager.AdjustAskQuantity(tradePair.nTradePairID, ExistingTrade->nPrice, qty);
-			//actualTradeManager.InputNewCompletedTrade(CActualTrade(ExistingTrade->nUserPubKey, cut->nUserPubKey, tradePair.nTradePairID, ExistingTrade->nPrice, qty, actualAmount, bidAmount - actualAmount, tradePair.nBidTradeFeeCoinID, actualAmount - askAmount, tradePair.nAskTradeFeeCoinID, "", GetAdjustedTime()));
+			CActualTrade actualTrade(tradePair.nTradePairID, ExistingTrade->nUserTradeID, ut->nUserTradeID, ut->nPrice, qty, ExistingTrade->nUserPubKey, ut->nUserPubKey, bidTradeFee, 0, askTradeFee, 0, GetAdjustedTime());
+			if (actualTradeManager.GenerateActualTrade(actualTrade))
+			{
+				userBalanceManager.UpdateAfterTradeBalance(ExistingTrade->nUserPubKey, ut->nUserPubKey, tradePair.nCoinID1, tradePair.nCoinID2, -bidAmount, qty, -qty, askAmount);
+			}
+			
 			if (ut->nBalanceQty == 0)
 				return;
 
@@ -473,6 +477,15 @@ void CUserTradeManager::InputMatchUserSellRequest(CUserTrade userTrade)
 		}
 		++Buyers;
 	}
+}
+
+bool CActualTradeManager::GenerateActualTrade(CActualTrade& ActualTrade)
+{
+	ActualTrade.nActualTradeID = ++mapActualTradeSetting[ActualTrade.nTradePairID].nLastActualTradeID;
+	ActualTrade.nMasternodeInspector = ""; //to fill with MN public key
+	mapActualTradeSetting[ActualTrade.nTradePairID].nLastHash = ActualTrade.nCurrentHash = ActualTrade.GetHash();
+	ActualTrade.Sign();
+	return true;
 }
 
 std::string CActualTrade::GetHash()
