@@ -15,9 +15,9 @@ class COrderBookSetting;
 class COrderBookManager;
 
 typedef std::map<uint64_t, COrderBook> PriceOrderBook; //price and order data
-typedef std::pair<PriceOrderBook, PriceOrderBook> BidAskOrderBook;
-typedef std::pair<COrderBookSetting, BidAskOrderBook> OrderBookInfo;
-extern std::map<int, OrderBookInfo> mapOrderBook;
+extern std::map<int, PriceOrderBook> mapOrderBidBook;
+extern std::map<int, PriceOrderBook> mapOrderAskBook;
+extern std::map<int, COrderBookSetting> mapOrderBookSetting;
 extern COrderBookManager orderBookManager;
 
 class COrderBookSetting

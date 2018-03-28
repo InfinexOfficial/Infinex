@@ -9,7 +9,9 @@
 class COrderBook;
 class COrderBookManager;
 
-std::map<int, OrderBookInfo> mapOrderBook;
+std::map<int, PriceOrderBook> mapOrderBidBook;
+std::map<int, PriceOrderBook> mapOrderAskBook;
+std::map<int, COrderBookSetting> mapOrderBookSetting;
 COrderBookManager orderBookManager;
 
 uint64_t COrderBookManager::GetAdjustedTime()
@@ -19,33 +21,33 @@ uint64_t COrderBookManager::GetAdjustedTime()
 
 bool COrderBookManager::InsertNewBidOrder(int TradePairID, uint64_t Price, int64_t Qty)
 {
-	if (!mapOrderBook.count(TradePairID))
+	if (!mapOrderBidBook.count(TradePairID))
 		return false;
 
-	if (mapOrderBook[TradePairID].second.first.count(Price))
+	if (mapOrderBidBook[TradePairID].count(Price))
 		return false;
 	
 	COrderBook NewOrder(Price, Qty, Price*Qty, "", GetAdjustedTime());
-	mapOrderBook[TradePairID].second.first.insert(std::make_pair(Price, NewOrder));
+	mapOrderBidBook[TradePairID].insert(std::make_pair(Price, NewOrder));
 	return true;
 }
 
 bool COrderBookManager::InsertNewAskOrder(int TradePairID, uint64_t Price, int64_t Qty)
 {
-	if (!mapOrderBook.count(TradePairID))
+	if (!mapOrderAskBook.count(TradePairID))
 		return false;
 
-	if (mapOrderBook[TradePairID].second.second.count(Price))
+	if (mapOrderAskBook[TradePairID].count(Price))
 		return false;
 
 	COrderBook NewOrder(Price, Qty, Price*Qty, "", GetAdjustedTime());
-	mapOrderBook[TradePairID].second.second.insert(std::make_pair(Price, NewOrder));
+	mapOrderAskBook[TradePairID].insert(std::make_pair(Price, NewOrder));
 	return true;
 }
 
 void COrderBookManager::AdjustBidQuantity(int TradePairID, uint64_t Price, int64_t Qty)
 {
-	if (!mapOrderBook.count(TradePairID))
+	if (!mapOrderBidBook.count(TradePairID))
 	{
 		//need to sync with seed server or check node task
 	}
@@ -53,19 +55,19 @@ void COrderBookManager::AdjustBidQuantity(int TradePairID, uint64_t Price, int64
 	if (InsertNewBidOrder(TradePairID, Price, Qty))
 		return;
 
-	int finalQty = mapOrderBook[TradePairID].second.first[Price].nQuantity + Qty;
+	int finalQty = mapOrderBidBook[TradePairID][Price].nQuantity + Qty;
 	if (finalQty < 0)
 	{
 		//some check need to be done here
 		finalQty = 0;
 	}
 
-	mapOrderBook[TradePairID].second.first[Price].nQuantity = finalQty;
+	mapOrderBidBook[TradePairID][Price].nQuantity = finalQty;
 }
 
 void COrderBookManager::AdjustAskQuantity(int TradePairID, uint64_t Price, int64_t Qty)
 {
-	if (!mapOrderBook.count(TradePairID))
+	if (!mapOrderAskBook.count(TradePairID))
 	{
 		//need to sync with seed server or check node task
 	}
@@ -73,19 +75,19 @@ void COrderBookManager::AdjustAskQuantity(int TradePairID, uint64_t Price, int64
 	if (InsertNewAskOrder(TradePairID, Price, Qty))
 		return;
 
-	int finalQty = mapOrderBook[TradePairID].second.second[Price].nQuantity + Qty;
+	int finalQty = mapOrderAskBook[TradePairID][Price].nQuantity + Qty;
 	if (finalQty < 0)
 	{
 		//some check need to be done here
 		finalQty = 0;
 	}
 
-	mapOrderBook[TradePairID].second.second[Price].nQuantity = finalQty;
+	mapOrderAskBook[TradePairID][Price].nQuantity = finalQty;
 }
 
 void COrderBookManager::UpdateBidOrder(int TradePairID, uint64_t Price, uint64_t Qty)
 {
-	if (!mapOrderBook.count(TradePairID))
+	if (!mapOrderBidBook.count(TradePairID))
 	{
 		//need to sync with seed server or check node task
 	}
@@ -93,12 +95,12 @@ void COrderBookManager::UpdateBidOrder(int TradePairID, uint64_t Price, uint64_t
 	if (InsertNewBidOrder(TradePairID, Price, Qty))
 		return;
 
-	mapOrderBook[TradePairID].second.first[Price].nQuantity = Qty;
+	mapOrderBidBook[TradePairID][Price].nQuantity = Qty;
 }
 
 void COrderBookManager::UpdateAskOrder(int TradePairID, uint64_t Price, uint64_t Qty)
 {
-	if (!mapOrderBook.count(TradePairID))
+	if (!mapOrderAskBook.count(TradePairID))
 	{
 		//need to sync with seed server or check node task
 	}
@@ -106,13 +108,10 @@ void COrderBookManager::UpdateAskOrder(int TradePairID, uint64_t Price, uint64_t
 	if (InsertNewAskOrder(TradePairID, Price, Qty))
 		return;
 
-	mapOrderBook[TradePairID].second.second[Price].nQuantity = Qty;
+	mapOrderAskBook[TradePairID][Price].nQuantity = Qty;
 }
 
 void COrderBookManager::AssignRole(int TradePairID)
 {
-	if (!mapOrderBook.count(TradePairID))
-	{
-		
-	}
+	
 }
