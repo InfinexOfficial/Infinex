@@ -33,7 +33,6 @@ enum infinidex_node_role_enum {
 };
 
 class CNodeRole;
-class CNodeRoleManager;
 
 typedef std::pair <std::string, std::string> pairIPPubkey;
 typedef std::pair <pairIPPubkey, std::vector<std::shared_ptr<CNodeRole>>> pairIPPubKeyNodeRole;
@@ -81,12 +80,6 @@ public:
 	{}
 
 	bool Verify();
-};
-
-class CNodeRoleManager
-{
-public:
-	
 };
 
 #endif

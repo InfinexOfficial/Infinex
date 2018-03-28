@@ -201,6 +201,17 @@ public:
 		nLastHash(""),
 		ToVerifyActualTrade(false)
 	{}
+
+	CActualTradeSetting():
+		nTradePairID(0),
+		nSyncInProgress(false),
+		nLastTradeMaxPreTimeDistance(3000),
+		nToStoreLowerLimit(50),
+		nToStoreUpperLimit(100),
+		nLastActualTradeID(0),
+		nLastHash(""),
+		ToVerifyActualTrade(false)
+	{}
 };
 
 class CActualTrade

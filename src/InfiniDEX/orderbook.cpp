@@ -25,7 +25,7 @@ bool COrderBookManager::InsertNewBidOrder(int TradePairID, uint64_t Price, int64
 	if (mapOrderBook[TradePairID].second.first.count(Price))
 		return false;
 	
-	COrderBook NewOrder(Price, Qty, Price*Qty, GetAdjustedTime());
+	COrderBook NewOrder(Price, Qty, Price*Qty, "", GetAdjustedTime());
 	mapOrderBook[TradePairID].second.first.insert(std::make_pair(Price, NewOrder));
 	return true;
 }
@@ -38,7 +38,7 @@ bool COrderBookManager::InsertNewAskOrder(int TradePairID, uint64_t Price, int64
 	if (mapOrderBook[TradePairID].second.second.count(Price))
 		return false;
 
-	COrderBook NewOrder(Price, Qty, Price*Qty, GetAdjustedTime());
+	COrderBook NewOrder(Price, Qty, Price*Qty, "", GetAdjustedTime());
 	mapOrderBook[TradePairID].second.second.insert(std::make_pair(Price, NewOrder));
 	return true;
 }

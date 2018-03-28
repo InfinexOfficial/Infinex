@@ -15,6 +15,8 @@ class CUserBalanceManager;
 class CGlobalUserBalanceHandler;
 
 typedef std::map<std::string, CUserBalance> mapUserBalanceByPubKey;
+typedef std::map<int, CUserBalance> mapUserBalanceByCoinID;
+extern std::map<std::string, mapUserBalanceByCoinID> mapGlobalUserBalance;
 extern std::map<int, mapUserBalanceByPubKey> mapUserBalance;
 extern std::map<int, CUserBalanceSetting> mapUserBalanceSetting;
 extern CGlobalUserBalanceHandler globalUserBalanceHandler;
@@ -38,6 +40,14 @@ class CGlobalUserBalanceHandler
 {
 public:
 	bool nIsInChargeOfGlobalUserBalance;
+
+	CGlobalUserBalanceHandler(bool nIsInChargeOfGlobalUserBalance):
+		nIsInChargeOfGlobalUserBalance(nIsInChargeOfGlobalUserBalance)
+	{}
+
+	CGlobalUserBalanceHandler():
+		nIsInChargeOfGlobalUserBalance(false)
+	{}
 };
 
 class CUserBalanceSetting
@@ -74,9 +84,15 @@ public:
 	int64_t nPendingBalance;
 	int64_t nTotalBalance;
 	uint64_t nInSyncTime;
+	int nLastDepositID;
+	int nLastWithdrawID;
+	int nLastActualTradeID;
+	int nLastUserTradeID;
 	uint64_t nLastUpdateTime;
 
-	CUserBalance(std::string nUserPubKey, int nCoinID, int64_t nAvailableBalance, int64_t nInExchangeBalance, int64_t nInDisputeBalance, int64_t nPendingBalance, int64_t nTotalBalance, uint64_t nInSyncTime, uint64_t nLastUpdateTime) :
+	CUserBalance(std::string nUserPubKey, int nCoinID, int64_t nAvailableBalance, int64_t nInExchangeBalance, int64_t nInDisputeBalance, 
+		int64_t nPendingBalance, int64_t nTotalBalance, uint64_t nInSyncTime, int nLastDepositID, int nLastWithdrawID, 
+		int nLastActualTradeID, int nLastUserTradeID, uint64_t nLastUpdateTime) :
 		nUserPubKey(nUserPubKey),
 		nCoinID(nCoinID),
 		nAvailableBalance(nAvailableBalance),
@@ -85,6 +101,10 @@ public:
 		nPendingBalance(nPendingBalance),
 		nTotalBalance(nTotalBalance),
 		nInSyncTime(nInSyncTime),
+		nLastDepositID(nLastDepositID),
+		nLastWithdrawID(nLastWithdrawID),
+		nLastActualTradeID(nLastActualTradeID),
+		nLastUserTradeID(nLastUserTradeID),
 		nLastUpdateTime(nLastUpdateTime)
 	{}
 
@@ -97,6 +117,10 @@ public:
 		nPendingBalance(0),
 		nTotalBalance(0),
 		nInSyncTime(0),
+		nLastDepositID(0),
+		nLastWithdrawID(0),
+		nLastActualTradeID(0),
+		nLastUserTradeID(0),
 		nLastUpdateTime(0)
 	{}
 
@@ -110,11 +134,13 @@ private:
 
 public:
 	CUserBalanceManager() {}
+	int GetLastDepositID(int CoinID, std::string UserPubKey);
+	bool IsInChargeOfGlobalCoinBalance();
 	bool IsInChargeOfCoinBalance(int CoinID);
 	bool IsCoinInList(int CoinID);
 	bool IsFurtherInTime(int CoinID, std::string UserPubKey, uint64_t time);
 	bool IsUserBalanceExist(int CoinID, std::string UserPubKey);
-	bool AddNewUserBalance(CUserBalance NewUserBalance);
+	bool AddUserBalance(CUserBalance UserBalance);
 	bool VerifyUserBalance(int CoinID);
 	userbalance_to_exchange_enum_t BalanceToExchange(int CoinID, std::string UserPubKey, uint64_t amount);
 	exchange_to_userbalance_enum_t ExchangeToBalance(int CoinID, std::string UserPubKey, uint64_t amount);

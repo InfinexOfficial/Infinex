@@ -10,13 +10,25 @@
 class CUserBalance;
 class CUserBalanceManager;
 
+std::map<std::string, mapUserBalanceByCoinID> mapGlobalUserBalance;
 std::map<int, mapUserBalanceByPubKey> mapUserBalance;
 std::map<int, CUserBalanceSetting> mapUserBalanceSetting;
+CGlobalUserBalanceHandler globalUserBalanceHandler;
 CUserBalanceManager userBalanceManager;
 
 bool CUserBalance::VerifySignature()
 {
 	return true;
+}
+
+int CUserBalanceManager::GetLastDepositID(int CoinID, std::string UserPubKey)
+{
+	return mapUserBalance[CoinID][UserPubKey].nLastDepositID;
+}
+
+bool CUserBalanceManager::IsInChargeOfGlobalCoinBalance()
+{
+	return globalUserBalanceHandler.nIsInChargeOfGlobalUserBalance;
 }
 
 bool CUserBalanceManager::IsInChargeOfCoinBalance(int CoinID)
@@ -53,19 +65,22 @@ bool CUserBalanceManager::IsUserBalanceExist(int CoinID, std::string UserPubKey)
 }
 
 //change to enum
-bool CUserBalanceManager::AddNewUserBalance(CUserBalance NewUserBalance)
+bool CUserBalanceManager::AddUserBalance(CUserBalance UserBalance)
 {
-	if (!IsInChargeOfCoinBalance(NewUserBalance.nCoinID))
-		return false;	
-
-	if (!NewUserBalance.VerifySignature())
+	if (!UserBalance.VerifySignature())
 		return false;
 
-	if (!IsUserBalanceExist(NewUserBalance.nCoinID, NewUserBalance.nUserPubKey))
-		mapUserBalance[NewUserBalance.nCoinID].insert(std::make_pair(NewUserBalance.nUserPubKey, NewUserBalance));
-	else if (IsFurtherInTime(NewUserBalance.nCoinID, NewUserBalance.nUserPubKey, NewUserBalance.nLastUpdateTime))
-		mapUserBalance[NewUserBalance.nCoinID][NewUserBalance.nUserPubKey] = NewUserBalance;	
-	return true;
+	if (IsInChargeOfCoinBalance(UserBalance.nCoinID))
+	{
+		if (!IsUserBalanceExist(UserBalance.nCoinID, UserBalance.nUserPubKey))
+			mapUserBalance[UserBalance.nCoinID].insert(std::make_pair(UserBalance.nUserPubKey, UserBalance));
+		else if (IsFurtherInTime(UserBalance.nCoinID, UserBalance.nUserPubKey, UserBalance.nLastUpdateTime))
+			mapUserBalance[UserBalance.nCoinID][UserBalance.nUserPubKey] = UserBalance;
+
+		return true;
+	}
+
+	return false;
 }
 
 userbalance_to_exchange_enum_t CUserBalanceManager::BalanceToExchange(int CoinID, std::string UserPubKey, uint64_t amount)

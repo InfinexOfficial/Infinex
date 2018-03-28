@@ -467,7 +467,7 @@ void CUserTradeManager::InputMatchUserSellRequest(CUserTrade userTrade)
 			CActualTrade actualTrade(tradePair.nTradePairID, ExistingTrade->nUserTradeID, ut->nUserTradeID, ut->nPrice, qty, ExistingTrade->nUserPubKey, ut->nUserPubKey, bidTradeFee, 0, askTradeFee, 0, GetAdjustedTime());
 			if (actualTradeManager.GenerateActualTrade(actualTrade))
 			{
-				userBalanceManager.UpdateAfterTradeBalance(ExistingTrade->nUserPubKey, ut->nUserPubKey, tradePair.nCoinID1, tradePair.nCoinID2, -bidAmount, qty, -qty, askAmount);
+				userBalanceManager.UpdateAfterTradeBalance(ExistingTrade->nUserPubKey, ut->nUserPubKey, tradePair.nCoinID1, tradePair.nCoinID2, 0-bidAmount, qty, 0-qty, askAmount);
 			}
 			
 			if (ut->nBalanceQty == 0)
@@ -661,4 +661,14 @@ void CActualTradeManager::ProcessActualTrade(CActualTrade ActualTrade)
 	{
 
 	}
+}
+
+bool CActualTradeManager::IsTradePairInList(int TradePairID)
+{
+	return true;
+}
+
+bool CActualTradeManager::IsActualTradeInList(int TradePairID, int ActualTradeID)
+{
+	return true;
 }

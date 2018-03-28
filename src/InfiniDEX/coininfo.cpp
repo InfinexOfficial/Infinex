@@ -40,7 +40,7 @@ bool CCoinInfoManager::GetCoinInfoBySymbol(std::string Symbol, CCoinInfo &CoinIn
 	return true;
 }
 
-void CCoinInfoManager::UpdateCoinInfo(CCoinInfo CoinInfo)
+void CCoinInfoManager::UpdateCoinInfo(CCoinInfo &CoinInfo)
 {
 	if (IsCoinInCompleteListByCoinID(CoinInfo.nCoinInfoID))
 	{

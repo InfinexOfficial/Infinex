@@ -73,7 +73,7 @@ public:
 	bool IsCoinInCompleteListBySymbol(std::string Symbol);
 	bool GetCoinInfoByCoinID(int CoinID, CCoinInfo &CoinInfo);
 	bool GetCoinInfoBySymbol(std::string Symbol, CCoinInfo &CoinInfo);
-	void UpdateCoinInfo(CCoinInfo CoinInfo);
+	void UpdateCoinInfo(CCoinInfo &CoinInfo);
 };
 
 #endif

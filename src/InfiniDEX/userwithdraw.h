@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <memory>
 #include <userconnection.h>
 
 class CUserWithdraw;

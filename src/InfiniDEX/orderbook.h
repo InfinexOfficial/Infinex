@@ -50,15 +50,13 @@ public:
 	uint64_t nAmount;
 	std::string nMNPubKey;
 	uint64_t nLastUpdateTime;
-	std::string nHash;
 
-	COrderBook(uint64_t nOrderPrice, uint64_t nQuantity, uint64_t nAmount, std::string nMNPubKey, uint64_t nLastUpdateTime, std::string nHash) :
+	COrderBook(uint64_t nOrderPrice, uint64_t nQuantity, uint64_t nAmount, std::string nMNPubKey, uint64_t nLastUpdateTime) :
 		nOrderPrice(nOrderPrice),
 		nQuantity(nQuantity),
 		nAmount(nAmount),
 		nMNPubKey(nMNPubKey),
-		nLastUpdateTime(nLastUpdateTime),
-		nHash(nHash)
+		nLastUpdateTime(nLastUpdateTime)
 	{}
 
 	COrderBook() :
@@ -66,8 +64,7 @@ public:
 		nQuantity(0),
 		nAmount(0),
 		nMNPubKey(""),
-		nLastUpdateTime(0),
-		nHash("")
+		nLastUpdateTime(0)
 	{}
 
 	bool Verify();

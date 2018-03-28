@@ -26,6 +26,11 @@ void CUserDepositManager::ProcessMessage(CNode* pfrom, std::string& strCommand, 
 
 }
 
+bool CUserDepositManager::IsInChargeOfUserDepositInfo(int CoinID)
+{
+	return mapUserDepositSetting[CoinID].ProvideUserDepositInfo;
+}
+
 void CUserDepositManager::ToProvideUserDepositInfo(int CoinID, bool toProcess)
 {
 	mapUserDepositSetting[CoinID].ProvideUserDepositInfo = toProcess;
@@ -64,8 +69,11 @@ void CUserDepositManager::RequestPendingDepositData(int StartingID)
 
 }
 
-void CUserDepositManager::AddNewPendingDeposit(CUserDeposit UserDeposit)
+void CUserDepositManager::AddPendingDeposit(CUserDeposit UserDeposit)
 {
+	if (!IsInChargeOfUserDepositInfo(UserDeposit.nCoinID))
+		return;
+	
 	if (!UserDeposit.Verify())
 		return;
 
@@ -79,10 +87,8 @@ void CUserDepositManager::AddNewPendingDeposit(CUserDeposit UserDeposit)
 			return;
 		}
 	}
-	else if (IsUserPendingDepositInList(UserDeposit))
-	{
+	else if (IsUserDepositInList(UserDeposit))
 		return;
-	}
 
 	int UserLastPendingDepositID = GetLastUserPendingDepositID(UserDeposit.nUserPubKey, UserDeposit.nCoinID);
 	if (UserLastPendingDepositID != (UserDeposit.nUserDepositID - 1))
@@ -92,11 +98,15 @@ void CUserDepositManager::AddNewPendingDeposit(CUserDeposit UserDeposit)
 		return;
 	}
 
-	userBalanceManager.UpdateUserPendingBalance(UserDeposit.nCoinID, UserDeposit.nUserPubKey, UserDeposit.nDepositAmount);
 	mapUserDeposit[UserDeposit.nCoinID][UserDeposit.nUserPubKey].insert(std::make_pair(UserDeposit.nUserDepositID, UserDeposit));
+	if (userBalanceManager.GetLastDepositID(UserDeposit.nCoinID, UserDeposit.nUserPubKey) > UserDeposit.nUserDepositID)
+		return;
+
+	userBalanceManager.AdjustUserPendingBalance(UserDeposit.nCoinID, UserDeposit.nUserPubKey, UserDeposit.nDepositAmount);
+	
 }
 
-bool CUserDepositManager::IsUserPendingDepositInList(CUserDeposit UserDeposit)
+bool CUserDepositManager::IsUserDepositInList(CUserDeposit UserDeposit)
 {
 	return mapUserDeposit[UserDeposit.nCoinID][UserDeposit.nUserPubKey].count(UserDeposit.nUserDepositID);
 }
@@ -115,12 +125,13 @@ void CUserDepositManager::RequestConfirmDepositData(int StartingID)
 
 }
 
-void CUserDepositManager::AddNewConfirmDeposit(CUserDeposit UserDeposit)
+void CUserDepositManager::AddConfirmDeposit(CUserDeposit UserDeposit)
 {
 	if (!UserDeposit.Verify())
-	{
 		return;
-	}
+
+	if (UserDeposit.nDepositStatus != USER_DEPOSIT_CONFIRMED)
+		return;
 
 	if (!IsUserInList(UserDeposit.nUserPubKey, UserDeposit.nCoinID))
 	{
@@ -132,9 +143,10 @@ void CUserDepositManager::AddNewConfirmDeposit(CUserDeposit UserDeposit)
 			return;
 		}
 	}
-	else if (IsUserConfirmDepositInList(UserDeposit))
+	else if (IsUserDepositInList(UserDeposit))
 	{
-		return;
+		if (mapUserDeposit[UserDeposit.nCoinID][UserDeposit.nUserPubKey][UserDeposit.nUserDepositID].nDepositStatus == USER_DEPOSIT_CONFIRMED)
+			return;
 	}
 
 	int UserLastConfirmDepositID = GetLastUserConfirmDepositID(UserDeposit.nUserPubKey, UserDeposit.nCoinID);
@@ -145,13 +157,11 @@ void CUserDepositManager::AddNewConfirmDeposit(CUserDeposit UserDeposit)
 		return;
 	}
 
-	userBalanceManager.UpdateUserAvailableBalance(UserDeposit.nCoinID, UserDeposit.nUserPubKey, UserDeposit.nDepositAmount);
 	mapUserDeposit[UserDeposit.nCoinID][UserDeposit.nUserPubKey].insert(std::make_pair(UserDeposit.nUserDepositID, UserDeposit));
-}
+	if (userBalanceManager.GetLastDepositID(UserDeposit.nCoinID, UserDeposit.nUserPubKey) > UserDeposit.nUserDepositID)
+		return;
 
-bool CUserDepositManager::IsUserConfirmDepositInList(CUserDeposit UserDeposit)
-{
-	return mapUserDeposit[UserDeposit.nCoinID][UserDeposit.nUserPubKey].count(UserDeposit.nUserDepositID);
+	userBalanceManager.AdjustUserAvailableBalance(UserDeposit.nCoinID, UserDeposit.nUserPubKey, UserDeposit.nDepositAmount);
 }
 
 int CUserDepositManager::GetLastUserConfirmDepositID(std::string UserPubKey, int CoinID)

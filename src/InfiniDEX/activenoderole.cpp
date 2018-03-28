@@ -4,12 +4,10 @@
 
 #include "stdafx.h"
 #include "activenoderole.h"
-#include "actualtrade.h"
 #include "chartdata.h"
 #include "coininfo.h"
 #include "markettradehistory.h"
 #include "orderbook.h"
-#include "usertrade.h"
 #include "userwithdraw.h"
 #include "userdeposit.h"
 #include "usertradehistory.h"

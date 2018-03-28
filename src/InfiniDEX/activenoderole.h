@@ -12,9 +12,10 @@
 #include <noderole.h>
 
 class CNodeRoleManager;
-
+extern CNodeRoleManager nodeRoleManager;
 class CNodeRoleManager
 {
+public:
 	bool IsInCharge(int TradePairID, infinidex_node_role_enum RoleType);
 	bool AddNewRole(CNodeRole Role);
 	bool RemoveRole(int TradePairID, int NodeRoleID);

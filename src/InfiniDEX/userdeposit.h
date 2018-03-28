@@ -10,6 +10,13 @@
 #include <map>
 #include "userconnection.h"
 
+enum userdeposit_status_enum {
+	USER_DEPOSIT_EMPTY = 0,
+	USER_DEPOSIT_INVALID = 1,
+	USER_DEPOSIT_PENDING = 2,
+	USER_DEPOSIT_CONFIRMED = 3
+};
+
 class CUserDeposit;
 class CUserDepositSetting;
 class CUserDepositManager;
@@ -52,18 +59,18 @@ public:
 	uint64_t nDepositAmount;
 	uint64_t nBlockNumber;
 	uint64_t nDepositTime;
-	bool nValidDeposit;
+	userdeposit_status_enum nDepositStatus;
 	std::string nRemark;
 	uint64_t nLastUpdateTime;
 
-	CUserDeposit(int nUserDepositID, std::string nUserPubKey, int nCoinID, uint64_t nDepositAmount, uint64_t nBlockNumber, uint64_t nDepositTime, bool nValidDeposit, std::string nRemark, uint64_t nLastUpdateTime) :
+	CUserDeposit(int nUserDepositID, std::string nUserPubKey, int nCoinID, uint64_t nDepositAmount, uint64_t nBlockNumber, uint64_t nDepositTime, userdeposit_status_enum nDepositStatus, std::string nRemark, uint64_t nLastUpdateTime) :
 		nUserDepositID(nUserDepositID),
 		nUserPubKey(nUserPubKey),
 		nCoinID(nCoinID),
 		nDepositAmount(nDepositAmount),
 		nBlockNumber(nBlockNumber),
 		nDepositTime(nDepositTime),
-		nValidDeposit(nValidDeposit),
+		nDepositStatus(nDepositStatus),
 		nRemark(nRemark),
 		nLastUpdateTime(nLastUpdateTime)
 	{}
@@ -75,7 +82,7 @@ public:
 		nDepositAmount(0),
 		nBlockNumber(0),
 		nDepositTime(0),
-		nValidDeposit(false),
+		nDepositStatus(USER_DEPOSIT_EMPTY),
 		nRemark(""),
 		nLastUpdateTime(0)
 	{}
@@ -93,6 +100,7 @@ private:
 public:
 	CUserDepositManager() {}
 	void ProcessMessage(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	bool IsInChargeOfUserDepositInfo(int CoinID);
 	void ToProvideUserDepositInfo(int CoinID, bool toProcess);
 	void SetSyncInProgress(int CoinID, bool status);
 	void AddCoinToList(int CoinID);
@@ -100,12 +108,11 @@ public:
 	void AddNewUser(std::string UserPubKey, int CoinID);
 	bool IsUserInList(std::string UserPubKey, int CoinID);
 	void RequestPendingDepositData(int StartingID);
-	void AddNewPendingDeposit(CUserDeposit UserDeposit);	
-	bool IsUserPendingDepositInList(CUserDeposit UserDeposit);
+	void AddPendingDeposit(CUserDeposit UserDeposit);
 	int GetLastUserPendingDepositID(std::string UserPubKey, int CoinID);
 	void RequestConfirmDepositData(int StartingID);
-	void AddNewConfirmDeposit(CUserDeposit UserDeposit);
-	bool IsUserConfirmDepositInList(CUserDeposit UserDeposit);
+	void AddConfirmDeposit(CUserDeposit UserDeposit);
+	bool IsUserDepositInList(CUserDeposit UserDeposit);
 	int GetLastUserConfirmDepositID(std::string UserPubKey, int CoinID);
 };
 
