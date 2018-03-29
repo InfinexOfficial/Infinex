@@ -55,6 +55,10 @@ public:
 	bool nSyncInProgress;
 	bool nIsInChargeOfProcessUserTrade;
 	bool nIsInChargeOfMatchUserTrade;
+	bool nIsInChargeOfChartData;
+	bool nIsInChargeOfMarketTradeHistory;
+	bool nIsInChargeOfUserTradeHistory;
+	bool nIsInChargeOfUserBalance;
 
 	CUserTradeSetting() :
 		nTradePairID(0),
@@ -65,7 +69,11 @@ public:
 		nMNPubKey(""),
 		nSyncInProgress(false),
 		nIsInChargeOfProcessUserTrade(false),
-		nIsInChargeOfMatchUserTrade(false)
+		nIsInChargeOfMatchUserTrade(false),
+		nIsInChargeOfChartData(false),
+		nIsInChargeOfMarketTradeHistory(false),
+		nIsInChargeOfUserTradeHistory(false),
+		nIsInChargeOfUserBalance(false)
 	{}
 
 	bool IsValidSubmissionTimeAndUpdate(uint64_t time);
@@ -168,12 +176,13 @@ public:
 	bool IsSubmittedAskAmountValid(CUserTrade userTrade, int nTradeFee);
 	void ProcessUserBuyRequest(CUserTrade userTrade);
 	void ProcessUserSellRequest(CUserTrade userTrade);
+	bool InputUserBuyTrade(std::shared_ptr<CUserTrade>& userTrade);
+	bool InputUserSellTrade(std::shared_ptr<CUserTrade>& userTrade);
 	void InputMatchUserBuyRequest(CUserTrade userTrade);
 	void InputMatchUserSellRequest(CUserTrade userTrade);
 	uint64_t GetBidRequiredAmount(uint64_t Price, uint64_t Qty, int TradeFee);
 	uint64_t GetAskExpectedAmount(uint64_t Price, uint64_t Qty, int TradeFee);
-	bool AddUserBuyTradeIntoList(const std::shared_ptr<CUserTrade>& userTrade);
-	bool AddUserSellTradeIntoList(const std::shared_ptr<CUserTrade>& userTrade);
+	
 	int64_t GetBalanceAmount(int TradePairID, uint64_t Price, int UserTradeID);
 };
 
@@ -313,8 +322,6 @@ public:
 	bool AddNewActualTrade(CActualTrade ActualTrade); //process by same node
 	bool AddNewActualTrade(CNode* node, CConnman& connman, CActualTrade ActualTrade); //data from other node
 	std::vector<std::string> FindDuplicateTrade(int TradePairID);
-	void InitiateCompleteResync(int TradePairID);
-	void InitialSync(int TradePairID);
 	void InputNewTradePair(int TradePairID);
 	bool IsActualTradeInList(CActualTrade ActualTrade);
 	void ProcessActualTrade(CActualTrade ActualTrade);
