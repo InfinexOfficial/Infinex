@@ -45,16 +45,14 @@ public:
 	uint64_t nMinimumTradeAmount;
 	uint64_t nMaximumTradeAmount;
 	int nBidTradeFee; //regular trade fee in percentage for bid, can be negative as form of incentive
-	int nBidTradeFeeCoinID; //trade fee coin type payout for bid
 	int nAskTradeFee; //regular trade fee in percentage for ask, can be negative as form of incentive
-	int nAskTradeFeeCoinID; //trade fee coin type payout for ask
 	std::string nStatus;
 	uint64_t nLastUpdate;
 	std::string nHash;
 
 	CTradePair(int nTradePairID, std::string nName, int nCoinID1, std::string nSymbol1, int nCoinID2, std::string nSymbol2,
 		bool nTradeEnabled, uint64_t nMinimumTradeQuantity, uint64_t nMaximumTradeQuantity, uint64_t nMinimumTradeAmount, uint64_t nMaximumTradeAmount,
-		int nBidTradeFee, int nBidTradeFeeCoinID, int nAskTradeFee, int nAskTradeFeeCoinID, std::string nStatus, uint64_t nLastUpdate, std::string nHash) :
+		int nBidTradeFee, int nAskTradeFee, std::string nStatus, uint64_t nLastUpdate, std::string nHash) :
 		nTradePairID(nTradePairID),
 		nName(nName),
 		nCoinID1(nCoinID1),
@@ -67,9 +65,7 @@ public:
 		nMinimumTradeAmount(nMinimumTradeAmount),
 		nMaximumTradeAmount(nMaximumTradeAmount),
 		nBidTradeFee(nBidTradeFee),
-		nBidTradeFeeCoinID(nBidTradeFeeCoinID),
 		nAskTradeFee(nAskTradeFee),
-		nAskTradeFeeCoinID(nAskTradeFeeCoinID),
 		nStatus(nStatus),
 		nLastUpdate(nLastUpdate),
 		nHash(nHash)
@@ -88,9 +84,7 @@ public:
 		nMinimumTradeAmount(0),
 		nMaximumTradeAmount(0),
 		nBidTradeFee(0),
-		nBidTradeFeeCoinID(0),
 		nAskTradeFee(0),
-		nAskTradeFeeCoinID(0),
 		nStatus(""),
 		nLastUpdate(0),
 		nHash("")
