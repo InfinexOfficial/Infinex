@@ -59,6 +59,7 @@ public:
 	bool nIsInChargeOfMarketTradeHistory;
 	bool nIsInChargeOfUserTradeHistory;
 	bool nIsInChargeOfUserBalance;
+	bool nIsInChargeOfOrderBook;
 
 	CUserTradeSetting() :
 		nTradePairID(0),
@@ -73,7 +74,8 @@ public:
 		nIsInChargeOfChartData(false),
 		nIsInChargeOfMarketTradeHistory(false),
 		nIsInChargeOfUserTradeHistory(false),
-		nIsInChargeOfUserBalance(false)
+		nIsInChargeOfUserBalance(false),
+		nIsInChargeOfOrderBook(false)
 	{}
 
 	bool IsValidSubmissionTimeAndUpdate(uint64_t time);
@@ -161,28 +163,21 @@ private:
 	std::vector<unsigned char> vchSig;
 
 public:
-	uint64_t GetAdjustedTime();
-	bool IsTradePairInList(int TradePairID);
-	bool IsSyncInProgress(int TradePairID);
-	bool IsInChargeOfProcessUserTrade(int TradePairID);
-	bool IsInChargeOfMatchUserTrade(int TradePairID);
+	uint64_t GetAdjustedTime();	
 	bool IsUserTradeInList(int TradePairID, std::string UserHash);
 	void AddToUserTradeList(int TradePairID, std::string UserHash);
-	bool IsProcessedUserTradeInList(CUserTrade UserTrade);
-	int IsProcessedUserTradeInSequence(CUserTrade UserTrade);
-	bool IsSubmittedBidValid(CUserTrade UserTrade, CTradePair TradePair);
-	bool IsSubmittedAskValid(CUserTrade UserTrade, CTradePair TradePair);
-	bool IsSubmittedBidAmountValid(CUserTrade userTrade, int nTradeFee);
-	bool IsSubmittedAskAmountValid(CUserTrade userTrade, int nTradeFee);
-	void ProcessUserBuyRequest(CUserTrade userTrade);
-	void ProcessUserSellRequest(CUserTrade userTrade);
-	bool InputUserBuyTrade(std::shared_ptr<CUserTrade>& userTrade);
-	bool InputUserSellTrade(std::shared_ptr<CUserTrade>& userTrade);
-	void InputMatchUserBuyRequest(CUserTrade userTrade);
-	void InputMatchUserSellRequest(CUserTrade userTrade);
 	uint64_t GetBidRequiredAmount(uint64_t Price, uint64_t Qty, int TradeFee);
 	uint64_t GetAskExpectedAmount(uint64_t Price, uint64_t Qty, int TradeFee);
-	
+	bool IsSubmittedBidValid(std::shared_ptr<CUserTrade>& userTrade, CTradePair TradePair);
+	bool IsSubmittedAskValid(std::shared_ptr<CUserTrade>& userTrade, CTradePair TradePair);
+	bool IsSubmittedBidAmountValid(std::shared_ptr<CUserTrade>& userTrade, int nTradeFee);
+	bool IsSubmittedAskAmountValid(std::shared_ptr<CUserTrade>& userTrade, int nTradeFee);
+	void ProcessUserBuyRequest(std::shared_ptr<CUserTrade>& userTrade);
+	void ProcessUserSellRequest(std::shared_ptr<CUserTrade>& userTrade);
+	bool InputUserBuyTrade(std::shared_ptr<CUserTrade>& userTrade);
+	bool InputUserSellTrade(std::shared_ptr<CUserTrade>& userTrade);
+	void InputMatchUserBuyRequest(std::shared_ptr<CUserTrade>& userTrade, bool InitialCheck = false);
+	void InputMatchUserSellRequest(std::shared_ptr<CUserTrade>& userTrade, bool InitialCheck = false);	
 	int64_t GetBalanceAmount(int TradePairID, uint64_t Price, int UserTradeID);
 };
 

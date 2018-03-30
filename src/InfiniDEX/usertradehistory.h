@@ -38,6 +38,19 @@ public:
 	bool nIsBid;
 	uint64_t nTradeProcessTime;
 
+	CUserTradeHistory(int nTradePairID, std::string nUser1PubKey, std::string nUser2PubKey, uint64_t nTradePrice, uint64_t nQty,
+		uint64_t nAmount, bool nIsBid, uint64_t nTradeProcessTime) :
+		nTradeHistoryID(0),
+		nTradePairID(nTradePairID),
+		nUser1PubKey(nUser1PubKey),
+		nUser2PubKey(nUser2PubKey),
+		nTradePrice(nTradePrice),
+		nQty(nQty),
+		nAmount(nAmount),
+		nIsBid(nIsBid),
+		nTradeProcessTime(nTradeProcessTime)
+	{}
+
 	CUserTradeHistory(int nTradeHistoryID, int nTradePairID, std::string nUser1PubKey, std::string nUser2PubKey, uint64_t nTradePrice, uint64_t nQty, 
 		uint64_t nAmount, bool nIsBid, uint64_t nTradeProcessTime) :
 		nTradeHistoryID(nTradeHistoryID),
