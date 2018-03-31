@@ -10,6 +10,8 @@ class CNodeRole;
 std::map<int, pairIPPubKeyNodeRole> mapTradePairGlobalRoleByIPPubKey;
 std::map<int, pairNodeRoleByRole> mapTradePairGlobalRoleByRole;
 std::map<int, std::vector<std::shared_ptr<CNodeRole>>> mapTradePairNodeRole;
+std::map<int, std::shared_ptr<CNodeRole>> mapNodeRoleByID; 
+std::map<int, std::shared_ptr<CNodeRole>> mapNodeRole;
 
 bool CNodeRole::VerifySignature()
 {

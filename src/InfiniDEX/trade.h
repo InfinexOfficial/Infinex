@@ -53,6 +53,8 @@ public:
 	uint64_t nLastUserTradeTime;
 	std::string nMNPubKey;
 	bool nSyncInProgress;
+	bool nInChargeOfBidBroadcast;
+	bool nInChargeOfAskBroadcast;
 	bool nIsInChargeOfProcessUserTrade;
 	bool nIsInChargeOfMatchUserTrade;
 
@@ -64,6 +66,8 @@ public:
 		nLastUserTradeID(0),
 		nMNPubKey(nMNPubKey),
 		nSyncInProgress(false),
+		nInChargeOfBidBroadcast(false),
+		nInChargeOfAskBroadcast(false),
 		nIsInChargeOfProcessUserTrade(false),
 		nIsInChargeOfMatchUserTrade(false)
 	{}
@@ -76,6 +80,8 @@ public:
 		nLastUserTradeID(0),
 		nMNPubKey(""),
 		nSyncInProgress(false),
+		nInChargeOfBidBroadcast(false),
+		nInChargeOfAskBroadcast(false),
 		nIsInChargeOfProcessUserTrade(false),
 		nIsInChargeOfMatchUserTrade(false)
 	{}
@@ -166,6 +172,8 @@ private:
 
 public:
 	uint64_t GetAdjustedTime();
+	void AssignBidBroadcastRole(int TradePairID);
+	void AssignAskBroadcastRole(int TradePairID);
 	void InitTradePair(int TradePairID);
 	bool AssignNodeToProcessUserTrade(int TradePairID, bool toAssign = true);
 	bool AssignNodeToMatchUserTrade(int TradePairID, bool toAssign = true);

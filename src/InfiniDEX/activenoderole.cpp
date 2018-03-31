@@ -8,9 +8,13 @@
 #include "coininfo.h"
 #include "markettradehistory.h"
 #include "orderbook.h"
-#include "userwithdraw.h"
+#include "trade.h"
+#include "tradepair.h"
+#include "userbalance.h"
+#include "userconnection.h"
 #include "userdeposit.h"
 #include "usertradehistory.h"
+#include "userwithdraw.h"
 
 CNodeRoleManager nodeRoleManager;
 
@@ -29,12 +33,34 @@ bool CNodeRoleManager::IsInCharge(int TradePairID, infinidex_node_role_enum Role
 	return false;
 }
 
-bool CNodeRoleManager::AddNewRole(CNodeRole Role)
+bool CNodeRoleManager::UpdateRole(CNodeRole Role)
 {
 	if (!Role.VerifySignature())
 		return false;
+	
+	if (mapNodeRoleByID.count(Role.NodeRoleID))
+	{
+		auto& temp = mapNodeRoleByID[Role.NodeRoleID];
+		if (temp->LastUpdateTime >= Role.LastUpdateTime)
+			return true;
 
+		if (temp->IsValid && !Role.IsValid)
+		{
 
+		}
+		return true;
+	}
+	
+	if (Role.NodePubKey == MNPubKey)
+	{
+		CTradePair tp = tradePairManager.GetTradePair(Role.TradePairID);
+		if (Role.NodeRole == INFINIDEX_BALANCE_INFO)
+		{
+			globalUserBalanceHandler.nIsInChargeOfGlobalUserBalance = true;
+		}
+		else if (Role.NodeRole == INFINIDEX_BID_BOOK_BROADCAST)
+			userTradeManager.AssignBidBroadcastRole(tp.nTradePairID);
+	}	
 
 	return true;
 }

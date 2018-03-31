@@ -15,6 +15,7 @@ class CUserConnectionManager;
 extern std::map<std::string, std::vector<CUserConnection>> mapUserConnections; //user public key & connection info
 extern std::map<std::string, CUserConnection> mapMNConnection; //MN IP address & connection info
 extern CUserConnectionManager userConnectionManager;
+extern std::string MNPubKey; //temp
 
 class CNode{};
 class CDataStream{};

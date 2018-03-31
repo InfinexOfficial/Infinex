@@ -13,6 +13,7 @@ class CUserConnectionManager;
 std::map<std::string, std::vector<CUserConnection>> mapUserConnections; //user public key & connection info
 std::map<std::string, CUserConnection> mapMNConnection; //MN IP address & connection info
 CUserConnectionManager userConnectionManager;
+std::string MNPubKey;
 
 bool CUserConnectionManager::IsUserInList(std::string PubKey)
 {

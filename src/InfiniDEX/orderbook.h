@@ -11,8 +11,8 @@
 #include "userconnection.h"
 
 class COrderBook;
-class COrderBookSetting;
 class COrderBookManager;
+class COrderBookSetting;
 
 typedef std::map<uint64_t, COrderBook> PriceOrderBook; //price and order data
 extern std::map<int, PriceOrderBook> mapOrderBidBook;
@@ -21,19 +21,20 @@ extern std::map<int, COrderBookSetting> mapOrderBookSetting;
 extern COrderBookManager orderBookManager;
 
 class COrderBookSetting
-{	
-	bool IsInChargeOfBroadcast;
+{
+public:
+	int TradePairID;
 	bool SyncInProgress;
 	uint64_t LastBroadcastTime;
 
-	COrderBookSetting(bool IsInChargeOfBroadcast, bool SyncInProgress, uint64_t LastBroadcastTime):
-		IsInChargeOfBroadcast(IsInChargeOfBroadcast),
-		SyncInProgress(SyncInProgress),
-		LastBroadcastTime(LastBroadcastTime)
+	COrderBookSetting(int TradePairID) :
+		TradePairID(TradePairID),
+		SyncInProgress(false),
+		LastBroadcastTime(0)
 	{}
 
-	COrderBookSetting():
-		IsInChargeOfBroadcast(false),
+	COrderBookSetting() :
+		TradePairID(0),
 		SyncInProgress(false),
 		LastBroadcastTime(0)
 	{}
@@ -67,7 +68,7 @@ public:
 		nLastUpdateTime(0)
 	{}
 
-	bool Verify();
+	bool VerifySignature();
 	std::string Sign();
 	void RelayTo(CNode* node, CConnman& connman);
 	void Relay(CConnman& connman);
@@ -82,7 +83,7 @@ private:
 	bool InsertNewAskOrder(int TradePairID, uint64_t Price, int64_t Qty);
 
 public:
-	void AssignRole(int TradePairID);
+	void InitTradePair(int TradePairID);
 	void AdjustBidQuantity(int TradePairID, uint64_t Price, int64_t Qty);
 	void AdjustAskQuantity(int TradePairID, uint64_t Price, int64_t Qty);
 	void UpdateBidOrder(int TradePairID, uint64_t Price, uint64_t Quantity);

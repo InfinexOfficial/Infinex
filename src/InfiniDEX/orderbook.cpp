@@ -8,6 +8,7 @@
 
 class COrderBook;
 class COrderBookManager;
+class COrderBookSetting;
 
 std::map<int, PriceOrderBook> mapOrderBidBook;
 std::map<int, PriceOrderBook> mapOrderAskBook;
@@ -111,7 +112,12 @@ void COrderBookManager::UpdateAskOrder(int TradePairID, uint64_t Price, uint64_t
 	mapOrderAskBook[TradePairID][Price].nQuantity = Qty;
 }
 
-void COrderBookManager::AssignRole(int TradePairID)
+void COrderBookManager::InitTradePair(int TradePairID)
 {
-	
+	if (mapOrderBookSetting.count(TradePairID))
+		return;
+
+	mapOrderBookSetting.insert(std::make_pair(TradePairID, COrderBookSetting(TradePairID)));
+	mapOrderBidBook.insert(std::make_pair(TradePairID, PriceOrderBook()));
+	mapOrderAskBook.insert(std::make_pair(TradePairID, PriceOrderBook()));
 }

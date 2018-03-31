@@ -39,8 +39,11 @@ typedef std::pair <pairIPPubkey, std::vector<std::shared_ptr<CNodeRole>>> pairIP
 typedef std::pair <infinidex_node_role_enum, std::vector<std::shared_ptr<CNodeRole>>> pairNodeRoleByRole;
 extern std::map<int, pairIPPubKeyNodeRole> mapTradePairGlobalRoleByIPPubKey;
 extern std::map<int, pairNodeRoleByRole> mapTradePairGlobalRoleByRole;
-extern std::map<int, std::vector<std::shared_ptr<CNodeRole>>> mapTradePairNodeRole;
 extern std::map<int, std::vector<infinidex_node_role_enum>> mapCoinIDNodeRoles;
+
+extern std::map<int, std::shared_ptr<CNodeRole>> mapNodeRole;
+extern std::map<int, std::shared_ptr<CNodeRole>> mapNodeRoleByID;
+extern std::map<int, std::vector<std::shared_ptr<CNodeRole>>> mapTradePairNodeRole;
 
 class CNodeRole
 {
@@ -55,9 +58,9 @@ public:
 	std::string NodePubKey;
 	bool IsValid;
 	int ToReplaceNodeRoleID;
-	uint64_t AppointTime;
+	uint64_t LastUpdateTime;
 
-	CNodeRole(int NodeRoleID, int TradePairID, infinidex_node_role_enum NodeRole, std::string NodeIP, std::string NodePubKey, bool IsValid, int ToReplaceNodeRoleID, uint64_t AppointTime):
+	CNodeRole(int NodeRoleID, int TradePairID, infinidex_node_role_enum NodeRole, std::string NodeIP, std::string NodePubKey, bool IsValid, int ToReplaceNodeRoleID, uint64_t LastUpdateTime):
 		NodeRoleID(NodeRoleID),
 		TradePairID(TradePairID),
 		NodeRole(NodeRole),
@@ -65,7 +68,7 @@ public:
 		NodePubKey(NodePubKey),
 		IsValid(IsValid),
 		ToReplaceNodeRoleID(ToReplaceNodeRoleID),
-		AppointTime(AppointTime)
+		LastUpdateTime(LastUpdateTime)
 	{}
 
 	CNodeRole() :
@@ -76,7 +79,7 @@ public:
 		NodePubKey(""),
 		IsValid(false),
 		ToReplaceNodeRoleID(0),
-		AppointTime(0)
+		LastUpdateTime(0)
 	{}
 
 	bool VerifySignature();
