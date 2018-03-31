@@ -57,13 +57,19 @@ public:
 	bool nIsInChargeOfUserBalance;
 	bool nVerifyUserBalance;
 
-	CUserBalanceSetting(int nCoinID, bool nIsInChargeOfUserBalance, bool nVerifyUserBalance):
+	CUserBalanceSetting(int nCoinID, bool nIsInChargeOfUserBalance, bool nVerifyUserBalance) :
 		nCoinID(nCoinID),
 		nIsInChargeOfUserBalance(nIsInChargeOfUserBalance),
 		nVerifyUserBalance(nVerifyUserBalance)
 	{}
 
-	CUserBalanceSetting():
+	CUserBalanceSetting(int nCoinID) :
+		nCoinID(nCoinID),
+		nIsInChargeOfUserBalance(false),
+		nVerifyUserBalance(false)
+	{}
+
+	CUserBalanceSetting() :
 		nCoinID(0),
 		nIsInChargeOfUserBalance(false),
 		nVerifyUserBalance(false)
@@ -134,13 +140,15 @@ private:
 
 public:
 	CUserBalanceManager() {}
+	void InitCoin(int CoinID);
+	bool AssignNodeToHandleGlobalBalance(bool toAssign = true);
 	int GetLastDepositID(int CoinID, std::string UserPubKey);
 	bool IsInChargeOfGlobalCoinBalance();
 	bool IsInChargeOfCoinBalance(int CoinID);
 	bool IsCoinInList(int CoinID);
 	bool IsFurtherInTime(int CoinID, std::string UserPubKey, uint64_t time);
 	bool IsUserBalanceExist(int CoinID, std::string UserPubKey);
-	bool AddUserBalance(CUserBalance UserBalance);
+	bool UpdateUserBalance(CUserBalance UserBalance);
 	bool VerifyUserBalance(int CoinID);
 	userbalance_to_exchange_enum_t BalanceToExchange(int CoinID, std::string UserPubKey, uint64_t amount);
 	exchange_to_userbalance_enum_t ExchangeToBalance(int CoinID, std::string UserPubKey, uint64_t amount);
@@ -150,7 +158,7 @@ public:
 	void AdjustUserAvailableBalance(int CoinID, std::string UserPubKey, int64_t amount);
 	void AdjustUserInExchangeBalance(int CoinID, std::string UserPubKey, int64_t amount);
 	void AdjustUserPendingBalance(int CoinID, std::string UserPubKey, int64_t amount);
-	bool UpdateAfterTradeBalance(std::string User1PubKey, std::string User2PubKey, int CoinID1, int CoinID2, int64_t User1EAdj, int64_t User1BAdj, int64_t User2EAdj, int64_t User2BAdj);
+	bool UpdateAfterTradeBalance(std::string User1PubKey, std::string User2PubKey, int CoinID1, int CoinID2, int64_t User1EAdjDown, int64_t User1BAdjUp, int64_t User2EAdjDown, int64_t User2BAdjUp);
 };
 
 #endif

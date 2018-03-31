@@ -31,6 +31,11 @@ bool CNodeRoleManager::IsInCharge(int TradePairID, infinidex_node_role_enum Role
 
 bool CNodeRoleManager::AddNewRole(CNodeRole Role)
 {
+	if (!Role.VerifySignature())
+		return false;
+
+
+
 	return true;
 }
 

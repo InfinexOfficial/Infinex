@@ -165,7 +165,10 @@ private:
 	std::vector<unsigned char> vchSig;
 
 public:
-	uint64_t GetAdjustedTime();	
+	uint64_t GetAdjustedTime();
+	void InitTradePair(int TradePairID);
+	bool AssignNodeToProcessUserTrade(int TradePairID, bool toAssign = true);
+	bool AssignNodeToMatchUserTrade(int TradePairID, bool toAssign = true);
 	bool IsUserTradeInList(int TradePairID, std::string UserHash);
 	void AddToUserTradeList(int TradePairID, std::string UserHash);
 	uint64_t GetBidRequiredAmount(uint64_t Price, uint64_t Qty, int TradeFee);

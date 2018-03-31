@@ -21,6 +21,20 @@ bool CUserBalance::VerifySignature()
 	return true;
 }
 
+void CUserBalanceManager::InitCoin(int CoinID)
+{
+	if (mapUserBalance.count(CoinID))
+		return;
+
+	mapUserBalanceSetting.insert(std::make_pair(CoinID, CUserBalanceSetting(CoinID)));
+	mapUserBalance.insert(std::make_pair(CoinID, mapUserBalanceByPubKey()));
+}
+
+bool CUserBalanceManager::AssignNodeToHandleGlobalBalance(bool toAssign = true)
+{
+	globalUserBalanceHandler.nIsInChargeOfGlobalUserBalance = true;
+}
+
 int CUserBalanceManager::GetLastDepositID(int CoinID, std::string UserPubKey)
 {
 	return mapUserBalance[CoinID][UserPubKey].nLastDepositID;
@@ -33,15 +47,7 @@ bool CUserBalanceManager::IsInChargeOfGlobalCoinBalance()
 
 bool CUserBalanceManager::IsInChargeOfCoinBalance(int CoinID)
 {
-	if (mapUserBalanceSetting[CoinID].nIsInChargeOfUserBalance)
-	{
-		if (!IsCoinInList(CoinID))
-		{
-			//time to sync
-		}
-		return true;
-	}
-	return false;
+	return mapUserBalanceSetting[CoinID].nIsInChargeOfUserBalance;
 }
 
 bool CUserBalanceManager::VerifyUserBalance(int CoinID)
@@ -64,72 +70,78 @@ bool CUserBalanceManager::IsUserBalanceExist(int CoinID, std::string UserPubKey)
 	return (mapUserBalance[CoinID].count(UserPubKey));
 }
 
-//change to enum
-bool CUserBalanceManager::AddUserBalance(CUserBalance UserBalance)
+bool CUserBalanceManager::UpdateUserBalance(CUserBalance UserBalance)
 {
 	if (!UserBalance.VerifySignature())
 		return false;
 
 	if (IsInChargeOfCoinBalance(UserBalance.nCoinID))
 	{
-		if (!IsUserBalanceExist(UserBalance.nCoinID, UserBalance.nUserPubKey))
-			mapUserBalance[UserBalance.nCoinID].insert(std::make_pair(UserBalance.nUserPubKey, UserBalance));
-		else if (IsFurtherInTime(UserBalance.nCoinID, UserBalance.nUserPubKey, UserBalance.nLastUpdateTime))
-			mapUserBalance[UserBalance.nCoinID][UserBalance.nUserPubKey] = UserBalance;
-
-		return true;
+		mapUserBalanceByPubKey& temp = mapUserBalance[UserBalance.nCoinID];
+		if (!temp.count(UserBalance.nUserPubKey))
+			temp.insert(std::make_pair(UserBalance.nUserPubKey, UserBalance));
+		else if (temp[UserBalance.nUserPubKey].nLastUpdateTime < UserBalance.nLastUpdateTime)
+			temp[UserBalance.nUserPubKey] = UserBalance;
 	}
 
-	return false;
+	if (IsInChargeOfGlobalCoinBalance())
+	{
+		if (!mapGlobalUserBalance.count(UserBalance.nUserPubKey))
+			mapGlobalUserBalance.insert(std::make_pair(UserBalance.nUserPubKey, mapUserBalanceByCoinID()));
+
+		mapUserBalanceByCoinID& temp = mapGlobalUserBalance[UserBalance.nUserPubKey];
+		if (!temp.count(UserBalance.nCoinID))
+			temp.insert(std::make_pair(UserBalance.nCoinID, UserBalance));
+		else if (temp[UserBalance.nCoinID].nLastUpdateTime < UserBalance.nLastUpdateTime)
+			temp[UserBalance.nCoinID] = UserBalance;
+	}
+
+	return true;
 }
 
 userbalance_to_exchange_enum_t CUserBalanceManager::BalanceToExchange(int CoinID, std::string UserPubKey, uint64_t amount)
 {
-	if (!IsInChargeOfCoinBalance(CoinID))
+	CUserBalanceSetting& setting = mapUserBalanceSetting[CoinID];
+	if (setting.nCoinID != CoinID)
 		return USER_BALANCE_INVALID_NODE;
 
-	if (!IsUserBalanceExist(CoinID, UserPubKey))
-	{
-		//to resync from seed server for latest user balance list
+	mapUserBalanceByPubKey& temp = mapUserBalance[CoinID];
+	if (!temp.count(UserPubKey))
 		return USER_ACCOUNT_NOT_FOUND;
-	}
 
-	if (VerifyUserBalance(CoinID))
+	CUserBalance& temp2 = temp[UserPubKey];
+
+	if (setting.nVerifyUserBalance)
 	{
-		if (GetUserAvailableBalance(CoinID, UserPubKey) < amount)
-		{
-			//to inform nodes of invalid balance issue;
+		if (temp2.nAvailableBalance < amount)
 			return USER_BALANCE_NOT_ENOUGH;
-		}
 	}
 
-	mapUserBalance[CoinID][UserPubKey].nAvailableBalance -= amount;
-	mapUserBalance[CoinID][UserPubKey].nInExchangeBalance += amount;
+	temp2.nAvailableBalance -= amount;
+	temp2.nInExchangeBalance += amount;
 	return USER_BALANCE_DEDUCTED;
 }
 
 exchange_to_userbalance_enum_t CUserBalanceManager::ExchangeToBalance(int CoinID, std::string UserPubKey, uint64_t amount)
 {
-	if (!IsInChargeOfCoinBalance(CoinID))
+	CUserBalanceSetting& setting = mapUserBalanceSetting[CoinID];
+	if (setting.nCoinID != CoinID)
 		return EXCHANGE_INVALID_NODE;
 
-	if (!IsUserBalanceExist(CoinID, UserPubKey))
-	{
-		//to resync from seed server for latest user balance list
+	mapUserBalanceByPubKey& temp = mapUserBalance[CoinID];
+	if (!temp.count(UserPubKey))
 		return EXCHANGE_ACCOUNT_NOT_FOUND;
-	}
 
-	if (VerifyUserBalance(CoinID))
+	CUserBalance& temp2 = temp[UserPubKey];
+
+	if (setting.nVerifyUserBalance)
 	{
-		if (GetUserInExchangeBalance(CoinID, UserPubKey) < amount)
-		{
-			//to inform nodes of invalid balance issue;
+		if (temp2.nInExchangeBalance < amount)
 			return EXCHANGE_BALANCE_NOT_ENOUGH;
-		}
 	}
 
-	mapUserBalance[CoinID][UserPubKey].nAvailableBalance += amount;
-	mapUserBalance[CoinID][UserPubKey].nInExchangeBalance -= amount;
+	temp2.nAvailableBalance += amount;
+	temp2.nInExchangeBalance -= amount;
 	return EXCHANGE_BALANCE_RETURNED;
 }
 
@@ -172,17 +184,20 @@ void CUserBalanceManager::AdjustUserPendingBalance(int CoinID, std::string UserP
 		mapUserBalance[CoinID][UserPubKey].nPendingBalance += amount;
 }
 
-bool CUserBalanceManager::UpdateAfterTradeBalance(std::string User1PubKey, std::string User2PubKey, int CoinID1, int CoinID2, int64_t User1EAdj, int64_t User1BAdj, int64_t User2EAdj, int64_t User2BAdj)
+bool CUserBalanceManager::UpdateAfterTradeBalance(std::string User1PubKey, std::string User2PubKey, int CoinID1, int CoinID2, int64_t User1EAdjDown, int64_t User1BAdjUp, int64_t User2EAdjDown, int64_t User2BAdjUp)
 {
 	if (!IsInChargeOfCoinBalance(CoinID1) || !IsInChargeOfCoinBalance(CoinID2))
 		return false;
 
-	if (!IsUserBalanceExist(CoinID1, User1PubKey) || !IsUserBalanceExist(CoinID1, User2PubKey) || !IsUserBalanceExist(CoinID2, User1PubKey) || !IsUserBalanceExist(CoinID2, User2PubKey))
+	mapUserBalanceByPubKey& temp1 = mapUserBalance[CoinID1];
+	mapUserBalanceByPubKey& temp2 = mapUserBalance[CoinID2];
+
+	if (!temp1.count(User1PubKey) || !temp1.count(User2PubKey) || !temp2.count(User1PubKey) || !temp2.count(User2PubKey))
 		return false;
 
-	AdjustUserInExchangeBalance(CoinID2, User1PubKey, User1EAdj);
-	AdjustUserAvailableBalance(CoinID1, User1PubKey, User1BAdj);
-	AdjustUserInExchangeBalance(CoinID1, User2PubKey, User2EAdj);
-	AdjustUserAvailableBalance(CoinID2, User2PubKey, User2BAdj);
+	temp1[User1PubKey].nAvailableBalance += User1BAdjUp;
+	temp1[User2PubKey].nInExchangeBalance -= User2EAdjDown;
+	temp2[User1PubKey].nInExchangeBalance -= User1EAdjDown;
+	temp2[User2PubKey].nAvailableBalance += User2BAdjUp;
 	return true;
 }

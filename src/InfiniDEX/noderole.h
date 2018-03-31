@@ -79,7 +79,7 @@ public:
 		AppointTime(0)
 	{}
 
-	bool Verify();
+	bool VerifySignature();
 };
 
 #endif

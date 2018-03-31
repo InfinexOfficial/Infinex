@@ -5,6 +5,13 @@
 #include "stdafx.h"
 #include "noderole.h"
 
+class CNodeRole;
+
 std::map<int, pairIPPubKeyNodeRole> mapTradePairGlobalRoleByIPPubKey;
 std::map<int, pairNodeRoleByRole> mapTradePairGlobalRoleByRole;
 std::map<int, std::vector<std::shared_ptr<CNodeRole>>> mapTradePairNodeRole;
+
+bool CNodeRole::VerifySignature()
+{
+	return true;
+}

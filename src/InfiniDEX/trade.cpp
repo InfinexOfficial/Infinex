@@ -75,6 +75,37 @@ uint64_t CUserTradeManager::GetAdjustedTime()
 	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
+void CUserTradeManager::InitTradePair(int TradePairID)
+{
+	if (!mapUserTradeSetting.count(TradePairID))
+	{
+		mapBidUserTradeByPrice.insert(std::make_pair(TradePairID, mUTPIUTV()));
+		mapAskUserTradeByPrice.insert(std::make_pair(TradePairID, mUTPIUTV()));
+		mapBidUserTradeByPubkey.insert(std::make_pair(TradePairID, mUTPKUTV()));
+		mapAskUserTradeByPubkey.insert(std::make_pair(TradePairID, mUTPKUTV()));
+		mapUserTradeSetting.insert(std::make_pair(TradePairID, CUserTradeSetting(TradePairID, "")));
+		mapUserTradeHash.insert(std::make_pair(TradePairID, std::set<std::string>()));
+	}
+}
+
+bool CUserTradeManager::AssignNodeToProcessUserTrade(int TradePairID, bool toAssign)
+{
+	if (!mapUserTradeSetting.count(TradePairID))
+		return false;
+
+	mapUserTradeSetting[TradePairID].nIsInChargeOfProcessUserTrade = toAssign;
+	return true;
+}
+
+bool CUserTradeManager::AssignNodeToMatchUserTrade(int TradePairID, bool toAssign)
+{
+	if (!mapUserTradeSetting.count(TradePairID))
+		return false;
+
+	mapUserTradeSetting[TradePairID].nIsInChargeOfMatchUserTrade = toAssign;
+	return true;
+}
+
 uint64_t CUserTradeManager::GetBidRequiredAmount(uint64_t Price, uint64_t Qty, int TradeFee)
 {
 	//overflow prevention

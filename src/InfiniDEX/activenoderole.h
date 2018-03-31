@@ -13,6 +13,7 @@
 
 class CNodeRoleManager;
 extern CNodeRoleManager nodeRoleManager;
+
 class CNodeRoleManager
 {
 public:
