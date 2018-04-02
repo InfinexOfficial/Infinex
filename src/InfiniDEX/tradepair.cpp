@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "stdafx.h"
+#include "coininfo.h"
 #include "tradepair.h"
 
 class CTradePair;
@@ -11,13 +12,48 @@ class CTradePairManager;
 std::map<int, CTradePair> mapCompleteTradePair;
 CTradePairManager tradePairManager;
 
-bool CTradePair::Verify()
+bool CTradePair::VerifySignature()
 {
 	return true;
 }
 
 bool RelayTo(CNode* node, CConnman& connman)
 {
+	return true;
+}
+
+bool CTradePairManager::UpdateTradePair(CTradePair &tradePair)
+{
+	if (!tradePair.VerifySignature())
+		return false;
+
+	CCoinInfo coinInfo1;
+	if (!coinInfoManager.GetCoinInfoByCoinID(tradePair.nCoinID1, coinInfo1))
+	{
+		return false;
+	}
+
+	CCoinInfo coinInfo2;
+	if (!coinInfoManager.GetCoinInfoByCoinID(tradePair.nCoinID2, coinInfo2))
+	{
+		return false;
+	}
+
+	if (coinInfo1.nSymbol != tradePair.nSymbol1)
+	{
+		return false;
+	}
+
+	if (coinInfo2.nSymbol != tradePair.nSymbol2)
+	{
+		return false;
+	}
+
+	if (!mapCompleteTradePair.count(tradePair.nTradePairID))
+		mapCompleteTradePair.insert(std::make_pair(tradePair.nTradePairID, tradePair));
+	else if (tradePair.nLastUpdate > mapCompleteTradePair[tradePair.nTradePairID].nLastUpdate)
+		mapCompleteTradePair[tradePair.nTradePairID] = tradePair;
+
 	return true;
 }
 
@@ -65,18 +101,15 @@ int CTradePairManager::GetBidSideCoinID(int TradePairID)
 
 tradepair_enum CTradePairManager::ProcessTradePair(CTradePair TradePair)
 {
-	if (!TradePair.Verify())
+	if (!TradePair.VerifySignature())
 		return TRADEPAIR_INVALID;
 
 	CTradePair temp = GetTradePair(TradePair.nTradePairID);
 	if (temp.nTradePairID == TradePair.nTradePairID)
 	{
-		if (temp.nHash == TradePair.nHash)
-			return TRADEPAIR_EXIST;
-		else
-		{
-			return TRADEPAIR_UPDATED;
-		}
+		if (TradePair.nLastUpdate > temp.nLastUpdate)
+			temp = TradePair;
+		return TRADEPAIR_UPDATED;
 	}
 
 	std::map<int, CTradePair>::iterator it = mapCompleteTradePair.begin();

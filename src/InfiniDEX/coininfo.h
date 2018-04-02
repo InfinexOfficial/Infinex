@@ -60,20 +60,19 @@ public:
 		nWalletStatus(""),
 		nLastUpdate(0)
 	{}
+
+	bool VerifySignature();
 };
 
 class CCoinInfoManager
 {
-private:
-	std::vector<unsigned char> vchSig;
-
 public:
 	CCoinInfoManager() {}
 	bool IsCoinInCompleteListByCoinID(int CoinID);
 	bool IsCoinInCompleteListBySymbol(std::string Symbol);
 	bool GetCoinInfoByCoinID(int CoinID, CCoinInfo &CoinInfo);
 	bool GetCoinInfoBySymbol(std::string Symbol, CCoinInfo &CoinInfo);
-	void UpdateCoinInfo(CCoinInfo &CoinInfo);
+	bool UpdateCoinInfo(CCoinInfo &CoinInfo);
 };
 
 #endif

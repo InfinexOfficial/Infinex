@@ -12,6 +12,11 @@ std::map<int, std::shared_ptr<CCoinInfo>> mapCompleteCoinInfoWithID;
 std::map<std::string, std::shared_ptr<CCoinInfo>> mapCompleteCoinInfoWithSymbol;
 CCoinInfoManager coinInfoManager;
 
+bool CCoinInfo::VerifySignature()
+{
+	return true;
+}
+
 bool CCoinInfoManager::IsCoinInCompleteListByCoinID(int CoinID)
 {
 	return mapCompleteCoinInfoWithID.count(CoinID);
@@ -40,8 +45,11 @@ bool CCoinInfoManager::GetCoinInfoBySymbol(std::string Symbol, CCoinInfo &CoinIn
 	return true;
 }
 
-void CCoinInfoManager::UpdateCoinInfo(CCoinInfo &CoinInfo)
+bool CCoinInfoManager::UpdateCoinInfo(CCoinInfo &CoinInfo)
 {
+	if (!CoinInfo.VerifySignature())
+		return false;
+
 	if (IsCoinInCompleteListByCoinID(CoinInfo.nCoinInfoID))
 	{
 		*mapCompleteCoinInfoWithID[CoinInfo.nCoinInfoID] = CoinInfo;
@@ -51,4 +59,6 @@ void CCoinInfoManager::UpdateCoinInfo(CCoinInfo &CoinInfo)
 		mapCompleteCoinInfoWithID.insert(std::make_pair(CoinInfo.nCoinInfoID, &CoinInfo));
 		mapCompleteCoinInfoWithSymbol.insert(std::make_pair(CoinInfo.nSymbol, &CoinInfo));
 	}
+
+	return true;
 }

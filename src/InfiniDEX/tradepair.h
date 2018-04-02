@@ -48,11 +48,10 @@ public:
 	int nAskTradeFee; //regular trade fee in percentage for ask, can be negative as form of incentive
 	std::string nStatus;
 	uint64_t nLastUpdate;
-	std::string nHash;
 
 	CTradePair(int nTradePairID, std::string nName, int nCoinID1, std::string nSymbol1, int nCoinID2, std::string nSymbol2,
 		bool nTradeEnabled, uint64_t nMinimumTradeQuantity, uint64_t nMaximumTradeQuantity, uint64_t nMinimumTradeAmount, uint64_t nMaximumTradeAmount,
-		int nBidTradeFee, int nAskTradeFee, std::string nStatus, uint64_t nLastUpdate, std::string nHash) :
+		int nBidTradeFee, int nAskTradeFee, std::string nStatus, uint64_t nLastUpdate) :
 		nTradePairID(nTradePairID),
 		nName(nName),
 		nCoinID1(nCoinID1),
@@ -67,8 +66,7 @@ public:
 		nBidTradeFee(nBidTradeFee),
 		nAskTradeFee(nAskTradeFee),
 		nStatus(nStatus),
-		nLastUpdate(nLastUpdate),
-		nHash(nHash)
+		nLastUpdate(nLastUpdate)
 	{}
 
 	CTradePair() :
@@ -86,11 +84,10 @@ public:
 		nBidTradeFee(0),
 		nAskTradeFee(0),
 		nStatus(""),
-		nLastUpdate(0),
-		nHash("")
+		nLastUpdate(0)
 	{}
 
-	bool Verify();
+	bool VerifySignature();
 	bool RelayTo(CNode* node, CConnman& connman);
 };
 
@@ -101,6 +98,7 @@ private:
 
 public:
 	CTradePairManager() {}
+	bool UpdateTradePair(CTradePair &tradePair);
 	void ProcessMessage(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void SendCompleteTradePairs(CNode* node, CConnman& connman);
 	void SendTradePair(CTradePair TradePair, CNode* node, CConnman& connman);
