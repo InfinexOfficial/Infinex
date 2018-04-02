@@ -28,6 +28,11 @@ bool CUserWalletAddressRequest::Verify()
 	return true;
 }
 
+void CUserWalletAddressManager::AssignDepositInfoRole(int CoinID)
+{
+
+}
+
 void CUserWalletAddressManager::ProcessMessage(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
 

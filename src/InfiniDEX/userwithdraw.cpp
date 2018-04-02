@@ -5,7 +5,68 @@
 #include "stdafx.h"
 #include "userwithdraw.h"
 
-void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
-void ProcessUserWithdrawRequest(CUserWithdraw UserWithdrawRequest);
-void SendUserWithdrawalRecords(std::string UserPubKey, int CoinID);
-void SendUsersWithdrawalRecords(CNode* node, CConnman& connman, int CoinID);
+class CUserWithdraw;
+class CUserWithdrawManager;
+
+std::map<int, PairPubKeyUserWithdraw> mapCoinUserWithdraw; //coin ID and users withdraw details
+CUserWithdrawManager userWithdrawManager;
+
+bool CUserWithdraw::VerifyWithdrawalSignature()
+{
+	return true;
+}
+
+bool CUserWithdraw::VerifyMasternodeSignature()
+{
+	return true;
+}
+
+bool CUserWithdraw::VerifyFinalSignature()
+{
+	return true;
+}
+
+void CUserWithdraw::RelayToUser()
+{
+
+}
+
+void CUserWithdraw::RelayToMN()
+{
+
+}
+
+void CUserWithdraw::RelayToNetwork()
+{
+
+}
+
+void CUserWithdrawManager::AssignWithdrawProcessorRole(int CoinID)
+{
+
+}
+
+void CUserWithdrawManager::AssignWithdrawInfoRole(int CoinID)
+{
+
+}
+
+void CUserWithdrawManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
+{
+
+}
+
+void CUserWithdrawManager::ProcessUserWithdrawRequest(CUserWithdraw UserWithdrawRequest)
+{
+
+}
+
+void CUserWithdrawManager::SendUserWithdrawalRecords(std::string UserPubKey, int CoinID)
+{
+
+}
+
+void CUserWithdrawManager::SendUsersWithdrawalRecords(CNode* node, CConnman& connman, int CoinID)
+{
+
+}

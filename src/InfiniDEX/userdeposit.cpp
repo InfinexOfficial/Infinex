@@ -21,6 +21,11 @@ bool CUserDeposit::Verify()
 	return true;
 }
 
+void CUserDepositManager::AssignDepositInfoRole(int TradePairID)
+{
+
+}
+
 void CUserDepositManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
 

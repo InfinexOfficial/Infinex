@@ -532,6 +532,41 @@ bool CUserTradeManager::ReduceBalanceQty(int TradePairID, int UserTradeID1, int 
 	return true;
 }
 
+int64_t CUserTradeManager::GetBalanceAmount(int TradePairID, uint64_t Price, int UserTradeID)
+{
+	return 0;
+}
+
+bool CActualTradeSetting::IsValidSubmissionTimeAndUpdate(uint64_t time)
+{
+	return true;
+}
+
+void CActualTradeManager::AssignWithdrawProcessorRole(int CoinID)
+{
+
+}
+
+void CActualTradeManager::AssignUserHistoryProviderRole(int TradePairID)
+{
+
+}
+
+void CActualTradeManager::AssignMarketHistoryProviderRole(int TradePairID)
+{
+
+}
+
+void CActualTradeManager::AssignChartDataProviderRole(int TradePairID)
+{
+
+}
+
+void CActualTradeManager::AssignTradeProcessorRole(int TradePairID)
+{
+
+}
+
 bool CActualTradeManager::GenerateActualTrade(std::shared_ptr<CActualTrade> actualTrade, CActualTradeSetting& actualTradeSetting)
 {
 	actualTrade->nActualTradeID = (actualTradeSetting.nLastActualTradeID + 1);
@@ -705,7 +740,7 @@ bool CActualTradeManager::InputActualTradeFromNode(std::shared_ptr<CActualTrade>
 		return false;
 
 	if (setting.nSyncInProgress)
-		return;
+		return false;
 
 	if (IsActualTradeInList(actualTrade->nTradePairID, actualTrade->nActualTradeID, actualTrade->nCurrentHash))
 		return false;

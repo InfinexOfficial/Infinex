@@ -30,9 +30,10 @@ void CUserBalanceManager::InitCoin(int CoinID)
 	mapUserBalance.insert(std::make_pair(CoinID, mapUserBalanceByPubKey()));
 }
 
-bool CUserBalanceManager::AssignNodeToHandleGlobalBalance(bool toAssign = true)
+bool CUserBalanceManager::AssignNodeToHandleGlobalBalance(bool toAssign)
 {
-	globalUserBalanceHandler.nIsInChargeOfGlobalUserBalance = true;
+	globalUserBalanceHandler.nIsInChargeOfGlobalUserBalance = toAssign;
+	return true;
 }
 
 int CUserBalanceManager::GetLastDepositID(int CoinID, std::string UserPubKey)
