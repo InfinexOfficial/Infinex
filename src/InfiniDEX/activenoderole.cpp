@@ -14,6 +14,7 @@
 #include "userconnection.h"
 #include "userdeposit.h"
 #include "usertradehistory.h"
+#include "userwalletaddress.h"
 #include "userwithdraw.h"
 
 CNodeRoleManager nodeRoleManager;
@@ -55,11 +56,50 @@ bool CNodeRoleManager::UpdateRole(CNodeRole Role)
 	{
 		CTradePair tp = tradePairManager.GetTradePair(Role.TradePairID);
 		if (Role.NodeRole == INFINIDEX_BALANCE_INFO)
-		{
 			globalUserBalanceHandler.nIsInChargeOfGlobalUserBalance = true;
-		}
 		else if (Role.NodeRole == INFINIDEX_BID_BOOK_BROADCAST)
 			userTradeManager.AssignBidBroadcastRole(tp.nTradePairID);
+		else if (Role.NodeRole == INFINIDEX_ASK_BOOK_BROADCAST)
+			userTradeManager.AssignAskBroadcastRole(tp.nTradePairID);
+		else if (Role.NodeRole == INFINIDEX_USER_HISTORY_PROVIDER)
+			actualTradeManager.AssignUserHistoryProviderRole(tp.nTradePairID);
+		else if (Role.NodeRole == INFINIDEX_MARKET_HISTORY_PROVIDER)
+			actualTradeManager.AssignMarketHistoryProviderRole(tp.nTradePairID);
+		else if (Role.NodeRole == INFINIDEX_CHART_DATA_PROVIDER)
+			actualTradeManager.AssignChartDataProviderRole(tp.nTradePairID);
+		else if (Role.NodeRole == INFINIDEX_TRADE_PROCESSOR)
+			actualTradeManager.AssignTradeProcessorRole(tp.nTradePairID);
+		else if (Role.NodeRole == INFINIDEX_WALLET_ADDRESS)
+			userWalletAddressManager.AssignDepositInfoRole(Role.CoinID);
+		else if (Role.NodeRole == INFINIDEX_WITHDRAW_INFO)
+			userWithdrawManager.AssignWithdrawInfoRole(Role.CoinID);
+		else if (Role.NodeRole == INFINIDEX_WITHDRAW_PROCESSOR)
+		{
+			actualTradeManager.AssignWithdrawProcessorRole(Role.CoinID);
+			userWithdrawManager.AssignWithdrawProcessorRole(Role.CoinID);
+		}
+		else if (Role.NodeRole == INFINIDEX_DEPOSIT_INFO)
+			userDepositManager.AssignDepositInfoRole(tp.nTradePairID);
+		else if (Role.NodeRole == INFINIDEX_TRUSTED_NODE)
+		{
+
+		}
+		else if (Role.NodeRole == INFINIDEX_VERIFICATOR)
+		{
+
+		}
+		else if (Role.NodeRole == INFINIDEX_BACKUP_NODE)
+		{
+
+		}
+		else if (Role.NodeRole == INFINIDEX_MARKET_OVERVIEW_PROCESSOR)
+		{
+
+		}
+		else if (Role.NodeRole == INFINIDEX_MARKET_OVERVIEW_PROVIDER)
+		{
+
+		}
 	}	
 
 	return true;

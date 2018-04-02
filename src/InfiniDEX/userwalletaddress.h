@@ -99,6 +99,7 @@ private:
 
 public:
 	CUserWalletAddressManager() {}
+	void AssignDepositInfoRole(int CoinID);
 	void ProcessMessage(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	bool IsCoinInList(int CoinID);
 	void SetupNewCoinContainer(int CoinID);

@@ -56,6 +56,8 @@ private:
 
 public:
     CUserWithdrawManager() {}
+	void AssignWithdrawProcessorRole(int CoinID);
+	void AssignWithdrawInfoRole(int CoinID);
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void ProcessUserWithdrawRequest(CUserWithdraw UserWithdrawRequest);
 	void SendUserWithdrawalRecords(std::string UserPubKey, int CoinID);

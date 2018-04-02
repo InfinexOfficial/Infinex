@@ -345,6 +345,11 @@ class CActualTradeManager
 {
 public:
 	CActualTradeManager() {}
+	void AssignWithdrawProcessorRole(int CoinID);
+	void AssignUserHistoryProviderRole(int TradePairID);
+	void AssignMarketHistoryProviderRole(int TradePairID);
+	void AssignChartDataProviderRole(int TradePairID);
+	void AssignTradeProcessorRole(int TradePairID);
 	bool GenerateActualTrade(std::shared_ptr<CActualTrade> actualTrade, CActualTradeSetting& actualTradeSetting);
 	bool InputActualTrade(std::shared_ptr<CActualTrade> actualTrade, CActualTradeSetting& setting, CTradePair& tradePair);
 	bool InputActualTradeFromNode(std::shared_ptr<CActualTrade> actualTrade, CActualTradeSetting& setting, CTradePair& tradePair);
