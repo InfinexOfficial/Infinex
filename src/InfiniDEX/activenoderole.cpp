@@ -56,7 +56,9 @@ bool CNodeRoleManager::UpdateRole(CNodeRole Role)
 	{
 		CTradePair tp = tradePairManager.GetTradePair(Role.TradePairID);
 		if (Role.NodeRole == INFINIDEX_BALANCE_INFO)
+		{
 			globalUserBalanceHandler.nIsInChargeOfGlobalUserBalance = true;
+		}
 		else if (Role.NodeRole == INFINIDEX_BID_BOOK_BROADCAST)
 			userTradeManager.AssignBidBroadcastRole(tp.nTradePairID);
 		else if (Role.NodeRole == INFINIDEX_ASK_BOOK_BROADCAST)

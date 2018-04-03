@@ -284,6 +284,13 @@ void CUserTradeManager::ProcessUserBuyRequest(std::shared_ptr<CUserTrade>& userT
 	if (!IsSubmittedBidAmountValid(userTrade, tradePair.nBidTradeFee))
 		return;
 
+	std::shared_ptr<CUserBalance> userBalance;
+	if (!userBalanceManager.GetUserBalance(tradePair.nCoinID2, userTrade->nUserPubKey, userBalance))
+		return;
+
+	if (userBalance->nAvailableBalance < userTrade->nAmount)
+		return;
+
 	userTrade->nUserTradeID = (setting.nLastUserTradeID + 1);
 	userTrade->nBalanceAmount = userTrade->nAmount;
 	userTrade->nBalanceQty = userTrade->nQuantity;

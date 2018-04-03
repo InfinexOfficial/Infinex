@@ -8,16 +8,17 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <memory>
 
 class CUserBalance;
 class CUserBalanceSetting;
 class CUserBalanceManager;
 class CGlobalUserBalanceHandler;
 
-typedef std::map<std::string, CUserBalance> mapUserBalanceByPubKey;
-typedef std::map<int, CUserBalance> mapUserBalanceByCoinID;
-extern std::map<std::string, mapUserBalanceByCoinID> mapGlobalUserBalance;
-extern std::map<int, mapUserBalanceByPubKey> mapUserBalance;
+typedef std::map<std::string, std::shared_ptr<CUserBalance>> mapUserBalanceWithPubKey;
+typedef std::map<int, std::shared_ptr<CUserBalance>> mapUserBalanceWithCoinID;
+extern std::map<std::string, mapUserBalanceWithCoinID> mapUserBalanceByPubKey;
+extern std::map<int, mapUserBalanceWithPubKey> mapUserBalanceByCoinID;
 extern std::map<int, CUserBalanceSetting> mapUserBalanceSetting;
 extern CGlobalUserBalanceHandler globalUserBalanceHandler;
 extern CUserBalanceManager userBalanceManager;
@@ -39,13 +40,19 @@ enum exchange_to_userbalance_enum_t {
 class CGlobalUserBalanceHandler
 {
 public:
+	char Char1;
+	char Char2;
 	bool nIsInChargeOfGlobalUserBalance;
 
-	CGlobalUserBalanceHandler(bool nIsInChargeOfGlobalUserBalance):
+	CGlobalUserBalanceHandler(char Char1, char Char2, bool nIsInChargeOfGlobalUserBalance):
+		Char1(Char1),
+		Char2(Char2),
 		nIsInChargeOfGlobalUserBalance(nIsInChargeOfGlobalUserBalance)
 	{}
 
 	CGlobalUserBalanceHandler():
+		Char1(),
+		Char2(),
 		nIsInChargeOfGlobalUserBalance(false)
 	{}
 };
@@ -141,14 +148,15 @@ private:
 public:
 	CUserBalanceManager() {}
 	void InitCoin(int CoinID);
-	bool AssignNodeToHandleGlobalBalance(bool toAssign = true);
+	bool AssignUserBalanceRole(char Char1, char Char2, bool toAssign = true);
+	bool UpdateUserBalance(CUserBalance UserBalance);
+	bool GetUserBalance(int CoinID, std::string UserPubKey, std::shared_ptr<CUserBalance>& UserBalance);
 	int GetLastDepositID(int CoinID, std::string UserPubKey);
 	bool IsInChargeOfGlobalCoinBalance();
 	bool IsInChargeOfCoinBalance(int CoinID);
 	bool IsCoinInList(int CoinID);
 	bool IsFurtherInTime(int CoinID, std::string UserPubKey, uint64_t time);
-	bool IsUserBalanceExist(int CoinID, std::string UserPubKey);
-	bool UpdateUserBalance(CUserBalance UserBalance);
+	bool IsUserBalanceExist(int CoinID, std::string UserPubKey);	
 	bool VerifyUserBalance(int CoinID);
 	userbalance_to_exchange_enum_t BalanceToExchange(int CoinID, std::string UserPubKey, uint64_t amount);
 	exchange_to_userbalance_enum_t ExchangeToBalance(int CoinID, std::string UserPubKey, uint64_t amount);

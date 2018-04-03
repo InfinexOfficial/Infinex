@@ -54,6 +54,8 @@ public:
 	int NodeRoleID;
 	int TradePairID;
 	int CoinID;
+	char Char1;
+	char Char2;
 	infinidex_node_role_enum NodeRole;
 	std::string NodeIP;
 	std::string NodePubKey;
@@ -61,10 +63,12 @@ public:
 	int ToReplaceNodeRoleID;
 	uint64_t LastUpdateTime;
 
-	CNodeRole(int NodeRoleID, int TradePairID, int CoinID, infinidex_node_role_enum NodeRole, std::string NodeIP, std::string NodePubKey, bool IsValid, int ToReplaceNodeRoleID, uint64_t LastUpdateTime):
+	CNodeRole(int NodeRoleID, int TradePairID, int CoinID, char Char1, char Char2, infinidex_node_role_enum NodeRole, std::string NodeIP, std::string NodePubKey, bool IsValid, int ToReplaceNodeRoleID, uint64_t LastUpdateTime):
 		NodeRoleID(NodeRoleID),
 		TradePairID(TradePairID),
 		CoinID(CoinID),
+		Char1(Char1),
+		Char2(Char2),
 		NodeRole(NodeRole),
 		NodeIP(NodeIP),
 		NodePubKey(NodePubKey),
@@ -77,6 +81,8 @@ public:
 		NodeRoleID(0),
 		TradePairID(0),
 		CoinID(0),
+		Char1(),
+		Char2(),
 		NodeRole(INFINIDEX_NOTHING),
 		NodeIP(""),
 		NodePubKey(""),
