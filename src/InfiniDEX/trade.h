@@ -42,6 +42,26 @@ extern std::map<int, CActualTradeSetting> mapActualTradeSetting;
 extern std::map<int, std::set<std::string>> mapActualTradeHash;
 extern CActualTradeManager actualTradeManager;
 
+class CCancelTrade
+{
+private:
+	std::vector<unsigned char> userVchSig;
+	std::vector<unsigned char> mnVchSig;
+
+public:
+	int nUserTradeID;
+	int nTradePairID;
+	std::string nUserPubKey;
+	bool isBid;
+	uint64_t nUserSubmitTime;
+	int64_t nBalance;
+	uint64_t nMNProcessTime;
+
+	bool VerifyUserSignature();
+	bool VerifyMNSignature();
+	bool MNSign();
+};
+
 class CUserTradeSetting
 {
 public:
@@ -172,6 +192,9 @@ private:
 
 public:
 	uint64_t GetAdjustedTime();
+	void InitTradeCancelRequest(CCancelTrade& cancelTrade);
+	void ProcessTradeCancelRequest(CCancelTrade& cancelTrade);
+	void ReturnTradeCancelBalance(CCancelTrade& cancelTrade);
 	void AssignBidBroadcastRole(int TradePairID);
 	void AssignAskBroadcastRole(int TradePairID);
 	void InitTradePair(int TradePairID);
