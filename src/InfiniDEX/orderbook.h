@@ -12,33 +12,11 @@
 
 class COrderBook;
 class COrderBookManager;
-class COrderBookSetting;
 
 typedef std::map<uint64_t, COrderBook> PriceOrderBook; //price and order data
 extern std::map<int, PriceOrderBook> mapOrderBidBook;
 extern std::map<int, PriceOrderBook> mapOrderAskBook;
-extern std::map<int, COrderBookSetting> mapOrderBookSetting;
 extern COrderBookManager orderBookManager;
-
-class COrderBookSetting
-{
-public:
-	int TradePairID;
-	bool SyncInProgress;
-	uint64_t LastBroadcastTime;
-
-	COrderBookSetting(int TradePairID) :
-		TradePairID(TradePairID),
-		SyncInProgress(false),
-		LastBroadcastTime(0)
-	{}
-
-	COrderBookSetting() :
-		TradePairID(0),
-		SyncInProgress(false),
-		LastBroadcastTime(0)
-	{}
-};
 
 class COrderBook
 {
@@ -69,9 +47,7 @@ public:
 	{}
 
 	bool VerifySignature();
-	std::string Sign();
-	void RelayTo(CNode* node, CConnman& connman);
-	void Relay(CConnman& connman);
+	bool Sign();
 };
 
 class COrderBookManager
@@ -88,5 +64,9 @@ public:
 	void AdjustAskQuantity(int TradePairID, uint64_t Price, int64_t Qty);
 	void UpdateBidOrder(int TradePairID, uint64_t Price, uint64_t Quantity);
 	void UpdateAskOrder(int TradePairID, uint64_t Price, uint64_t Quantity);
+	void BroadcastBidOrder(int TradePairID, uint64_t Price);
+	void BroadcastAskOrder(int TradePairID, uint64_t Price);
+	void BroadcastBidOrders(int TradePairID);
+	void BroadcastAskOrders(int TradePairID);
 };
 #endif

@@ -54,7 +54,9 @@ public:
 	std::string nUserPubKey;
 	bool isBid;
 	uint64_t nUserSubmitTime;
-	int64_t nBalance;
+	int64_t nBalanceAmount;
+	int64_t nBalanceQty;
+	uint64_t nPrice;
 	uint64_t nMNProcessTime;
 
 	bool VerifyUserSignature();

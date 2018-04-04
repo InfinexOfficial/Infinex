@@ -97,21 +97,23 @@ void CUserTradeManager::InitTradeCancelRequest(CCancelTrade& cancelTrade)
 
 	CUserTradeSetting& setting = mapUserTradeSetting[cancelTrade.nTradePairID];
 	if (setting.nTradePairID != cancelTrade.nTradePairID)
-		return;	
+		return;
 
-	if (cancelTrade.nBalance > 0)
+	if (cancelTrade.nMNProcessTime > 0)
 	{
 		if (setting.nIsInChargeOfProcessUserTrade)
 			ReturnTradeCancelBalance(cancelTrade);
 
 		if (setting.nInChargeOfBidBroadcast && cancelTrade.isBid)
 		{
-
+			orderBookManager.AdjustBidQuantity(cancelTrade.nTradePairID, cancelTrade.nPrice, cancelTrade.nBalanceQty);
+			orderBookManager.BroadcastBidOrder(cancelTrade.nTradePairID, cancelTrade.nPrice);
 		}
 
 		if (setting.nInChargeOfAskBroadcast && !cancelTrade.isBid)
 		{
-
+			orderBookManager.AdjustAskQuantity(cancelTrade.nTradePairID, cancelTrade.nPrice, cancelTrade.nBalanceQty);
+			orderBookManager.BroadcastAskOrder(cancelTrade.nTradePairID, cancelTrade.nPrice);
 		}
 	}
 	else
@@ -126,18 +128,26 @@ void CUserTradeManager::ProcessTradeCancelRequest(CCancelTrade& cancelTrade)
 	std::shared_ptr<CUserTrade> existingUserTrade;
 	if (cancelTrade.isBid)
 	{
-		existingUserTrade = mapBidUserTradeByPubkey[cancelTrade.nTradePairID][cancelTrade.nUserPubKey][cancelTrade.nUserTradeID];
-		cancelTrade.nBalance = existingUserTrade->nBalanceAmount;
+		mUTIUT& temp = mapBidUserTradeByPubkey[cancelTrade.nTradePairID][cancelTrade.nUserPubKey];
+		existingUserTrade = temp[cancelTrade.nUserTradeID];
+		if (existingUserTrade->nUserTradeID != cancelTrade.nUserTradeID)
+			return;
+		temp.erase(cancelTrade.nUserTradeID);
+		mapBidUserTradeByPrice[cancelTrade.nTradePairID][existingUserTrade->nPrice].erase(cancelTrade.nUserTradeID);
 	}
 	else
 	{
-		existingUserTrade = mapAskUserTradeByPubkey[cancelTrade.nTradePairID][cancelTrade.nUserPubKey][cancelTrade.nUserTradeID];
-		cancelTrade.nBalance = existingUserTrade->nBalanceQty;
+		mUTIUT& temp = mapAskUserTradeByPubkey[cancelTrade.nTradePairID][cancelTrade.nUserPubKey];
+		existingUserTrade = temp[cancelTrade.nUserTradeID];
+		if (existingUserTrade->nUserTradeID != cancelTrade.nUserTradeID)
+			return;
+		temp.erase(cancelTrade.nUserTradeID);
+		mapAskUserTradeByPrice[cancelTrade.nTradePairID][existingUserTrade->nPrice].erase(cancelTrade.nUserTradeID);
 	}
-
-	if (existingUserTrade->nUserTradeID != cancelTrade.nUserTradeID)
-		return;
-
+	
+	mapUserTradeHash[cancelTrade.nTradePairID].erase(existingUserTrade->nUserHash);
+	cancelTrade.nBalanceQty = existingUserTrade->nBalanceQty;
+	cancelTrade.nBalanceAmount = existingUserTrade->nBalanceAmount;
 	cancelTrade.nMNProcessTime = GetAdjustedTime();
 	if (!cancelTrade.MNSign())
 		return;
@@ -148,7 +158,6 @@ void CUserTradeManager::ReturnTradeCancelBalance(CCancelTrade& cancelTrade)
 	if (!cancelTrade.VerifyMNSignature())
 		return;
 
-	int CoinID;
 	CTradePair tradePair = tradePairManager.GetTradePair(cancelTrade.nTradePairID);
 	if (tradePair.nTradePairID != cancelTrade.nTradePairID)
 		return;
@@ -156,19 +165,28 @@ void CUserTradeManager::ReturnTradeCancelBalance(CCancelTrade& cancelTrade)
 	std::shared_ptr<CUserTrade> existingUserTrade;
 	if (cancelTrade.isBid)
 	{
-		existingUserTrade = mapBidUserTradeByPubkey[cancelTrade.nTradePairID][cancelTrade.nUserPubKey][cancelTrade.nUserTradeID];
-		if (existingUserTrade->nBalanceAmount < cancelTrade.nBalance)
+		mUTIUT& temp = mapBidUserTradeByPubkey[cancelTrade.nTradePairID][cancelTrade.nUserPubKey];
+		existingUserTrade = temp[cancelTrade.nUserTradeID];
+		if (existingUserTrade->nUserTradeID != cancelTrade.nUserTradeID)
 			return;
-		CoinID = tradePair.nCoinID2;
+		if (existingUserTrade->nBalanceAmount != cancelTrade.nBalanceAmount)
+			return;
+		temp.erase(cancelTrade.nUserTradeID);
+		mapBidUserTradeByPrice[cancelTrade.nTradePairID][existingUserTrade->nPrice].erase(cancelTrade.nUserTradeID);
+		userBalanceManager.ExchangeToBalance(tradePair.nCoinID2, cancelTrade.nUserPubKey, cancelTrade.nBalanceAmount);
 	}
 	else
 	{
-		existingUserTrade = mapAskUserTradeByPubkey[cancelTrade.nTradePairID][cancelTrade.nUserPubKey][cancelTrade.nUserTradeID];
-		if (existingUserTrade->nBalanceQty < cancelTrade.nBalance)
+		mUTIUT& temp = mapAskUserTradeByPubkey[cancelTrade.nTradePairID][cancelTrade.nUserPubKey];
+		existingUserTrade = temp[cancelTrade.nUserTradeID];
+		if (existingUserTrade->nUserTradeID != cancelTrade.nUserTradeID)
 			return;
-		CoinID = tradePair.nCoinID1;
+		if (existingUserTrade->nBalanceQty != cancelTrade.nBalanceQty)
+			return;
+		temp.erase(cancelTrade.nUserTradeID);
+		mapAskUserTradeByPrice[cancelTrade.nTradePairID][existingUserTrade->nPrice].erase(cancelTrade.nUserTradeID);
+		userBalanceManager.ExchangeToBalance(tradePair.nCoinID1, cancelTrade.nUserPubKey, cancelTrade.nBalanceQty);
 	}
-	userBalanceManager.ExchangeToBalance(CoinID, cancelTrade.nUserPubKey, cancelTrade.nBalance);
 }
 
 void CUserTradeManager::AssignBidBroadcastRole(int TradePairID)

@@ -12,8 +12,17 @@ class COrderBookSetting;
 
 std::map<int, PriceOrderBook> mapOrderBidBook;
 std::map<int, PriceOrderBook> mapOrderAskBook;
-std::map<int, COrderBookSetting> mapOrderBookSetting;
 COrderBookManager orderBookManager;
+
+bool COrderBook::VerifySignature()
+{
+	return true;
+}
+
+bool Sign()
+{
+	return true;
+}
 
 uint64_t COrderBookManager::GetAdjustedTime()
 {
@@ -114,10 +123,29 @@ void COrderBookManager::UpdateAskOrder(int TradePairID, uint64_t Price, uint64_t
 
 void COrderBookManager::InitTradePair(int TradePairID)
 {
-	if (mapOrderBookSetting.count(TradePairID))
+	if (mapOrderBidBook.count(TradePairID))
 		return;
 
-	mapOrderBookSetting.insert(std::make_pair(TradePairID, COrderBookSetting(TradePairID)));
 	mapOrderBidBook.insert(std::make_pair(TradePairID, PriceOrderBook()));
 	mapOrderAskBook.insert(std::make_pair(TradePairID, PriceOrderBook()));
+}
+
+void COrderBookManager::BroadcastBidOrder(int TradePairID, uint64_t Price)
+{
+
+}
+
+void COrderBookManager::BroadcastAskOrder(int TradePairID, uint64_t Price)
+{
+
+}
+
+void COrderBookManager::BroadcastBidOrders(int TradePairID)
+{
+
+}
+
+void COrderBookManager::BroadcastAskOrders(int TradePairID)
+{
+
 }
