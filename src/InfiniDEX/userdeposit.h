@@ -8,6 +8,8 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <set>
+#include <memory>
 #include "userconnection.h"
 
 enum userdeposit_status_enum {
@@ -22,9 +24,11 @@ class CUserDepositSetting;
 class CUserDepositManager;
 
 typedef std::map<std::string, uint64_t> mapLastRequestTimeByPubKey;
-typedef std::map<int, CUserDeposit> mapUserDepositByID;
-typedef std::map<std::string, mapUserDepositByID> mapUserDepositByPubKey;
-extern std::map<int, mapUserDepositByPubKey> mapUserDeposit;
+typedef std::map<int, std::shared_ptr<CUserDeposit>> mapUserDepositWithID;
+typedef std::map<std::string, mapUserDepositWithID> mapUserDepositWithPubKey;
+typedef std::map<int, mapUserDepositWithID> mapUserDepositWithCoinID;
+extern std::map<int, mapUserDepositWithPubKey> mapUserDepositByCoinID;
+extern std::map<std::string, mapUserDepositWithCoinID> mapUserDepositByPubKey;
 extern std::map<int, mapLastRequestTimeByPubKey> mapUserLastRequestTime;
 extern std::map<int, CUserDepositSetting> mapUserDepositSetting;
 extern CUserDepositManager userDepositManager;
@@ -32,13 +36,24 @@ extern CUserDepositManager userDepositManager;
 class CUserDepositSetting
 {
 public:
+	int CoinID;
 	bool ProvideUserDepositInfo;
 	bool SyncInProgress;
 	int MaxNoOfUserDepositInfo;
 	int MinTimeToLastRequest;
 	int LastDepositID;
 
+	CUserDepositSetting(int CoinID) :
+		CoinID(CoinID),
+		ProvideUserDepositInfo(false),
+		SyncInProgress(false),
+		MaxNoOfUserDepositInfo(100),
+		MinTimeToLastRequest(3000),
+		LastDepositID(0)
+	{}
+
 	CUserDepositSetting() :
+		CoinID(0),
 		ProvideUserDepositInfo(false),
 		SyncInProgress(false),
 		MaxNoOfUserDepositInfo(100),
@@ -99,6 +114,8 @@ private:
 
 public:
 	CUserDepositManager() {}
+	bool InChargeOfGlobalBalance(std::string pubKey);
+	void InputUserDeposit(std::shared_ptr<CUserDeposit> UserDeposit);
 	void AssignDepositInfoRole(int TradePairID);
 	void ProcessMessage(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	bool IsInChargeOfUserDepositInfo(int CoinID);
@@ -109,11 +126,11 @@ public:
 	void AddNewUser(std::string UserPubKey, int CoinID);
 	bool IsUserInList(std::string UserPubKey, int CoinID);
 	void RequestPendingDepositData(int StartingID);
-	void AddPendingDeposit(CUserDeposit UserDeposit);
+	void AddPendingDeposit(std::shared_ptr<CUserDeposit> UserDeposit);
 	int GetLastUserPendingDepositID(std::string UserPubKey, int CoinID);
 	void RequestConfirmDepositData(int StartingID);
-	void AddConfirmDeposit(CUserDeposit UserDeposit);
-	bool IsUserDepositInList(CUserDeposit UserDeposit);
+	void AddConfirmDeposit(std::shared_ptr<CUserDeposit> UserDeposit);
+	bool IsUserDepositInList(std::shared_ptr<CUserDeposit> UserDeposit);
 	int GetLastUserConfirmDepositID(std::string UserPubKey, int CoinID);
 };
 

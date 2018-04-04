@@ -15,6 +15,7 @@ std::map<int, mapUserBalanceWithPubKey> mapUserBalanceByCoinID;
 std::map<int, CUserBalanceSetting> mapUserBalanceSetting;
 CGlobalUserBalanceHandler globalUserBalanceHandler;
 CUserBalanceManager userBalanceManager;
+std::set<char> globalInChargeDeposit;
 
 bool CUserBalance::VerifySignature()
 {

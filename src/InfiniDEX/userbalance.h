@@ -22,6 +22,7 @@ extern std::map<int, mapUserBalanceWithPubKey> mapUserBalanceByCoinID;
 extern std::map<int, CUserBalanceSetting> mapUserBalanceSetting;
 extern CGlobalUserBalanceHandler globalUserBalanceHandler;
 extern CUserBalanceManager userBalanceManager;
+extern std::set<char> globalInChargeDeposit;
 
 enum userbalance_to_exchange_enum_t {
 	USER_ACCOUNT_NOT_FOUND = -1,
@@ -166,6 +167,7 @@ public:
 	void AdjustUserAvailableBalance(int CoinID, std::string UserPubKey, int64_t amount);
 	void AdjustUserInExchangeBalance(int CoinID, std::string UserPubKey, int64_t amount);
 	void AdjustUserPendingBalance(int CoinID, std::string UserPubKey, int64_t amount);
+	void ConfirmPendingBalance(int CoinID, std::string UserPubKey, int64_t amount);
 	bool UpdateAfterTradeBalance(std::string User1PubKey, std::string User2PubKey, int CoinID1, int CoinID2, int64_t User1EAdjDown, int64_t User1BAdjUp, int64_t User2EAdjDown, int64_t User2BAdjUp);
 };
 
