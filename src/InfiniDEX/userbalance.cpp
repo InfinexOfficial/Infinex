@@ -42,51 +42,54 @@ bool CUserBalanceManager::UpdateUserBalance(CUserBalance UserBalance)
 	if (!UserBalance.VerifySignature())
 		return false;
 
-	if (!IsInChargeOfGlobalCoinBalance())
+	if (!InChargeOfUserBalance(UserBalance.nUserPubKey))
 		return false;
 
+	std::shared_ptr<CUserBalance> ub1;
+	InitUserBalance(UserBalance.nCoinID, UserBalance.nUserPubKey, ub1);
+
 	std::shared_ptr<CUserBalance> ub = std::make_shared<CUserBalance>(UserBalance);
-
-	if(!mapUserBalanceByCoinID.count(ub->nCoinID))
-		mapUserBalanceByCoinID.insert(std::make_pair(UserBalance.nCoinID, mapUserBalanceWithPubKey()));
-	mapUserBalanceWithPubKey& temp1 = mapUserBalanceByCoinID[UserBalance.nCoinID];
-	if (!temp1.count(UserBalance.nUserPubKey))
-		temp1.insert(std::make_pair(UserBalance.nUserPubKey, ub));
-	else if (temp1[UserBalance.nUserPubKey]->nLastUpdateTime < UserBalance.nLastUpdateTime)
-		temp1[UserBalance.nUserPubKey] = ub;
-
-	if (!mapUserBalanceByPubKey.count(UserBalance.nUserPubKey))
-		mapUserBalanceByPubKey.insert(std::make_pair(UserBalance.nUserPubKey, mapUserBalanceWithCoinID()));
-	mapUserBalanceWithCoinID& temp2 = mapUserBalanceByPubKey[UserBalance.nUserPubKey];
-	if (!temp2.count(UserBalance.nCoinID))
-		temp2.insert(std::make_pair(UserBalance.nCoinID, ub));
-	else if (temp2[UserBalance.nCoinID]->nLastUpdateTime < UserBalance.nLastUpdateTime)
-		temp2[UserBalance.nCoinID] = ub;
+	if (ub1->nLastUpdateTime < ub->nLastUpdateTime)
+		ub1 = ub;
 
 	return true;
 }
 
-bool CUserBalanceManager::GetUserBalance(int CoinID, std::string UserPubKey, std::shared_ptr<CUserBalance>& UserBalance)
+void CUserBalanceManager::InitUserBalance(int CoinID, std::string UserPubKey, std::shared_ptr<CUserBalance>& UserBalance)
 {
+	if (!mapUserBalanceByPubKey.count(UserPubKey))
+		mapUserBalanceByPubKey.insert(std::make_pair(UserPubKey, mapUserBalanceWithCoinID()));
+
+	mapUserBalanceWithCoinID& temp = mapUserBalanceByPubKey[UserPubKey];
+	if (!temp.count(CoinID)) 
+	{
+		UserBalance = std::make_shared<CUserBalance>(UserPubKey, CoinID);
+		temp.insert(std::make_pair(CoinID, UserBalance));
+	}
+
 	if (!mapUserBalanceByCoinID.count(CoinID))
-		return false;
+		mapUserBalanceByCoinID.insert(std::make_pair(CoinID, mapUserBalanceWithPubKey()));
 
-	mapUserBalanceWithPubKey& temp = mapUserBalanceByCoinID[CoinID];
-	if (!temp.count(UserPubKey))
-		return false;
+	mapUserBalanceWithPubKey& temp2 = mapUserBalanceByCoinID[CoinID];
+	if (!temp2.count(UserPubKey))
+		temp2.insert(std::make_pair(UserPubKey, UserBalance));
 
-	UserBalance = temp[UserPubKey];
-	return true;
+	UserBalance = temp[CoinID];
 }
 
 int CUserBalanceManager::GetLastDepositID(int CoinID, std::string UserPubKey)
 {
-	return mapUserBalanceByCoinID[CoinID][UserPubKey]->nLastDepositID;
+	std::shared_ptr<CUserBalance> ub;
+	InitUserBalance(CoinID, UserPubKey, ub);
+	return ub->nLastDepositID;
 }
 
-bool CUserBalanceManager::IsInChargeOfGlobalCoinBalance()
+bool CUserBalanceManager::InChargeOfUserBalance(std::string pubKey)
 {
-	return globalUserBalanceHandler.nIsInChargeOfGlobalUserBalance;
+	char c = pubKey[2];
+	if (globalInChargeDeposit.count(c))
+		return true;
+	return false;
 }
 
 bool CUserBalanceManager::IsInChargeOfCoinBalance(int CoinID)
@@ -162,41 +165,58 @@ exchange_to_userbalance_enum_t CUserBalanceManager::ExchangeToBalance(int CoinID
 
 int64_t CUserBalanceManager::GetUserAvailableBalance(int CoinID, std::string UserPubKey)
 {
-	if (IsUserBalanceExist(CoinID, UserPubKey))
-		return mapUserBalanceByCoinID[CoinID][UserPubKey]->nAvailableBalance;
-	return 0;
+	std::shared_ptr<CUserBalance> ub;
+	InitUserBalance(CoinID, UserPubKey, ub);
+	return ub->nAvailableBalance;
 }
 
 int64_t CUserBalanceManager::GetUserInExchangeBalance(int CoinID, std::string UserPubKey)
 {
-	if (IsUserBalanceExist(CoinID, UserPubKey))
-		return mapUserBalanceByCoinID[CoinID][UserPubKey]->nInExchangeBalance;
-	return 0;
+	std::shared_ptr<CUserBalance> ub;
+	InitUserBalance(CoinID, UserPubKey, ub);
+	return ub->nInExchangeBalance;
 }
 
-int64_t CUserBalanceManager::GetUserPendingBalance(int CoinID, std::string UserPubKey)
+int64_t CUserBalanceManager::GetUserPendingDepositBalance(int CoinID, std::string UserPubKey)
 {
-	if (IsUserBalanceExist(CoinID, UserPubKey))
-		return mapUserBalanceByCoinID[CoinID][UserPubKey]->nPendingBalance;
-	return 0;
+	std::shared_ptr<CUserBalance> ub;
+	InitUserBalance(CoinID, UserPubKey, ub);
+	return ub->nPendingDepositBalance;
+}
+
+int64_t CUserBalanceManager::GetUserPendingWithdrawalBalance(int CoinID, std::string UserPubKey)
+{
+	std::shared_ptr<CUserBalance> ub;
+	InitUserBalance(CoinID, UserPubKey, ub);
+	return ub->nPendingWithdrawalBalance;
 }
 
 void CUserBalanceManager::AdjustUserAvailableBalance(int CoinID, std::string UserPubKey, int64_t amount)
 {
-	if (IsUserBalanceExist(CoinID, UserPubKey))
-		mapUserBalanceByCoinID[CoinID][UserPubKey]->nAvailableBalance += amount;
+	std::shared_ptr<CUserBalance> ub;
+	InitUserBalance(CoinID, UserPubKey, ub);
+	ub->nAvailableBalance += amount;
 }
 
 void CUserBalanceManager::AdjustUserInExchangeBalance(int CoinID, std::string UserPubKey, int64_t amount)
 {
-	if (IsUserBalanceExist(CoinID, UserPubKey))
-		mapUserBalanceByCoinID[CoinID][UserPubKey]->nInExchangeBalance += amount;
+	std::shared_ptr<CUserBalance> ub;
+	InitUserBalance(CoinID, UserPubKey, ub);
+	ub->nInExchangeBalance += amount;
 }
 
-void CUserBalanceManager::AdjustUserPendingBalance(int CoinID, std::string UserPubKey, int64_t amount)
+void CUserBalanceManager::AdjustUserPendingDepositBalance(int CoinID, std::string UserPubKey, int64_t amount)
 {
-	if (IsUserBalanceExist(CoinID, UserPubKey))
-		mapUserBalanceByCoinID[CoinID][UserPubKey]->nPendingBalance += amount;
+	std::shared_ptr<CUserBalance> ub;
+	InitUserBalance(CoinID, UserPubKey, ub);
+	ub->nPendingDepositBalance += amount;
+}
+
+void CUserBalanceManager::AdjustUserPendingWithdrawalBalance(int CoinID, std::string UserPubKey, int64_t amount)
+{
+	std::shared_ptr<CUserBalance> ub;
+	InitUserBalance(CoinID, UserPubKey, ub);
+	ub->nPendingWithdrawalBalance += amount;
 }
 
 bool CUserBalanceManager::UpdateAfterTradeBalance(std::string User1PubKey, std::string User2PubKey, int CoinID1, int CoinID2, int64_t User1EAdjDown, int64_t User1BAdjUp, int64_t User2EAdjDown, int64_t User2BAdjUp)
@@ -214,5 +234,41 @@ bool CUserBalanceManager::UpdateAfterTradeBalance(std::string User1PubKey, std::
 	temp1[User2PubKey]->nInExchangeBalance -= User2EAdjDown;
 	temp2[User1PubKey]->nInExchangeBalance -= User1EAdjDown;
 	temp2[User2PubKey]->nAvailableBalance += User2BAdjUp;
+	return true;
+}
+
+bool CUserBalanceManager::BalanceToExchangeV2(int CoinID, std::string UserPubKey, uint64_t amount)
+{
+	std::shared_ptr<CUserBalance> ub;
+	InitUserBalance(CoinID, UserPubKey, ub);
+	if (ub->nAvailableBalance < amount)
+		return false;
+
+	ub->nAvailableBalance -= amount;
+	ub->nInExchangeBalance += amount;
+	return true;
+}
+
+bool CUserBalanceManager::ExchangeToBalanceV2(int CoinID, std::string UserPubKey, uint64_t amount)
+{
+	std::shared_ptr<CUserBalance> ub;
+	InitUserBalance(CoinID, UserPubKey, ub);
+	if (ub->nInExchangeBalance < amount)
+		return false;
+
+	ub->nInExchangeBalance -= amount;
+	ub->nAvailableBalance += amount;
+	return true;
+}
+
+bool CUserBalanceManager::PendingDepositToBalance(int CoinID, std::string UserPubKey, uint64_t amount)
+{
+	std::shared_ptr<CUserBalance> ub;
+	InitUserBalance(CoinID, UserPubKey, ub);
+	if (ub->nPendingDepositBalance < amount)
+		return false;
+
+	ub->nPendingDepositBalance -= amount;
+	ub->nAvailableBalance += amount;
 	return true;
 }

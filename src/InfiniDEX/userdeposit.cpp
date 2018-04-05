@@ -22,14 +22,6 @@ bool CUserDeposit::Verify()
 	return true;
 }
 
-bool CUserDepositManager::InChargeOfGlobalBalance(std::string pubKey)
-{
-	char c = pubKey[2];
-	if (globalInChargeDeposit.count(c))
-		return true;
-	return false;
-}
-
 void CUserDepositManager::InputUserDeposit(std::shared_ptr<CUserDeposit> UserDeposit)
 {
 	if (!UserDeposit->Verify())
@@ -38,7 +30,7 @@ void CUserDepositManager::InputUserDeposit(std::shared_ptr<CUserDeposit> UserDep
 	if (UserDeposit->nDepositStatus != USER_DEPOSIT_CONFIRMED && UserDeposit->nDepositStatus != USER_DEPOSIT_PENDING)
 		return;
 
-	if (InChargeOfGlobalBalance(UserDeposit->nUserPubKey))
+	if (userBalanceManager.InChargeOfUserBalance(UserDeposit->nUserPubKey))
 	{
 		if (!mapUserDepositByPubKey.count(UserDeposit->nUserPubKey))
 			mapUserDepositByPubKey.insert(std::make_pair(UserDeposit->nUserPubKey, mapUserDepositWithCoinID()));
@@ -50,7 +42,7 @@ void CUserDepositManager::InputUserDeposit(std::shared_ptr<CUserDeposit> UserDep
 		{
 			temp2.insert(std::make_pair(UserDeposit->nUserDepositID, UserDeposit));
 			if (UserDeposit->nDepositStatus == USER_DEPOSIT_PENDING)
-				userBalanceManager.AdjustUserPendingBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, UserDeposit->nDepositAmount);
+				userBalanceManager.AdjustUserPendingDepositBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, UserDeposit->nDepositAmount);
 			else if (UserDeposit->nDepositStatus == USER_DEPOSIT_CONFIRMED)
 				userBalanceManager.AdjustUserAvailableBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, UserDeposit->nDepositAmount);
 		}
@@ -64,7 +56,7 @@ void CUserDepositManager::InputUserDeposit(std::shared_ptr<CUserDeposit> UserDep
 				return;
 
 			temp3 = UserDeposit;
-			userBalanceManager.ConfirmPendingBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, UserDeposit->nDepositAmount);
+			userBalanceManager.PendingDepositToBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, UserDeposit->nDepositAmount);
 		}
 	}
 

@@ -114,7 +114,6 @@ private:
 
 public:
 	CUserDepositManager() {}
-	bool InChargeOfGlobalBalance(std::string pubKey);
 	void InputUserDeposit(std::shared_ptr<CUserDeposit> UserDeposit);
 	void AssignDepositInfoRole(int TradePairID);
 	void ProcessMessage(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);

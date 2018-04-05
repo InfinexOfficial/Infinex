@@ -399,9 +399,7 @@ void CUserTradeManager::ProcessUserBuyRequest(std::shared_ptr<CUserTrade>& userT
 		return;
 
 	std::shared_ptr<CUserBalance> userBalance;
-	if (!userBalanceManager.GetUserBalance(tradePair.nCoinID2, userTrade->nUserPubKey, userBalance))
-		return;
-
+	userBalanceManager.InitUserBalance(tradePair.nCoinID2, userTrade->nUserPubKey, userBalance);
 	if (userBalance->nAvailableBalance < userTrade->nAmount)
 		return;
 
