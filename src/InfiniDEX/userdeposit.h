@@ -25,8 +25,9 @@ class CUserDepositManager;
 
 typedef std::map<std::string, uint64_t> mapLastRequestTimeByPubKey;
 typedef std::map<int, std::shared_ptr<CUserDeposit>> mapUserDepositWithID;
-typedef std::map<std::string, mapUserDepositWithID> mapUserDepositWithPubKey;
-typedef std::map<int, mapUserDepositWithID> mapUserDepositWithCoinID;
+typedef std::pair<int, mapUserDepositWithID> UserDepositInfo;
+typedef std::map<std::string, UserDepositInfo> mapUserDepositWithPubKey;
+typedef std::map<int, UserDepositInfo> mapUserDepositWithCoinID;
 extern std::map<int, mapUserDepositWithPubKey> mapUserDepositByCoinID;
 extern std::map<std::string, mapUserDepositWithCoinID> mapUserDepositByPubKey;
 extern std::map<int, mapLastRequestTimeByPubKey> mapUserLastRequestTime;

@@ -36,27 +36,29 @@ void CUserDepositManager::InputUserDeposit(std::shared_ptr<CUserDeposit> UserDep
 			mapUserDepositByPubKey.insert(std::make_pair(UserDeposit->nUserPubKey, mapUserDepositWithCoinID()));
 		mapUserDepositWithCoinID& temp = mapUserDepositByPubKey[UserDeposit->nUserPubKey];
 		if (!temp.count(UserDeposit->nCoinID))
-			temp.insert(std::make_pair(UserDeposit->nCoinID, mapUserDepositWithID()));
-		mapUserDepositWithID& temp2 = temp[UserDeposit->nCoinID];
-		if (!temp2.count(UserDeposit->nUserDepositID))
+			temp.insert(std::make_pair(UserDeposit->nCoinID, UserDepositInfo()));
+		UserDepositInfo& temp2 = temp[UserDeposit->nCoinID];
+		if (temp2.first == (UserDeposit->nUserDepositID - 1))
 		{
-			temp2.insert(std::make_pair(UserDeposit->nUserDepositID, UserDeposit));
+			temp2.second.insert(std::make_pair(UserDeposit->nUserDepositID, UserDeposit));
+			temp2.first++;
 			if (UserDeposit->nDepositStatus == USER_DEPOSIT_PENDING)
 				userBalanceManager.AdjustUserPendingDepositBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, UserDeposit->nDepositAmount);
 			else if (UserDeposit->nDepositStatus == USER_DEPOSIT_CONFIRMED)
 				userBalanceManager.AdjustUserAvailableBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, UserDeposit->nDepositAmount);
 		}
-		else
+		else if (temp2.first >= UserDeposit->nUserDepositID && UserDeposit->nDepositStatus == USER_DEPOSIT_CONFIRMED)
 		{
-			auto& temp3 = temp2[UserDeposit->nUserDepositID];
-			if (temp3->nDepositStatus == USER_DEPOSIT_CONFIRMED)
-				return;
+			auto& temp3 = temp2.second[UserDeposit->nUserDepositID];
+			if (temp3->nDepositStatus != USER_DEPOSIT_CONFIRMED)
+			{
+				temp3 = UserDeposit;
+				userBalanceManager.PendingDepositToBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, UserDeposit->nDepositAmount);
+			}
+		}
+		else if (temp2.first < UserDeposit->nUserDepositID)
+		{
 
-			if (UserDeposit->nDepositStatus == USER_DEPOSIT_PENDING)
-				return;
-
-			temp3 = UserDeposit;
-			userBalanceManager.PendingDepositToBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, UserDeposit->nDepositAmount);
 		}
 	}
 
@@ -69,9 +71,9 @@ void CUserDepositManager::InputUserDeposit(std::shared_ptr<CUserDeposit> UserDep
 
 	mapUserDepositWithPubKey& temp4 = mapUserDepositByCoinID[UserDeposit->nCoinID];
 	if (!temp4.count(UserDeposit->nUserPubKey))
-		temp4.insert(std::make_pair(UserDeposit->nUserPubKey, mapUserDepositWithID()));
+		temp4.insert(std::make_pair(UserDeposit->nUserPubKey, UserDepositInfo()));
 
-	mapUserDepositWithID& temp5 = temp4[UserDeposit->nUserPubKey];
+	mapUserDepositWithID& temp5 = temp4[UserDeposit->nUserPubKey].second;
 	if (!temp5.count(UserDeposit->nUserDepositID))
 	{
 		int lastPendingID = 0;
@@ -139,7 +141,7 @@ bool CUserDepositManager::IsCoinInList(int CoinID)
 
 void CUserDepositManager::AddNewUser(std::string UserPubKey, int CoinID)
 {
-	mapUserDepositByCoinID[CoinID].insert(std::make_pair(UserPubKey, mapUserDepositWithID()));
+	mapUserDepositByCoinID[CoinID].insert(std::make_pair(UserPubKey, UserDepositInfo()));
 	mapUserLastRequestTime[CoinID].insert(std::make_pair(UserPubKey, 0));
 }
 
@@ -170,9 +172,9 @@ void CUserDepositManager::AddPendingDeposit(std::shared_ptr<CUserDeposit> UserDe
 
 	mapUserDepositWithPubKey& temp = mapUserDepositByCoinID[UserDeposit->nCoinID];
 	if (!temp.count(UserDeposit->nUserPubKey))
-		temp.insert(std::make_pair(UserDeposit->nUserPubKey, mapUserDepositWithID()));
+		temp.insert(std::make_pair(UserDeposit->nUserPubKey, UserDepositInfo()));
 	
-	mapUserDepositWithID& temp2 = temp[UserDeposit->nUserPubKey];
+	mapUserDepositWithID& temp2 = temp[UserDeposit->nUserPubKey].second;
 	if (temp2.count(UserDeposit->nUserDepositID))
 		return;	
 
@@ -193,13 +195,13 @@ void CUserDepositManager::AddPendingDeposit(std::shared_ptr<CUserDeposit> UserDe
 
 bool CUserDepositManager::IsUserDepositInList(std::shared_ptr<CUserDeposit> UserDeposit)
 {
-	return mapUserDepositByCoinID[UserDeposit->nCoinID][UserDeposit->nUserPubKey].count(UserDeposit->nUserDepositID);
+	return mapUserDepositByCoinID[UserDeposit->nCoinID][UserDeposit->nUserPubKey].second.count(UserDeposit->nUserDepositID);
 }
 
 int CUserDepositManager::GetLastUserPendingDepositID(std::string UserPubKey, int CoinID)
 {
-	mapUserDepositWithID::reverse_iterator it = mapUserDepositByCoinID[CoinID][UserPubKey].rbegin();
-	if (it == mapUserDepositByCoinID[CoinID][UserPubKey].rend())
+	mapUserDepositWithID::reverse_iterator it = mapUserDepositByCoinID[CoinID][UserPubKey].second.rbegin();
+	if (it == mapUserDepositByCoinID[CoinID][UserPubKey].second.rend())
 		return 0;
 
 	return it->second->nUserDepositID;
@@ -230,7 +232,7 @@ void CUserDepositManager::AddConfirmDeposit(std::shared_ptr<CUserDeposit> UserDe
 	}
 	else if (IsUserDepositInList(UserDeposit))
 	{
-		if (mapUserDepositByCoinID[UserDeposit->nCoinID][UserDeposit->nUserPubKey][UserDeposit->nUserDepositID]->nDepositStatus == USER_DEPOSIT_CONFIRMED)
+		if (mapUserDepositByCoinID[UserDeposit->nCoinID][UserDeposit->nUserPubKey].second[UserDeposit->nUserDepositID]->nDepositStatus == USER_DEPOSIT_CONFIRMED)
 			return;
 	}
 
@@ -242,7 +244,7 @@ void CUserDepositManager::AddConfirmDeposit(std::shared_ptr<CUserDeposit> UserDe
 		return;
 	}
 
-	mapUserDepositByCoinID[UserDeposit->nCoinID][UserDeposit->nUserPubKey].insert(std::make_pair(UserDeposit->nUserDepositID, UserDeposit));
+	mapUserDepositByCoinID[UserDeposit->nCoinID][UserDeposit->nUserPubKey].second.insert(std::make_pair(UserDeposit->nUserDepositID, UserDeposit));
 	if (userBalanceManager.GetLastDepositID(UserDeposit->nCoinID, UserDeposit->nUserPubKey) > UserDeposit->nUserDepositID)
 		return;
 
@@ -251,8 +253,8 @@ void CUserDepositManager::AddConfirmDeposit(std::shared_ptr<CUserDeposit> UserDe
 
 int CUserDepositManager::GetLastUserConfirmDepositID(std::string UserPubKey, int CoinID)
 {
-	mapUserDepositWithID::reverse_iterator it = mapUserDepositByCoinID[CoinID][UserPubKey].rbegin();
-	if (it == mapUserDepositByCoinID[CoinID][UserPubKey].rend())
+	mapUserDepositWithID::reverse_iterator it = mapUserDepositByCoinID[CoinID][UserPubKey].second.rbegin();
+	if (it == mapUserDepositByCoinID[CoinID][UserPubKey].second.rend())
 		return 0;
 
 	return it->second->nUserDepositID;
