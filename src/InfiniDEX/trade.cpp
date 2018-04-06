@@ -27,6 +27,7 @@ std::map<int, mUTPKUTV> mapBidUserTradeByPubkey;
 std::map<int, mUTPKUTV> mapAskUserTradeByPubkey;
 std::map<int, CUserTradeSetting> mapUserTradeSetting;
 std::map<int, std::set<std::string>> mapUserTradeHash;
+std::map<std::string, int> mapUserLastTradeID;
 std::map<int, mATIAT> mapActualTradeByActualTradeID;
 std::map<int, mUTImAT> mapActualTradeByUserTradeID;
 std::map<int, std::vector<CActualTrade>> mapConflictTrade;
@@ -88,6 +89,23 @@ bool CCancelTrade::VerifyMNSignature()
 bool CCancelTrade::MNSign()
 {
 	return true;
+}
+
+int CUserTradeManager::GetLastUserTradeID(std::string userPubKey)
+{
+	if (!mapUserLastTradeID.count(userPubKey)) 
+	{
+		mapUserLastTradeID.insert(std::make_pair(userPubKey, 0));
+		return 0;
+	}
+	return mapUserLastTradeID[userPubKey];
+}
+
+void CUserTradeManager::IncreaseLastUserTradeID(std::string userPubKey)
+{
+	if (!mapUserLastTradeID.count(userPubKey))
+		mapUserLastTradeID.insert(std::make_pair(userPubKey, 1));
+	++mapUserLastTradeID[userPubKey];
 }
 
 void CUserTradeManager::InitTradeCancelRequest(CCancelTrade& cancelTrade)
@@ -250,7 +268,7 @@ uint64_t CUserTradeManager::GetAskExpectedAmount(uint64_t Price, uint64_t Qty, i
 	return (uint64_t)amount;
 }
 
-bool CUserTradeManager::IsSubmittedBidAmountValid(std::shared_ptr<CUserTrade>& userTrade, int nTradeFee)
+bool CUserTradeManager::IsSubmittedBidAmountValid(const std::shared_ptr<CUserTrade>& userTrade, int nTradeFee)
 {
 	uint64_t ExpectedAmount = GetBidRequiredAmount(userTrade->nPrice, userTrade->nQuantity, nTradeFee);
 	if ((ExpectedAmount - 1) <= userTrade->nAmount <= (ExpectedAmount + 1))
@@ -258,7 +276,7 @@ bool CUserTradeManager::IsSubmittedBidAmountValid(std::shared_ptr<CUserTrade>& u
 	return false;
 }
 
-bool CUserTradeManager::IsSubmittedAskAmountValid(std::shared_ptr<CUserTrade>& userTrade, int nTradeFee)
+bool CUserTradeManager::IsSubmittedAskAmountValid(const std::shared_ptr<CUserTrade>& userTrade, int nTradeFee)
 {
 	uint64_t ExpectedAmount = GetAskExpectedAmount(userTrade->nPrice, userTrade->nQuantity, nTradeFee);
 	if ((ExpectedAmount - 1) <= userTrade->nAmount <= (ExpectedAmount + 1))
@@ -267,7 +285,7 @@ bool CUserTradeManager::IsSubmittedAskAmountValid(std::shared_ptr<CUserTrade>& u
 }
 
 //change to enum for more return info
-bool CUserTradeManager::IsSubmittedBidValid(std::shared_ptr<CUserTrade>& userTrade, CTradePair& TradePair)
+bool CUserTradeManager::IsSubmittedBidValid(const std::shared_ptr<CUserTrade>& userTrade, CTradePair& TradePair)
 {
 	if (userTrade->nAmount < TradePair.nMinimumTradeAmount)
 		return false;
@@ -282,7 +300,7 @@ bool CUserTradeManager::IsSubmittedBidValid(std::shared_ptr<CUserTrade>& userTra
 }
 
 //change to enum for more return info
-bool CUserTradeManager::IsSubmittedAskValid(std::shared_ptr<CUserTrade>& userTrade, CTradePair& TradePair)
+bool CUserTradeManager::IsSubmittedAskValid(const std::shared_ptr<CUserTrade>& userTrade, CTradePair& TradePair)
 {
 	if (userTrade->nAmount < TradePair.nMaximumTradeAmount)
 		return false;
@@ -306,7 +324,7 @@ void CUserTradeManager::AddToUserTradeList(int TradePairID, std::string UserHash
 	mapUserTradeHash[TradePairID].insert(UserHash);
 }
 
-bool CUserTradeManager::InputUserBuyTrade(std::shared_ptr<CUserTrade>& userTrade)
+bool CUserTradeManager::InputUserBuyTrade(const std::shared_ptr<CUserTrade>& userTrade)
 {
 	userbalance_to_exchange_enum_t result = userBalanceManager.BalanceToExchange(userTrade->nTradePairID, userTrade->nUserPubKey, userTrade->nAmount);
 	if (result != USER_BALANCE_DEDUCTED)
@@ -336,7 +354,7 @@ bool CUserTradeManager::InputUserBuyTrade(std::shared_ptr<CUserTrade>& userTrade
 	return true;
 }
 
-bool CUserTradeManager::InputUserSellTrade(std::shared_ptr<CUserTrade>& userTrade)
+bool CUserTradeManager::InputUserSellTrade(const std::shared_ptr<CUserTrade>& userTrade)
 {
 	userbalance_to_exchange_enum_t result = userBalanceManager.BalanceToExchange(userTrade->nTradePairID, userTrade->nUserPubKey, userTrade->nAmount);
 	if (result != USER_BALANCE_DEDUCTED)
@@ -366,62 +384,77 @@ bool CUserTradeManager::InputUserSellTrade(std::shared_ptr<CUserTrade>& userTrad
 	return true;
 }
 
-void CUserTradeManager::ProcessUserBuyRequest(std::shared_ptr<CUserTrade>& userTrade, CUserTradeSetting& setting, CTradePair& tradePair)
+void CUserTradeManager::InputUserTrade(const std::shared_ptr<CUserTrade>& userTrade)
 {
 	if (userTrade->nQuantity <= 0)
 		return;
 
-	if (tradePair.nTradePairID != userTrade->nTradePairID)
+	if (!userTrade->VerifyUserSignature())
 		return;
 
+	CUserTradeSetting& setting = mapUserTradeSetting[userTrade->nTradePairID];
+	CTradePair& tradePair = mapCompleteTradePair[userTrade->nTradePairID];
+	if (tradePair.nTradePairID != userTrade->nTradePairID)
+	{
+		//request node setup
+		return;
+	}
+
+	if (userTrade->nIsBid)
+	{
+		ProcessUserBuyRequest(userTrade, setting, tradePair);
+		InputMatchUserBuyRequest(userTrade, setting, tradePair);
+	}
+	else
+	{
+		ProcessUserSellRequest(userTrade, setting, tradePair);
+		InputMatchUserSellRequest(userTrade, setting, tradePair);
+	}
+}
+
+void CUserTradeManager::ProcessUserBuyRequest(const std::shared_ptr<CUserTrade>& userTrade, CUserTradeSetting& setting, CTradePair& tradePair)
+{
 	if (tradePair.nBidTradeFee > userTrade->nTradeFee)
 		return;
 
-	if (setting.nTradePairID != userTrade->nTradePairID)
-		return;
-
-	if (setting.nSyncInProgress)
-		return;
-
-	if (!setting.nIsInChargeOfProcessUserTrade)
-		return;
-
-	if (!setting.IsValidSubmissionTimeAndUpdate(userTrade->nTimeSubmit))
-		return;
-
-	if (!userTrade->VerifyUserSignature())
+	if (!userBalanceManager.InChargeOfUserBalance(userTrade->nUserPubKey))
 		return;
 
 	if (IsUserTradeInList(userTrade->nTradePairID, userTrade->nUserHash))
 		return;
 
 	if (!IsSubmittedBidAmountValid(userTrade, tradePair.nBidTradeFee))
-		return;
+		return;	
 
 	std::shared_ptr<CUserBalance> userBalance;
 	userBalanceManager.InitUserBalance(tradePair.nCoinID2, userTrade->nUserPubKey, userBalance);
 	if (userBalance->nAvailableBalance < userTrade->nAmount)
 		return;
 
-	userTrade->nUserTradeID = (setting.nLastUserTradeID + 1);
-	userTrade->nBalanceAmount = userTrade->nAmount;
-	userTrade->nBalanceQty = userTrade->nQuantity;
-	userTrade->nMNPubKey = setting.nMNPubKey;
-	userTrade->nLastUpdate = GetAdjustedTime();
-	userTrade->MNSign();
+	if (userTrade->nMNPubKey == "")
+	{
+		int timeDiff = GetAdjustedTime() - userTrade->nTimeSubmit;
+		if (timeDiff > 10000 || timeDiff < -10000)
+			return;
 
-	if (!InputUserBuyTrade(userTrade))
-		return;
+		int userTradeID = GetLastUserTradeID(userTrade->nUserPubKey);
+		userTrade->nUserTradeID = (userTradeID + 1);
+		userTrade->nBalanceAmount = userTrade->nAmount;
+		userTrade->nBalanceQty = userTrade->nQuantity;
+		userTrade->nMNPubKey = setting.nMNPubKey; //to replace with actual pub key
+		userTrade->nLastUpdate = GetAdjustedTime();
+		userTrade->MNSign();
 
-	++setting.nLastUserTradeID;
-	AddToUserTradeList(userTrade->nTradePairID, userTrade->nUserHash);
-	userTrade->RelayToHandler();
+		if (!InputUserBuyTrade(userTrade))
+			return;
 
-	if (setting.nIsInChargeOfMatchUserTrade)
-		InputMatchUserBuyRequest(userTrade, setting, tradePair);
+		IncreaseLastUserTradeID(userTrade->nUserPubKey);
+		AddToUserTradeList(userTrade->nTradePairID, userTrade->nUserHash);
+		userTrade->RelayToHandler();
+	}
 }
 
-void CUserTradeManager::ProcessUserSellRequest(std::shared_ptr<CUserTrade>& userTrade, CUserTradeSetting& setting, CTradePair& tradePair)
+void CUserTradeManager::ProcessUserSellRequest(const std::shared_ptr<CUserTrade>& userTrade, CUserTradeSetting& setting, CTradePair& tradePair)
 {
 	if (userTrade->nQuantity <= 0)
 		return;
@@ -471,7 +504,7 @@ void CUserTradeManager::ProcessUserSellRequest(std::shared_ptr<CUserTrade>& user
 		InputMatchUserBuyRequest(userTrade, setting, tradePair);
 }
 
-void CUserTradeManager::InputMatchUserBuyRequest(std::shared_ptr<CUserTrade>& userTrade, CUserTradeSetting& setting, CTradePair& tradePair, bool InitialCheck)
+void CUserTradeManager::InputMatchUserBuyRequest(const std::shared_ptr<CUserTrade>& userTrade, CUserTradeSetting& setting, CTradePair& tradePair, bool InitialCheck)
 {
 	if (!InitialCheck)
 	{
@@ -559,7 +592,7 @@ void CUserTradeManager::InputMatchUserBuyRequest(std::shared_ptr<CUserTrade>& us
 	}
 }
 
-void CUserTradeManager::InputMatchUserSellRequest(std::shared_ptr<CUserTrade>& userTrade, CUserTradeSetting& setting, CTradePair& tradePair, bool InitialCheck)
+void CUserTradeManager::InputMatchUserSellRequest(const std::shared_ptr<CUserTrade>& userTrade, CUserTradeSetting& setting, CTradePair& tradePair, bool InitialCheck)
 {
 	if (!InitialCheck)
 	{
