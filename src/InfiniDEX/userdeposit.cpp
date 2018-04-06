@@ -27,9 +27,6 @@ void CUserDepositManager::InputUserDeposit(std::shared_ptr<CUserDeposit> UserDep
 	if (!UserDeposit->Verify())
 		return;
 
-	if (UserDeposit->nDepositStatus != USER_DEPOSIT_CONFIRMED && UserDeposit->nDepositStatus != USER_DEPOSIT_PENDING)
-		return;
-
 	if (userBalanceManager.InChargeOfUserBalance(UserDeposit->nUserPubKey))
 	{
 		if (!mapUserDepositByPubKey.count(UserDeposit->nUserPubKey))
@@ -47,18 +44,48 @@ void CUserDepositManager::InputUserDeposit(std::shared_ptr<CUserDeposit> UserDep
 			else if (UserDeposit->nDepositStatus == USER_DEPOSIT_CONFIRMED)
 				userBalanceManager.AdjustUserAvailableBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, UserDeposit->nDepositAmount);
 		}
-		else if (temp2.first >= UserDeposit->nUserDepositID && UserDeposit->nDepositStatus == USER_DEPOSIT_CONFIRMED)
+		else if (temp2.first >= UserDeposit->nUserDepositID)
 		{
 			auto& temp3 = temp2.second[UserDeposit->nUserDepositID];
-			if (temp3->nDepositStatus != USER_DEPOSIT_CONFIRMED)
-			{
+			if (UserDeposit->nLastUpdateTime > temp3->nLastUpdateTime)
+			{				
+				if (UserDeposit->nDepositStatus == USER_DEPOSIT_CONFIRMED)
+				{
+					if (temp3->nDepositStatus == USER_DEPOSIT_PENDING)
+						userBalanceManager.PendingToAvailable(UserDeposit->nCoinID, UserDeposit->nUserPubKey, temp3->nDepositAmount, UserDeposit->nDepositAmount);
+					else if (temp3->nDepositStatus == USER_DEPOSIT_INVALID)
+						userBalanceManager.AdjustUserAvailableBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, UserDeposit->nDepositAmount);
+					else if (UserDeposit->nDepositAmount != temp3->nDepositAmount)
+					{
+						int64_t difference = UserDeposit->nDepositAmount - temp3->nDepositAmount;
+						userBalanceManager.AdjustUserAvailableBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, difference);
+					}
+				}
+				else if (UserDeposit->nDepositStatus == USER_DEPOSIT_PENDING)
+				{
+					if (temp3->nDepositStatus == USER_DEPOSIT_CONFIRMED)
+						userBalanceManager.AvailableToPending(UserDeposit->nCoinID, UserDeposit->nUserPubKey, temp3->nDepositAmount, UserDeposit->nDepositAmount);
+					else if (temp3->nDepositStatus == USER_DEPOSIT_INVALID)
+						userBalanceManager.AdjustUserPendingDepositBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, UserDeposit->nDepositAmount);
+					else if (UserDeposit->nDepositAmount != temp3->nDepositAmount)
+					{
+						int64_t difference = UserDeposit->nDepositAmount - temp3->nDepositAmount;
+						userBalanceManager.AdjustUserPendingDepositBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, difference);
+					}
+				}
+				else if (UserDeposit->nDepositStatus == USER_DEPOSIT_INVALID)
+				{
+					if (temp3->nDepositStatus == USER_DEPOSIT_CONFIRMED)
+						userBalanceManager.AdjustUserAvailableBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, -(UserDeposit->nDepositAmount));
+					else if (temp3->nDepositStatus == USER_DEPOSIT_PENDING)
+						userBalanceManager.AdjustUserPendingDepositBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, -(UserDeposit->nDepositAmount));
+				}
 				temp3 = UserDeposit;
-				userBalanceManager.PendingDepositToBalance(UserDeposit->nCoinID, UserDeposit->nUserPubKey, UserDeposit->nDepositAmount);
 			}
 		}
 		else if (temp2.first < UserDeposit->nUserDepositID)
 		{
-
+			//to request range data
 		}
 	}
 

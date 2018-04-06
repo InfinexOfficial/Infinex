@@ -261,14 +261,26 @@ bool CUserBalanceManager::ExchangeToBalanceV2(int CoinID, std::string UserPubKey
 	return true;
 }
 
-bool CUserBalanceManager::PendingDepositToBalance(int CoinID, std::string UserPubKey, uint64_t amount)
+bool CUserBalanceManager::PendingToAvailable(int CoinID, std::string UserPubKey, uint64_t PendingAmount, uint64_t AvailableAmount)
 {
 	std::shared_ptr<CUserBalance> ub;
 	InitUserBalance(CoinID, UserPubKey, ub);
-	if (ub->nPendingDepositBalance < amount)
+	if (ub->nPendingDepositBalance < PendingAmount)
 		return false;
 
-	ub->nPendingDepositBalance -= amount;
-	ub->nAvailableBalance += amount;
+	ub->nPendingDepositBalance -= PendingAmount;
+	ub->nAvailableBalance += AvailableAmount;
+	return true;
+}
+
+bool CUserBalanceManager::AvailableToPending(int CoinID, std::string UserPubKey, uint64_t AvailableAmount, uint64_t PendingAmount)
+{
+	std::shared_ptr<CUserBalance> ub;
+	InitUserBalance(CoinID, UserPubKey, ub);
+	if (ub->nAvailableBalance < AvailableAmount)
+		return false;
+
+	ub->nAvailableBalance -= AvailableAmount;
+	ub->nPendingDepositBalance += PendingAmount;
 	return true;
 }

@@ -194,7 +194,8 @@ public:
 
 	bool BalanceToExchangeV2(int CoinID, std::string UserPubKey, uint64_t amount);
 	bool ExchangeToBalanceV2(int CoinID, std::string UserPubKey, uint64_t amount);
-	bool PendingDepositToBalance(int CoinID, std::string UserPubKey, uint64_t amount);
+	bool PendingToAvailable(int CoinID, std::string UserPubKey, uint64_t PendingAmount, uint64_t AvailableAmount);
+	bool AvailableToPending(int CoinID, std::string UserPubKey, uint64_t AvailableAmount, uint64_t PendingAmount);
 };
 
 #endif

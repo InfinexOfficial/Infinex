@@ -13,7 +13,6 @@
 #include "userconnection.h"
 
 enum userdeposit_status_enum {
-	USER_DEPOSIT_EMPTY = 0,
 	USER_DEPOSIT_INVALID = 1,
 	USER_DEPOSIT_PENDING = 2,
 	USER_DEPOSIT_CONFIRMED = 3
@@ -98,7 +97,7 @@ public:
 		nDepositAmount(0),
 		nBlockNumber(0),
 		nDepositTime(0),
-		nDepositStatus(USER_DEPOSIT_EMPTY),
+		nDepositStatus(USER_DEPOSIT_INVALID),
 		nRemark(""),
 		nLastUpdateTime(0)
 	{}
