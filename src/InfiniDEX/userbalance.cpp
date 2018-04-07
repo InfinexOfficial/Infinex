@@ -92,6 +92,14 @@ bool CUserBalanceManager::InChargeOfUserBalance(std::string pubKey)
 	return false;
 }
 
+bool CUserBalanceManager::InChargeOfUserBalanceBackup(std::string pubKey)
+{
+	char c = pubKey[2];
+	if (globalInChargeDepositBackup.count(c))
+		return true;
+	return false;
+}
+
 bool CUserBalanceManager::IsInChargeOfCoinBalance(int CoinID)
 {
 	return mapUserBalanceSetting[CoinID].nIsInChargeOfUserBalance;

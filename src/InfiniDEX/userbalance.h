@@ -24,6 +24,7 @@ extern std::map<int, CUserBalanceSetting> mapUserBalanceSetting;
 extern CGlobalUserBalanceHandler globalUserBalanceHandler;
 extern CUserBalanceManager userBalanceManager;
 extern std::set<char> globalInChargeDeposit;
+extern std::set<char> globalInChargeDepositBackup;
 
 enum userbalance_to_exchange_enum_t {
 	USER_ACCOUNT_NOT_FOUND = -1,
@@ -175,6 +176,7 @@ public:
 	void InitUserBalance(int CoinID, std::string UserPubKey, std::shared_ptr<CUserBalance>& UserBalance);
 	int GetLastDepositID(int CoinID, std::string UserPubKey);
 	bool InChargeOfUserBalance(std::string pubKey);
+	bool InChargeOfUserBalanceBackup(std::string pubKey);
 	bool IsInChargeOfCoinBalance(int CoinID);
 	bool IsCoinInList(int CoinID);
 	bool IsFurtherInTime(int CoinID, std::string UserPubKey, uint64_t time);
