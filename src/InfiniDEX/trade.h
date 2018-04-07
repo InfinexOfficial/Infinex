@@ -40,6 +40,9 @@ extern CUserTradeManager userTradeManager;
 
 typedef std::map<int, std::shared_ptr<CActualTrade>> mATIAT;
 typedef std::map<int, mATIAT> mUTImAT;
+
+extern std::map<std::string, mUTImAT> mapUserActualTrades;
+
 extern std::map<int, mATIAT> mapActualTradeByActualTradeID;
 extern std::map<int, mUTImAT> mapActualTradeByUserTradeID;
 extern std::map<int, std::vector<CActualTrade>> mapConflictTrade;
@@ -79,7 +82,6 @@ public:
 	int nLastUserTradeID;
 	uint64_t nLastUserTradeTime;
 	std::string nMNPubKey;
-	bool nSyncInProgress;
 	bool nInChargeOfBidBroadcast;
 	bool nInChargeOfAskBroadcast;
 	bool nIsInChargeOfProcessUserTrade;
@@ -92,7 +94,6 @@ public:
 		nToStoreUpperLimit(100),
 		nLastUserTradeID(0),
 		nMNPubKey(nMNPubKey),
-		nSyncInProgress(false),
 		nInChargeOfBidBroadcast(false),
 		nInChargeOfAskBroadcast(false),
 		nIsInChargeOfProcessUserTrade(false),
@@ -106,7 +107,6 @@ public:
 		nToStoreUpperLimit(100),
 		nLastUserTradeID(0),
 		nMNPubKey(""),
-		nSyncInProgress(false),
 		nInChargeOfBidBroadcast(false),
 		nInChargeOfAskBroadcast(false),
 		nIsInChargeOfProcessUserTrade(false),
@@ -214,8 +214,8 @@ public:
 	void InputUserTrade(const std::shared_ptr<CUserTrade>& userTrade);
 	bool ProcessUserTradeRequest(const std::shared_ptr<CUserTrade>& userTrade, CTradePair& tradePair);
 	void SaveProcessedUserTrade(const std::shared_ptr<CUserTrade>& userTrade, CTradePair& tradePair);
-	void InputMatchUserBuyRequest(const std::shared_ptr<CUserTrade>& userTrade, CUserTradeSetting& setting, CTradePair& tradePair, bool InitialCheck = false);
-	void InputMatchUserSellRequest(const std::shared_ptr<CUserTrade>& userTrade, CUserTradeSetting& setting, CTradePair& tradePair, bool InitialCheck = false);
+	void InputMatchUserBuyRequest(const std::shared_ptr<CUserTrade>& userTrade, CTradePair& tradePair);
+	void InputMatchUserSellRequest(const std::shared_ptr<CUserTrade>& userTrade, CTradePair& tradePair);
 	bool ReduceBalanceQty(int TradePairID, int UserTradeID1, int UserTradeID2, uint64_t Qty);
 	int64_t GetBalanceAmount(int TradePairID, uint64_t Price, int UserTradeID);
 };
@@ -231,13 +231,12 @@ public:
 	int nLastActualTradeID;
 	uint64_t nLastActualTradeTime;
 	std::string nMNPubKey;
-	bool nSyncInProgress;
 	bool ToVerifyActualTrade;
 	bool nIsInChargeOfChartData;
 	bool nIsInChargeOfMarketTradeHistory;
 	bool nIsInChargeOfUserTradeHistory;
-	bool nIsInChargeOfUserBalance;
-	bool nIsInChargeOfOrderBook;
+	bool nInChargeOfBidBroadcast;
+	bool nInChargeOfAskBroadcast;
 
 	CActualTradeSetting(int nTradePairID, std::string nMNPubKey) :
 		nTradePairID(nTradePairID),
@@ -248,13 +247,12 @@ public:
 		nLastActualTradeID(0),
 		nLastActualTradeTime(0),
 		nMNPubKey(nMNPubKey),
-		nSyncInProgress(false),
 		ToVerifyActualTrade(false),
 		nIsInChargeOfChartData(false),
 		nIsInChargeOfMarketTradeHistory(false),
 		nIsInChargeOfUserTradeHistory(false),
-		nIsInChargeOfUserBalance(false),
-		nIsInChargeOfOrderBook(false)
+		nInChargeOfBidBroadcast(false),
+		nInChargeOfAskBroadcast(false)
 	{}
 
 	CActualTradeSetting():
@@ -265,13 +263,12 @@ public:
 		nToStoreUpperLimit(100),
 		nLastActualTradeID(0),
 		nLastActualTradeTime(0),
-		nSyncInProgress(false),
 		ToVerifyActualTrade(false),
 		nIsInChargeOfChartData(false),
 		nIsInChargeOfMarketTradeHistory(false),
 		nIsInChargeOfUserTradeHistory(false),
-		nIsInChargeOfUserBalance(false),
-		nIsInChargeOfOrderBook(false)
+		nInChargeOfBidBroadcast(false),
+		nInChargeOfAskBroadcast(false)
 	{}
 
 	bool IsValidSubmissionTimeAndUpdate(uint64_t time);
@@ -319,26 +316,6 @@ public:
 		nCurrentHash(""),
 		nTradeTime(nTradeTime)
 	{}
-	
-	CActualTrade(int nActualTradeID, int nTradePairID, int nUserTrade1, int nUserTrade2, uint64_t nTradePrice, uint64_t nTradeQty, uint64_t nTradeAmount, uint64_t nBidAmount, uint64_t nAskAmount, 
-		std::string nUserPubKey1, std::string nUserPubKey2, int64_t nFee1, int64_t nFee2, std::string nMasternodeInspector, std::string nCurrentHash, uint64_t nTradeTime) :
-		nActualTradeID(nActualTradeID),
-		nTradePairID(nTradePairID),
-		nUserTrade1(nUserTrade1),
-		nUserTrade2(nUserTrade2),
-		nTradePrice(nTradePrice),
-		nTradeQty(nTradeQty),
-		nTradeAmount(nTradeAmount),
-		nBidAmount(nBidAmount),
-		nAskAmount(nAskAmount),
-		nUserPubKey1(nUserPubKey1),
-		nUserPubKey2(nUserPubKey2),
-		nFee1(nFee1),
-		nFee2(nFee2),
-		nMasternodeInspector(nMasternodeInspector),
-		nCurrentHash(nCurrentHash),
-		nTradeTime(nTradeTime)
-	{}
 
 	CActualTrade() :
 		nActualTradeID(0),
@@ -370,18 +347,15 @@ class CActualTradeManager
 {
 public:
 	CActualTradeManager() {}
-	void AssignWithdrawProcessorRole(int CoinID);
 	void AssignUserHistoryProviderRole(int TradePairID);
 	void AssignMarketHistoryProviderRole(int TradePairID);
 	void AssignChartDataProviderRole(int TradePairID);
 	void AssignTradeProcessorRole(int TradePairID);
 	bool GenerateActualTrade(std::shared_ptr<CActualTrade> actualTrade, CActualTradeSetting& actualTradeSetting);
 	bool InputActualTrade(std::shared_ptr<CActualTrade> actualTrade, CActualTradeSetting& setting, CTradePair& tradePair);
+	void InputActualTrade(std::shared_ptr<CActualTrade> actualTrade);
 	bool InputActualTradeFromNode(std::shared_ptr<CActualTrade> actualTrade, CActualTradeSetting& setting, CTradePair& tradePair);
 	bool IsActualTradeInList(int TradePairID, int ActualTradeID, std::string Hash);
-	bool GetActualTrade(CNode* node, int ActualTradeID, int TradePairID);
-	bool AddNewActualTrade(CActualTrade ActualTrade); //process by same node
-	std::vector<std::string> FindDuplicateTrade(int TradePairID);
 	void InputNewTradePair(int TradePairID);	
 	uint64_t GetTotalTradedQuantity(int TradePairID, int UserTradeID);
 };

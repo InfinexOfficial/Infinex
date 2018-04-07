@@ -100,31 +100,11 @@ public:
 	int64_t nPendingDepositBalance;
 	int64_t nPendingWithdrawalBalance;
 	int64_t nTotalBalance;
-	uint64_t nInSyncTime;
 	int nLastDepositID;
 	int nLastWithdrawID;
 	int nLastActualTradeID;
 	int nLastUserTradeID;
 	uint64_t nLastUpdateTime;
-
-	CUserBalance(std::string nUserPubKey, int nCoinID, int64_t nAvailableBalance, int64_t nInExchangeBalance, int64_t nInDisputeBalance, 
-		int64_t nPendingDepositBalance, int64_t nPendingWithdrawalBalance, int64_t nTotalBalance, uint64_t nInSyncTime, int nLastDepositID, 
-		int nLastWithdrawID, int nLastActualTradeID, int nLastUserTradeID, uint64_t nLastUpdateTime) :
-		nUserPubKey(nUserPubKey),
-		nCoinID(nCoinID),
-		nAvailableBalance(nAvailableBalance),
-		nInExchangeBalance(nInExchangeBalance),
-		nInDisputeBalance(nInDisputeBalance),
-		nPendingDepositBalance(nPendingDepositBalance),
-		nPendingWithdrawalBalance(nPendingWithdrawalBalance),
-		nTotalBalance(nTotalBalance),
-		nInSyncTime(nInSyncTime),
-		nLastDepositID(nLastDepositID),
-		nLastWithdrawID(nLastWithdrawID),
-		nLastActualTradeID(nLastActualTradeID),
-		nLastUserTradeID(nLastUserTradeID),
-		nLastUpdateTime(nLastUpdateTime)
-	{}
 
 	CUserBalance(std::string nUserPubKey, int nCoinID) :
 		nUserPubKey(nUserPubKey),
@@ -135,7 +115,6 @@ public:
 		nPendingDepositBalance(0),
 		nPendingWithdrawalBalance(0),
 		nTotalBalance(0),
-		nInSyncTime(0),
 		nLastDepositID(0),
 		nLastWithdrawID(0),
 		nLastActualTradeID(0),
@@ -152,7 +131,6 @@ public:
 		nPendingDepositBalance(0),
 		nPendingWithdrawalBalance(0),
 		nTotalBalance(0),
-		nInSyncTime(0),
 		nLastDepositID(0),
 		nLastWithdrawID(0),
 		nLastActualTradeID(0),
@@ -179,7 +157,6 @@ public:
 	bool InChargeOfUserBalanceBackup(std::string pubKey);
 	bool IsInChargeOfCoinBalance(int CoinID);
 	bool IsCoinInList(int CoinID);
-	bool IsFurtherInTime(int CoinID, std::string UserPubKey, uint64_t time);
 	bool IsUserBalanceExist(int CoinID, std::string UserPubKey);	
 	bool VerifyUserBalance(int CoinID);
 	userbalance_to_exchange_enum_t BalanceToExchange(int CoinID, std::string UserPubKey, uint64_t amount);
@@ -198,6 +175,7 @@ public:
 	bool ExchangeToBalanceV2(int CoinID, std::string UserPubKey, uint64_t amount);
 	bool PendingToAvailable(int CoinID, std::string UserPubKey, uint64_t PendingAmount, uint64_t AvailableAmount);
 	bool AvailableToPending(int CoinID, std::string UserPubKey, uint64_t AvailableAmount, uint64_t PendingAmount);
+	bool UpdateAfterTradeBalance(std::string UserPubKey, int ExchangeCoinID, int BalanceCoinID, int64_t ExchangeAdjDown, int64_t BalanceAdjUp);
 };
 
 #endif

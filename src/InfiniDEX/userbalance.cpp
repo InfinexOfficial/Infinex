@@ -115,11 +115,6 @@ bool CUserBalanceManager::IsCoinInList(int CoinID)
 	return mapUserBalanceByCoinID.count(CoinID);
 }
 
-bool CUserBalanceManager::IsFurtherInTime(int CoinID, std::string UserPubKey, uint64_t time)
-{
-	return (time > mapUserBalanceByCoinID[CoinID][UserPubKey]->nInSyncTime);
-}
-
 bool CUserBalanceManager::IsUserBalanceExist(int CoinID, std::string UserPubKey)
 {
 	return (mapUserBalanceByCoinID[CoinID].count(UserPubKey));
@@ -243,6 +238,20 @@ bool CUserBalanceManager::UpdateAfterTradeBalance(std::string User1PubKey, std::
 	temp2[User1PubKey]->nInExchangeBalance -= User1EAdjDown;
 	temp2[User2PubKey]->nAvailableBalance += User2BAdjUp;
 	return true;
+}
+
+bool CUserBalanceManager::UpdateAfterTradeBalance(std::string UserPubKey, int ExchangeCoinID, int BalanceCoinID, int64_t ExchangeAdjDown, int64_t BalanceAdjUp)
+{
+	auto& a = mapUserBalanceByPubKey[UserPubKey];
+	if (!a.count(ExchangeCoinID))
+	{
+		std::shared_ptr<CUserBalance> temp = std::make_shared<CUserBalance>(UserPubKey, BalanceCoinID);
+		temp->nAvailableBalance += BalanceAdjUp;
+		a.insert(std::make_pair(BalanceCoinID, temp));
+	}
+	else
+		a[BalanceCoinID]->nAvailableBalance += BalanceAdjUp;
+	a[ExchangeCoinID]->nInExchangeBalance -= ExchangeAdjDown;
 }
 
 bool CUserBalanceManager::BalanceToExchangeV2(int CoinID, std::string UserPubKey, uint64_t amount)
