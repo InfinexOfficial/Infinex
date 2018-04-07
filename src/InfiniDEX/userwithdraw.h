@@ -17,33 +17,52 @@ class CUserWithdrawManager;
 typedef std::pair<std::string, std::shared_ptr<CUserWithdraw>> PairHashUserWithdraw; //node signature and user withdraw request
 typedef std::pair<std::string, PairHashUserWithdraw> PairPubKeyUserWithdraw;
 extern std::map<int, PairPubKeyUserWithdraw> mapCoinUserWithdraw; //coin ID and users withdraw details
+
+
 extern CUserWithdrawManager userWithdrawManager;
 
 class CUserWithdraw
 {
 private:
-	std::vector<unsigned char> vchSig;
+	std::vector<unsigned char> userVchSig;
+	std::vector<unsigned char> mnVchSig;
+	std::vector<unsigned char> finalVchSig;
 
 public:
-    std::string nUserPubKey;
-	int nCoinID;
-    uint64_t nWithdrawAmount;
-	uint64_t nWithdrawRequestTime;
-	std::string nUserHash;
-	int nUserWithdrawID;
-	std::string nMNPubKey;
-	bool nValidWithdraw;
-	uint64_t nWithdrawCheckTime;	
-	std::string nMNHash;
-	uint64_t nWithdrawProcessTime;
-    std::string nTransactionID;    
-    std::string nRemark;
-	std::string nFinalHash;
-    uint64_t nLastUpdateTime;
+    std::string UserPubKey;
+	int CoinID;
+    uint64_t WithdrawAmount;
+	uint64_t WithdrawRequestTime;
+	std::string UserHash;
+	int UserWithdrawID;
+	std::string MNPubKey;
+	bool ValidWithdraw;
+	uint64_t WithdrawCheckTime;	
+	uint64_t WithdrawProcessTime;
+    std::string TransactionID;    
+    std::string Remark;
+    uint64_t LastUpdateTime;
+
+	CUserWithdraw():
+		UserPubKey(""),
+		CoinID(0),
+		WithdrawAmount(0),
+		WithdrawRequestTime(0),
+		UserHash(""),
+		UserWithdrawID(0),
+		MNPubKey(""),
+		ValidWithdraw(false),
+		WithdrawCheckTime(0),
+		WithdrawProcessTime(0),
+		TransactionID(""),
+		Remark(""),
+		LastUpdateTime(0)
+	{}
 		
 	bool VerifyWithdrawalSignature();
 	bool VerifyMasternodeSignature();
 	bool VerifyFinalSignature();
+	bool MNSign();
 	void RelayToUser();
 	void RelayToMN();
 	void RelayToNetwork();
@@ -56,6 +75,7 @@ private:
 
 public:
     CUserWithdrawManager() {}
+	void InputUserWithdraw(std::shared_ptr<CUserWithdraw> userWithdraw);
 	void AssignWithdrawProcessorRole(int CoinID);
 	void AssignWithdrawInfoRole(int CoinID);
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);

@@ -11,6 +11,17 @@ class CUserWithdrawManager;
 std::map<int, PairPubKeyUserWithdraw> mapCoinUserWithdraw; //coin ID and users withdraw details
 CUserWithdrawManager userWithdrawManager;
 
+void CUserWithdrawManager::InputUserWithdraw(std::shared_ptr<CUserWithdraw> userWithdraw)
+{
+	if (!userWithdraw->VerifyWithdrawalSignature())
+		return;
+
+	if (userWithdraw->UserWithdrawID != 0 && !userWithdraw->VerifyMasternodeSignature())
+		return;
+
+	
+}
+
 bool CUserWithdraw::VerifyWithdrawalSignature()
 {
 	return true;
@@ -22,6 +33,11 @@ bool CUserWithdraw::VerifyMasternodeSignature()
 }
 
 bool CUserWithdraw::VerifyFinalSignature()
+{
+	return true;
+}
+
+bool CUserWithdraw::MNSign()
 {
 	return true;
 }
