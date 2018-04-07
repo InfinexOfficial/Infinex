@@ -21,13 +21,17 @@ class CActualTrade;
 class CActualTradeSetting;
 class CActualTradeManager;
 
+std::map<std::string, pULTIUTC> mapUserTrades;
+
 std::map<int, mUTPIUTV> mapBidUserTradeByPrice;
 std::map<int, mUTPIUTV> mapAskUserTradeByPrice;
+
 std::map<int, mUTPKUTV> mapBidUserTradeByPubkey;
 std::map<int, mUTPKUTV> mapAskUserTradeByPubkey;
+
 std::map<int, CUserTradeSetting> mapUserTradeSetting;
 std::map<int, std::set<std::string>> mapUserTradeHash;
-std::map<std::string, int> mapUserLastTradeID;
+
 std::map<int, mATIAT> mapActualTradeByActualTradeID;
 std::map<int, mUTImAT> mapActualTradeByUserTradeID;
 std::map<int, std::vector<CActualTrade>> mapConflictTrade;
@@ -91,23 +95,6 @@ bool CCancelTrade::MNSign()
 	return true;
 }
 
-int CUserTradeManager::GetLastUserTradeID(std::string userPubKey)
-{
-	if (!mapUserLastTradeID.count(userPubKey)) 
-	{
-		mapUserLastTradeID.insert(std::make_pair(userPubKey, 0));
-		return 0;
-	}
-	return mapUserLastTradeID[userPubKey];
-}
-
-void CUserTradeManager::IncreaseLastUserTradeID(std::string userPubKey)
-{
-	if (!mapUserLastTradeID.count(userPubKey))
-		mapUserLastTradeID.insert(std::make_pair(userPubKey, 1));
-	++mapUserLastTradeID[userPubKey];
-}
-
 void CUserTradeManager::InitTradeCancelRequest(CCancelTrade& cancelTrade)
 {
 	if (!cancelTrade.VerifyUserSignature())
@@ -146,7 +133,7 @@ void CUserTradeManager::ProcessTradeCancelRequest(CCancelTrade& cancelTrade)
 	std::shared_ptr<CUserTrade> existingUserTrade;
 	if (cancelTrade.isBid)
 	{
-		mUTIUT& temp = mapBidUserTradeByPubkey[cancelTrade.nTradePairID][cancelTrade.nUserPubKey];
+		mINTUT& temp = mapBidUserTradeByPubkey[cancelTrade.nTradePairID][cancelTrade.nUserPubKey];
 		existingUserTrade = temp[cancelTrade.nUserTradeID];
 		if (existingUserTrade->nUserTradeID != cancelTrade.nUserTradeID)
 			return;
@@ -155,7 +142,7 @@ void CUserTradeManager::ProcessTradeCancelRequest(CCancelTrade& cancelTrade)
 	}
 	else
 	{
-		mUTIUT& temp = mapAskUserTradeByPubkey[cancelTrade.nTradePairID][cancelTrade.nUserPubKey];
+		mINTUT& temp = mapAskUserTradeByPubkey[cancelTrade.nTradePairID][cancelTrade.nUserPubKey];
 		existingUserTrade = temp[cancelTrade.nUserTradeID];
 		if (existingUserTrade->nUserTradeID != cancelTrade.nUserTradeID)
 			return;
@@ -183,7 +170,7 @@ void CUserTradeManager::ReturnTradeCancelBalance(CCancelTrade& cancelTrade)
 	std::shared_ptr<CUserTrade> existingUserTrade;
 	if (cancelTrade.isBid)
 	{
-		mUTIUT& temp = mapBidUserTradeByPubkey[cancelTrade.nTradePairID][cancelTrade.nUserPubKey];
+		mINTUT& temp = mapBidUserTradeByPubkey[cancelTrade.nTradePairID][cancelTrade.nUserPubKey];
 		existingUserTrade = temp[cancelTrade.nUserTradeID];
 		if (existingUserTrade->nUserTradeID != cancelTrade.nUserTradeID)
 			return;
@@ -195,7 +182,7 @@ void CUserTradeManager::ReturnTradeCancelBalance(CCancelTrade& cancelTrade)
 	}
 	else
 	{
-		mUTIUT& temp = mapAskUserTradeByPubkey[cancelTrade.nTradePairID][cancelTrade.nUserPubKey];
+		mINTUT& temp = mapAskUserTradeByPubkey[cancelTrade.nTradePairID][cancelTrade.nUserPubKey];
 		existingUserTrade = temp[cancelTrade.nUserTradeID];
 		if (existingUserTrade->nUserTradeID != cancelTrade.nUserTradeID)
 			return;
@@ -334,23 +321,14 @@ bool CUserTradeManager::InputUserBuyTrade(const std::shared_ptr<CUserTrade>& use
 		return false;
 	}
 
-	if (!mapBidUserTradeByPrice[userTrade->nTradePairID].count(userTrade->nPrice))
-	{
-		mUTIUT temp;
-		temp.insert(std::make_pair(userTrade->nUserTradeID, userTrade));
-		mapBidUserTradeByPrice[userTrade->nTradePairID].insert(std::make_pair(userTrade->nPrice, temp));
-	}
-	else
-		mapBidUserTradeByPrice[userTrade->nTradePairID][userTrade->nPrice].insert(std::make_pair(userTrade->nUserTradeID, userTrade));
-
-	if (!mapBidUserTradeByPubkey[userTrade->nTradePairID].count(userTrade->nUserPubKey))
-	{
-		mUTIUT temp;
-		temp.insert(std::make_pair(userTrade->nUserTradeID, userTrade));
-		mapBidUserTradeByPubkey[userTrade->nTradePairID].insert(std::make_pair(userTrade->nUserPubKey, temp));
-	}
-	else
-		mapBidUserTradeByPubkey[userTrade->nTradePairID][userTrade->nUserPubKey].insert(std::make_pair(userTrade->nUserTradeID, userTrade));
+	auto& a = mapUserTrades[userTrade->nUserPubKey];
+	userTrade->nUserTradeID = a.first + 1;
+	userTrade->nBalanceAmount = userTrade->nAmount;
+	userTrade->nBalanceQty = userTrade->nQuantity;
+	userTrade->nMNPubKey = ""; //to replace with actual MN pub key
+	userTrade->nLastUpdate = GetAdjustedTime();
+	userTrade->MNSign();
+	a.second.insert(std::make_pair(userTrade->nUserTradeID, userTrade));
 	return true;
 }
 
@@ -366,7 +344,7 @@ bool CUserTradeManager::InputUserSellTrade(const std::shared_ptr<CUserTrade>& us
 
 	if (!mapAskUserTradeByPrice[userTrade->nTradePairID].count(userTrade->nPrice))
 	{
-		mUTIUT temp;
+		mINTUT temp;
 		temp.insert(std::make_pair(userTrade->nUserTradeID, userTrade));
 		mapAskUserTradeByPrice[userTrade->nTradePairID].insert(std::make_pair(userTrade->nPrice, temp));
 	}
@@ -375,7 +353,7 @@ bool CUserTradeManager::InputUserSellTrade(const std::shared_ptr<CUserTrade>& us
 
 	if (!mapAskUserTradeByPubkey[userTrade->nTradePairID].count(userTrade->nUserPubKey))
 	{
-		mUTIUT temp;
+		mINTUT temp;
 		temp.insert(std::make_pair(userTrade->nUserTradeID, userTrade));
 		mapAskUserTradeByPubkey[userTrade->nTradePairID].insert(std::make_pair(userTrade->nUserPubKey, temp));
 	}
@@ -435,20 +413,11 @@ void CUserTradeManager::ProcessUserBuyRequest(const std::shared_ptr<CUserTrade>&
 	{
 		int timeDiff = GetAdjustedTime() - userTrade->nTimeSubmit;
 		if (timeDiff > 10000 || timeDiff < -10000)
-			return;
-
-		int userTradeID = GetLastUserTradeID(userTrade->nUserPubKey);
-		userTrade->nUserTradeID = (userTradeID + 1);
-		userTrade->nBalanceAmount = userTrade->nAmount;
-		userTrade->nBalanceQty = userTrade->nQuantity;
-		userTrade->nMNPubKey = setting.nMNPubKey; //to replace with actual pub key
-		userTrade->nLastUpdate = GetAdjustedTime();
-		userTrade->MNSign();
+			return;	
 
 		if (!InputUserBuyTrade(userTrade))
 			return;
-
-		IncreaseLastUserTradeID(userTrade->nUserPubKey);
+		
 		AddToUserTradeList(userTrade->nTradePairID, userTrade->nUserHash);
 		userTrade->RelayToHandler();
 	}
@@ -549,7 +518,7 @@ void CUserTradeManager::InputMatchUserBuyRequest(const std::shared_ptr<CUserTrad
 	mUTPIUTV::iterator Sellers = mapAskUserTradeByPrice[userTrade->nTradePairID].begin();
 	while (Sellers != mapAskUserTradeByPrice[userTrade->nTradePairID].end() && Sellers->first <= userTrade->nPrice)
 	{
-		mUTIUT::iterator Seller = Sellers->second.begin();
+		mINTUT::iterator Seller = Sellers->second.begin();
 		while (Seller != Sellers->second.end())
 		{
 			std::shared_ptr<CUserTrade> ExistingTrade = Seller->second;
@@ -637,7 +606,7 @@ void CUserTradeManager::InputMatchUserSellRequest(const std::shared_ptr<CUserTra
 	mUTPIUTV::reverse_iterator Buyers = mapBidUserTradeByPrice[userTrade->nTradePairID].rbegin();
 	while (Buyers != mapBidUserTradeByPrice[userTrade->nTradePairID].rend() && Buyers->first >= userTrade->nPrice)
 	{
-		mUTIUT::iterator Buyer = Buyers->second.begin();
+		mINTUT::iterator Buyer = Buyers->second.begin();
 		while (Buyer != Buyers->second.end())
 		{
 			std::shared_ptr<CUserTrade> ExistingTrade = Buyer->second;

@@ -21,17 +21,21 @@ class CActualTrade;
 class CActualTradeSetting;
 class CActualTradeManager;
 
-typedef std::map<int, std::shared_ptr<CUserTrade>> mUTIUT; //user trade id and trade details
-typedef std::map<uint64_t, mUTIUT> mUTPIUTV; //price and user trade container
-typedef std::map<std::string, mUTIUT> mUTPKUTV; //user public key and user trade container
+typedef std::map<int, std::shared_ptr<CUserTrade>> mINTUT; //int and trade details
+
+typedef std::pair<int, mINTUT> pULTIUTC;
+extern std::map<std::string, pULTIUTC> mapUserTrades;
+
+typedef std::map<uint64_t, mINTUT> mUTPIUTV; //price and user trade container
 extern std::map<int, mUTPIUTV> mapBidUserTradeByPrice;
 extern std::map<int, mUTPIUTV> mapAskUserTradeByPrice;
+
+typedef std::map<std::string, mINTUT> mUTPKUTV; //user public key and user trade container
 extern std::map<int, mUTPKUTV> mapBidUserTradeByPubkey;
 extern std::map<int, mUTPKUTV> mapAskUserTradeByPubkey;
+
 extern std::map<int, CUserTradeSetting> mapUserTradeSetting;
 extern std::map<int, std::set<std::string>> mapUserTradeHash;
-extern std::map<int, std::set<std::shared_ptr<CUserTrade>>> mapPendingUserTrade;
-extern std::map<std::string, int> mapUserLastTradeID;
 extern CUserTradeManager userTradeManager;
 
 typedef std::map<int, std::shared_ptr<CActualTrade>> mATIAT;
@@ -185,8 +189,6 @@ private:
 
 public:
 	uint64_t GetAdjustedTime();
-	int GetLastUserTradeID(std::string userPubKey);
-	void IncreaseLastUserTradeID(std::string userPubKey);
 	void InitTradeCancelRequest(CCancelTrade& cancelTrade);
 	void ProcessTradeCancelRequest(CCancelTrade& cancelTrade);
 	void ReturnTradeCancelBalance(CCancelTrade& cancelTrade);
