@@ -16,6 +16,7 @@ std::map<int, CUserBalanceSetting> mapUserBalanceSetting;
 CGlobalUserBalanceHandler globalUserBalanceHandler;
 CUserBalanceManager userBalanceManager;
 std::set<char> globalInChargeDeposit;
+std::set<char> globalInChargeDepositBackup;
 
 bool CUserBalance::VerifySignature()
 {

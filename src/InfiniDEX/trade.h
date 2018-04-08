@@ -35,7 +35,6 @@ extern std::map<int, mUTPKUTV> mapBidUserTradeByPubkey;
 extern std::map<int, mUTPKUTV> mapAskUserTradeByPubkey;
 
 extern std::map<int, CUserTradeSetting> mapUserTradeSetting;
-extern std::map<int, std::set<std::string>> mapUserTradeHash;
 extern CUserTradeManager userTradeManager;
 
 typedef std::map<int, std::shared_ptr<CActualTrade>> mATIAT;
@@ -114,6 +113,11 @@ public:
 	{}
 
 	bool IsValidSubmissionTimeAndUpdate(uint64_t time);
+};
+
+class CProcessedUserTrade
+{
+
 };
 
 class CUserTrade
@@ -203,8 +207,6 @@ public:
 	void InitTradePair(int TradePairID);
 	bool AssignNodeToProcessUserTrade(int TradePairID, bool toAssign = true);
 	bool AssignNodeToMatchUserTrade(int TradePairID, bool toAssign = true);
-	bool IsUserTradeInList(int TradePairID, std::string UserHash);
-	void AddToUserTradeList(int TradePairID, std::string UserHash);
 	uint64_t GetBidRequiredAmount(uint64_t Price, uint64_t Qty, int TradeFee);
 	uint64_t GetAskExpectedAmount(uint64_t Price, uint64_t Qty, int TradeFee);
 	bool IsSubmittedBidValid(const std::shared_ptr<CUserTrade>& userTrade, CTradePair& TradePair);

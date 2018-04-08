@@ -77,7 +77,6 @@ bool CNodeRoleManager::UpdateRole(CNodeRole Role)
 			userWithdrawManager.AssignWithdrawInfoRole(Role.CoinID);
 		else if (Role.NodeRole == INFINIDEX_WITHDRAW_PROCESSOR)
 		{
-			actualTradeManager.AssignWithdrawProcessorRole(Role.CoinID);
 			userWithdrawManager.AssignWithdrawProcessorRole(Role.CoinID);
 		}
 		else if (Role.NodeRole == INFINIDEX_DEPOSIT_INFO)
