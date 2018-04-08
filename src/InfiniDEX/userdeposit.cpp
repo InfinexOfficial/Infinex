@@ -28,7 +28,7 @@ void CUserDepositManager::InputUserDeposit(const std::shared_ptr<CUserDeposit>& 
 		return;
 	
 	if (userBalanceManager.InChargeOfUserBalance(UserDeposit->nUserPubKey))
-	{
+	{		
 		if (!mapUserDepositByPubKey.count(UserDeposit->nUserPubKey))
 			mapUserDepositByPubKey.insert(std::make_pair(UserDeposit->nUserPubKey, mapUserDepositWithCoinID()));
 		mapUserDepositWithCoinID& temp = mapUserDepositByPubKey[UserDeposit->nUserPubKey];

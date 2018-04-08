@@ -70,7 +70,7 @@ bool CNodeRoleManager::UpdateRole(CNodeRole Role)
 		else if (Role.NodeRole == INFINIDEX_CHART_DATA_PROVIDER)
 			actualTradeManager.AssignChartDataProviderRole(tp.nTradePairID);
 		else if (Role.NodeRole == INFINIDEX_TRADE_PROCESSOR)
-			actualTradeManager.AssignTradeProcessorRole(tp.nTradePairID);
+			userTradeManager.AssignNodeToMatchUserTrade(tp.nTradePairID);
 		else if (Role.NodeRole == INFINIDEX_WALLET_ADDRESS)
 			userWalletAddressManager.AssignDepositInfoRole(Role.CoinID);
 		else if (Role.NodeRole == INFINIDEX_WITHDRAW_INFO)

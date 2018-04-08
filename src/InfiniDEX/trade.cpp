@@ -171,11 +171,7 @@ void CUserTradeManager::InputUserTrade(const std::shared_ptr<CUserTrade>& userTr
 			{
 				auto& b = a.second[userTrade->nUserTradeID];
 				if (b->nLastUpdate < userTrade->nLastUpdate)
-				{
-					b->nBalanceQty = userTrade->nBalanceQty;
-					b->nBalanceAmount = userTrade->nBalanceAmount;
-					b->nLastUpdate = userTrade->nLastUpdate;
-				}
+					*b = *userTrade;
 			}
 		}
 	}
@@ -225,10 +221,10 @@ bool CUserTradeManager::ProcessUserTradeRequest(const std::shared_ptr<CUserTrade
 		userBalanceManager.InitUserBalance(tradePair.nCoinID2, userTrade->nUserPubKey, userBalance);
 	else
 		userBalanceManager.InitUserBalance(tradePair.nCoinID1, userTrade->nUserPubKey, userBalance);
-
-	//if (userBalance->nAvailableBalance < userTrade->nAmount)
-		//return false;
 	
+	if (userBalance->nAvailableBalance < userTrade->nAmount)
+		return false;
+
 	userBalance->nAvailableBalance -= userTrade->nAmount;
 	userBalance->nInExchangeBalance += userTrade->nAmount;
 
@@ -239,7 +235,7 @@ bool CUserTradeManager::ProcessUserTradeRequest(const std::shared_ptr<CUserTrade
 	userTrade->nUserTradeID = a.first + 1;
 	userTrade->nBalanceAmount = userTrade->nAmount;
 	userTrade->nBalanceQty = userTrade->nQuantity;
-	userTrade->nMNBalancePubKey = ""; //to replace with actual MN pub key
+	userTrade->nMNBalancePubKey = "TEMP"; //to update with actual MN pub key
 	userTrade->nLastUpdate = GetAdjustedTime();
 	if (!userTrade->MNBalanceSign())
 		return false;
@@ -344,7 +340,7 @@ void CUserTradeManager::InputMatchUserBuyRequest(const std::shared_ptr<CUserTrad
 }
 
 void CUserTradeManager::InputMatchUserSellRequest(const std::shared_ptr<CUserTrade>& userTrade, CTradePair& tradePair)
-{
+{	
 	CActualTradeSetting& actualTradeSetting = mapActualTradeSetting[userTrade->nTradePairID];
 	if (actualTradeSetting.nTradePairID != userTrade->nTradePairID)
 		return;
@@ -566,7 +562,10 @@ void CUserTradeManager::InitTradePair(int TradePairID)
 bool CUserTradeManager::AssignNodeToProcessUserTrade(int TradePairID, bool toAssign)
 {
 	if (!mapUserTradeSetting.count(TradePairID))
-		return false;
+	{
+		//to update with actual MN key
+		mapUserTradeSetting.insert(std::make_pair(TradePairID, CUserTradeSetting(TradePairID, "")));
+	}
 
 	mapUserTradeSetting[TradePairID].nIsInChargeOfProcessUserTrade = toAssign;
 	return true;
@@ -575,7 +574,16 @@ bool CUserTradeManager::AssignNodeToProcessUserTrade(int TradePairID, bool toAss
 bool CUserTradeManager::AssignNodeToMatchUserTrade(int TradePairID, bool toAssign)
 {
 	if (!mapUserTradeSetting.count(TradePairID))
-		return false;
+	{
+		//to update with actual MN key
+		mapUserTradeSetting.insert(std::make_pair(TradePairID, CUserTradeSetting(TradePairID, "")));
+	}
+
+	if (!mapActualTradeSetting.count(TradePairID))
+	{
+		//to update with actual MN key
+		mapActualTradeSetting.insert(std::make_pair(TradePairID, CActualTradeSetting(TradePairID, "")));
+	}
 
 	mapUserTradeSetting[TradePairID].nIsInChargeOfMatchUserTrade = toAssign;
 	return true;
@@ -705,11 +713,6 @@ void CActualTradeManager::AssignMarketHistoryProviderRole(int TradePairID)
 }
 
 void CActualTradeManager::AssignChartDataProviderRole(int TradePairID)
-{
-
-}
-
-void CActualTradeManager::AssignTradeProcessorRole(int TradePairID)
 {
 
 }

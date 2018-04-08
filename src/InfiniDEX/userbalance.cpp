@@ -57,7 +57,7 @@ bool CUserBalanceManager::UpdateUserBalance(CUserBalance UserBalance)
 }
 
 void CUserBalanceManager::InitUserBalance(int CoinID, std::string UserPubKey, std::shared_ptr<CUserBalance>& UserBalance)
-{
+{	
 	if (!mapUserBalanceByPubKey.count(UserPubKey))
 		mapUserBalanceByPubKey.insert(std::make_pair(UserPubKey, mapUserBalanceWithCoinID()));
 

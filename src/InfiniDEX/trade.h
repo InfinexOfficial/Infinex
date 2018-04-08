@@ -115,11 +115,6 @@ public:
 	bool IsValidSubmissionTimeAndUpdate(uint64_t time);
 };
 
-class CProcessedUserTrade
-{
-
-};
-
 class CUserTrade
 {
 private:
@@ -352,7 +347,6 @@ public:
 	void AssignUserHistoryProviderRole(int TradePairID);
 	void AssignMarketHistoryProviderRole(int TradePairID);
 	void AssignChartDataProviderRole(int TradePairID);
-	void AssignTradeProcessorRole(int TradePairID);
 	bool GenerateActualTrade(std::shared_ptr<CActualTrade> actualTrade, CActualTradeSetting& actualTradeSetting);
 	bool InputActualTrade(std::shared_ptr<CActualTrade> actualTrade, CActualTradeSetting& setting, CTradePair& tradePair);
 	void InputActualTrade(std::shared_ptr<CActualTrade> actualTrade);
