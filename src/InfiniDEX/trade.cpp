@@ -2,7 +2,6 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "stdafx.h"
 #include "trade.h"
 #include "chartdata.h"
 #include "orderbook.h"
@@ -286,6 +285,8 @@ void CUserTradeManager::InputMatchUserBuyRequest(const std::shared_ptr<CUserTrad
 	if (actualTradeSetting.nTradePairID != userTrade->nTradePairID)
 		return;
 
+	std::cout << "User buy request: price: " << userTrade->nPrice << ", qty: " << userTrade->nBalanceQty << ", bid amount: " << userTrade->nBalanceAmount << std::endl;
+
 	mUTPIUTV::iterator Sellers = mapAskUserTradeByPrice[userTrade->nTradePairID].begin();
 	while (Sellers != mapAskUserTradeByPrice[userTrade->nTradePairID].end() && Sellers->first <= userTrade->nPrice)
 	{
@@ -318,7 +319,9 @@ void CUserTradeManager::InputMatchUserBuyRequest(const std::shared_ptr<CUserTrad
 			actualTradeManager.InputActualTrade(actualTrade, actualTradeSetting, tradePair);
 			if (actualTradeSetting.nInChargeOfAskBroadcast)
 				orderBookManager.AdjustAskQuantity(actualTrade->nTradePairID, actualTrade->nTradePrice, (0 - actualTrade->nTradeQty));
-						
+			
+			std::cout << "Matchup: price: " << ExistingTrade->nPrice << ", qty: " << qty << ", fee: " << bidAmount - askAmount << std::endl;
+
 			if (userTrade->nBalanceQty <= 0)
 				return;
 
@@ -327,6 +330,7 @@ void CUserTradeManager::InputMatchUserBuyRequest(const std::shared_ptr<CUserTrad
 		++Sellers;
 	}
 
+	std::cout << "User buy request after matchup: price: " << userTrade->nPrice << ", qty: " << userTrade->nBalanceQty << ", bid amount: " << userTrade->nBalanceAmount << std::endl;
 	auto& a = mapBidUserTradeByPrice[userTrade->nTradePairID];
 	if (!a.count(userTrade->nPrice))
 	{
@@ -346,6 +350,8 @@ void CUserTradeManager::InputMatchUserSellRequest(const std::shared_ptr<CUserTra
 	CActualTradeSetting& actualTradeSetting = mapActualTradeSetting[userTrade->nTradePairID];
 	if (actualTradeSetting.nTradePairID != userTrade->nTradePairID)
 		return;
+
+	std::cout << "User sell request: price: " << userTrade->nPrice << ", qty: " << userTrade->nBalanceQty << ", ask amount: " << userTrade->nBalanceAmount << std::endl;
 
 	mUTPIUTV::reverse_iterator Buyers = mapBidUserTradeByPrice[userTrade->nTradePairID].rbegin();
 	while (Buyers != mapBidUserTradeByPrice[userTrade->nTradePairID].rend() && Buyers->first >= userTrade->nPrice)
@@ -373,10 +379,14 @@ void CUserTradeManager::InputMatchUserSellRequest(const std::shared_ptr<CUserTra
 				return;
 
 			ExistingTrade->nBalanceQty -= qty;
+			ExistingTrade->nBalanceAmount -= bidAmount;
 			userTrade->nBalanceQty -= qty;			
+			userTrade->nBalanceAmount -= askAmount;
 			actualTradeManager.InputActualTrade(actualTrade, actualTradeSetting, tradePair);
 			if (actualTradeSetting.nInChargeOfBidBroadcast)
 				orderBookManager.AdjustBidQuantity(actualTrade->nTradePairID, actualTrade->nTradePrice, (0 - actualTrade->nTradeQty));
+
+			std::cout << "Matchup: price: " << ExistingTrade->nPrice << ", qty: " << qty << ", fee: " << bidAmount - askAmount << std::endl;
 
 			if (userTrade->nBalanceQty <= 0)
 				return;
@@ -386,6 +396,7 @@ void CUserTradeManager::InputMatchUserSellRequest(const std::shared_ptr<CUserTra
 		++Buyers;
 	}
 
+	std::cout << "User sell request after matchup: price: " << userTrade->nPrice << ", qty: " << userTrade->nBalanceQty << ", ask amount: " << userTrade->nBalanceAmount << std::endl;
 	auto& a = mapAskUserTradeByPrice[userTrade->nTradePairID];
 	if (!a.count(userTrade->nPrice))
 	{
@@ -406,8 +417,9 @@ bool CActualTradeManager::GenerateActualTrade(std::shared_ptr<CActualTrade> actu
 	actualTrade->nMasternodeInspector = actualTradeSetting.nMNPubKey;
 	actualTradeSetting.nLastActualTradeTime = actualTrade->nTradeTime;
 	actualTrade->nCurrentHash = actualTrade->GetHash();
-	if (mapActualTradeHash[actualTrade->nTradePairID].count(actualTrade->nCurrentHash))
-		return false;
+	//to enable on actual implementation, testing phase disable
+	//if (mapActualTradeHash[actualTrade->nTradePairID].count(actualTrade->nCurrentHash))
+		//return false;
 	if (!actualTrade->Sign())
 		return false;
 	++actualTradeSetting.nLastActualTradeID;
@@ -465,7 +477,37 @@ void CActualTradeManager::InputActualTrade(std::shared_ptr<CActualTrade> actualT
 		return;
 
 	if (userBalanceManager.InChargeOfUserBalance(actualTrade->nUserPubKey1) || userBalanceManager.InChargeOfUserBalanceBackup(actualTrade->nUserPubKey1))
-		userBalanceManager.UpdateAfterTradeBalance(actualTrade->nUserPubKey1, tradePair.nCoinID2, tradePair.nCoinID1, actualTrade->nBidAmount, actualTrade->nTradeQty);
+	{
+		if (mapUserTrades.count(actualTrade->nUserPubKey1))
+		{
+			auto& a = mapUserTrades[actualTrade->nUserPubKey1];
+			if (a.first >= actualTrade->nUserTrade1)
+			{
+				auto& b = a.second[actualTrade->nUserTrade1];
+				b->nBalanceQty -= actualTrade->nTradeQty;
+				b->nBalanceAmount -= actualTrade->nBidAmount;
+				if (b->nBalanceQty == 0)
+				{					
+					if (b->nBalanceAmount > 0)
+					{
+
+					}
+				}
+				else if (b->nBalanceQty < 0)
+				{
+
+				}
+				else
+				{
+					userBalanceManager.UpdateAfterTradeBalance(actualTrade->nUserPubKey1, tradePair.nCoinID2, tradePair.nCoinID1, actualTrade->nBidAmount, actualTrade->nTradeQty);
+				}
+			}
+			else
+			{
+				//is it a newly assigned node?
+			}
+		}		
+	}
 	if (userBalanceManager.InChargeOfUserBalance(actualTrade->nUserPubKey2) || userBalanceManager.InChargeOfUserBalanceBackup(actualTrade->nUserPubKey2))
 		userBalanceManager.UpdateAfterTradeBalance(actualTrade->nUserPubKey2, tradePair.nCoinID1, tradePair.nCoinID2, actualTrade->nTradeQty, actualTrade->nAskAmount);
 	if (setting.nIsInChargeOfChartData)
@@ -594,14 +636,14 @@ bool CUserTradeManager::AssignNodeToMatchUserTrade(int TradePairID, bool toAssig
 uint64_t CUserTradeManager::GetBidRequiredAmount(uint64_t Price, uint64_t Qty, int TradeFee)
 {
 	//overflow prevention
-	boost::multiprecision::uint128_t amount = Price * Qty * 10000 / (10000 + TradeFee);
+	boost::multiprecision::uint128_t amount = Price * Qty * 10000 / (10000 - TradeFee);
 	return (uint64_t)amount;
 }
 
 uint64_t CUserTradeManager::GetAskExpectedAmount(uint64_t Price, uint64_t Qty, int TradeFee)
 {
 	//overflow prevention
-	boost::multiprecision::uint128_t amount = Price * Qty * 10000 / (10000 - TradeFee);
+	boost::multiprecision::uint128_t amount = Price * Qty * 10000 / (10000 + TradeFee);
 	return (uint64_t)amount;
 }
 

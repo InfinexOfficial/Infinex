@@ -2,7 +2,6 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "stdafx.h"
 #include "userbalance.h"
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
