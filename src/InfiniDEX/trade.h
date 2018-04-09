@@ -95,10 +95,10 @@ public:
 	std::string nMNPubKey;
 	bool nInChargeOfBidBroadcast;
 	bool nInChargeOfAskBroadcast;
-	bool nIsInChargeOfMatchUserTrade;	
-	bool nIsInChargeOfChartData;
-	bool nIsInChargeOfMarketTradeHistory;
-	bool nIsInChargeOfUserTradeHistory;	
+	bool nInChargeOfMatchUserTrade;	
+	bool nInChargeOfChartData;
+	bool nInChargeOfMarketTradeHistory;
+	bool nInChargeOfUserTradeHistory;	
 
 	CUserTradeSetting(int nTradePairID, std::string nMNPubKey) :
 		nTradePairID(nTradePairID),
@@ -112,10 +112,10 @@ public:
 		nMNPubKey(nMNPubKey),
 		nInChargeOfBidBroadcast(false),
 		nInChargeOfAskBroadcast(false),
-		nIsInChargeOfMatchUserTrade(false),
-		nIsInChargeOfChartData(false),
-		nIsInChargeOfMarketTradeHistory(false),
-		nIsInChargeOfUserTradeHistory(false)
+		nInChargeOfMatchUserTrade(false),
+		nInChargeOfChartData(false),
+		nInChargeOfMarketTradeHistory(false),
+		nInChargeOfUserTradeHistory(false)
 	{}
 
 	CUserTradeSetting() :
@@ -130,10 +130,10 @@ public:
 		nMNPubKey(""),
 		nInChargeOfBidBroadcast(false),
 		nInChargeOfAskBroadcast(false),
-		nIsInChargeOfMatchUserTrade(false),
-		nIsInChargeOfChartData(false),
-		nIsInChargeOfMarketTradeHistory(false),
-		nIsInChargeOfUserTradeHistory(false)
+		nInChargeOfMatchUserTrade(false),
+		nInChargeOfChartData(false),
+		nInChargeOfMarketTradeHistory(false),
+		nInChargeOfUserTradeHistory(false)
 	{}
 
 	bool IsValidSubmissionTimeAndUpdate(uint64_t time);
@@ -223,12 +223,12 @@ public:
 	void ProcessTradeCancelRequest(CCancelTrade& cancelTrade);
 	void ReturnTradeCancelBalance(CCancelTrade& cancelTrade);
 	void InitTradePair(int TradePairID);
-	void AssignBidBroadcastRole(int TradePairID);
-	void AssignAskBroadcastRole(int TradePairID);
-	void AssignUserHistoryProviderRole(int TradePairID);
-	void AssignMarketHistoryProviderRole(int TradePairID);
-	void AssignChartDataProviderRole(int TradePairID);
-	bool AssignNodeToMatchUserTrade(int TradePairID, bool toAssign = true);
+	void AssignBidBroadcastRole(int TradePairID, bool toAssign = true);
+	void AssignAskBroadcastRole(int TradePairID, bool toAssign = true);
+	void AssignUserHistoryProviderRole(int TradePairID, bool toAssign = true);
+	void AssignMarketHistoryProviderRole(int TradePairID, bool toAssign = true);
+	void AssignChartDataProviderRole(int TradePairID, bool toAssign = true);
+	void AssignMatchUserTradeRole(int TradePairID, bool toAssign = true);
 	uint64_t GetBidRequiredAmount(uint64_t Price, uint64_t Qty, int TradeFee);
 	uint64_t GetAskExpectedAmount(uint64_t Price, uint64_t Qty, int TradeFee);
 	bool IsSubmittedBidValid(const std::shared_ptr<CUserTrade>& userTrade, CTradePair& TradePair);
@@ -321,8 +321,7 @@ public:
 	bool InputActualTrade(const std::shared_ptr<CActualTrade>& actualTrade, CUserTradeSetting& setting, CTradePair& tradePair);
 	void InputActualTrade(std::shared_ptr<CActualTrade> actualTrade);
 	bool InputActualTradeFromNode(std::shared_ptr<CActualTrade> actualTrade, CUserTradeSetting& setting, CTradePair& tradePair);
-	bool IsActualTradeInList(int TradePairID, int ActualTradeID, std::string Hash);	
-	uint64_t GetTotalTradedQuantity(int TradePairID, int UserTradeID);
+	bool IsActualTradeInList(int TradePairID, int ActualTradeID, std::string Hash);
 };
 
 #endif

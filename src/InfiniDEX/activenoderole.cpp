@@ -59,17 +59,25 @@ bool CNodeRoleManager::UpdateRole(CNodeRole Role)
 			globalUserBalanceHandler.nIsInChargeOfGlobalUserBalance = true;
 		}
 		else if (Role.NodeRole == INFINIDEX_BID_BOOK_BROADCAST)
+		{
+			orderBookManager.InitTradePair(tp.nTradePairID);
 			userTradeManager.AssignBidBroadcastRole(tp.nTradePairID);
+			//request complete data from other node		
+		}
 		else if (Role.NodeRole == INFINIDEX_ASK_BOOK_BROADCAST)
+		{
+			orderBookManager.InitTradePair(tp.nTradePairID);
 			userTradeManager.AssignAskBroadcastRole(tp.nTradePairID);
+			//request complete data from other node		
+		}
 		else if (Role.NodeRole == INFINIDEX_USER_HISTORY_PROVIDER)
-			actualTradeManager.AssignUserHistoryProviderRole(tp.nTradePairID);
+			userTradeManager.AssignUserHistoryProviderRole(tp.nTradePairID);
 		else if (Role.NodeRole == INFINIDEX_MARKET_HISTORY_PROVIDER)
-			actualTradeManager.AssignMarketHistoryProviderRole(tp.nTradePairID);
+			userTradeManager.AssignMarketHistoryProviderRole(tp.nTradePairID);
 		else if (Role.NodeRole == INFINIDEX_CHART_DATA_PROVIDER)
-			actualTradeManager.AssignChartDataProviderRole(tp.nTradePairID);
+			userTradeManager.AssignChartDataProviderRole(tp.nTradePairID);
 		else if (Role.NodeRole == INFINIDEX_TRADE_PROCESSOR)
-			userTradeManager.AssignNodeToMatchUserTrade(tp.nTradePairID);
+			userTradeManager.AssignMatchUserTradeRole(tp.nTradePairID);
 		else if (Role.NodeRole == INFINIDEX_WALLET_ADDRESS)
 			userWalletAddressManager.AssignDepositInfoRole(Role.CoinID);
 		else if (Role.NodeRole == INFINIDEX_WITHDRAW_INFO)

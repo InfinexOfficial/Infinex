@@ -63,7 +63,7 @@ void CUserTradeManager::InputTradeCancel(CCancelTrade& cancelTrade)
 			orderBookManager.BroadcastAskOrder(cancelTrade.nTradePairID, cancelTrade.nPrice);
 		}
 	}
-	else if (setting.nIsInChargeOfMatchUserTrade)
+	else if (setting.nInChargeOfMatchUserTrade)
 		ProcessTradeCancelRequest(cancelTrade);
 }
 
@@ -181,7 +181,7 @@ void CUserTradeManager::InputUserTrade(const std::shared_ptr<CUserTrade>& userTr
 	if (setting.nTradePairID != userTrade->nTradePairID)
 		return;
 
-	if (userTrade->nMNTradePubKey == "" && setting.nIsInChargeOfMatchUserTrade)
+	if (userTrade->nMNTradePubKey == "" && setting.nInChargeOfMatchUserTrade)
 	{
 		if (userTrade->nIsBid)
 			InputMatchUserBuyRequest(userTrade, tradePair);
@@ -423,9 +423,9 @@ bool CActualTradeManager::InputActualTrade(const std::shared_ptr<CActualTrade>& 
 		a.insert(std::make_pair(actualTrade->nUserTrade2, temp2));
 	}
 	
-	if (setting.nIsInChargeOfChartData)
+	if (setting.nInChargeOfChartData)
 		ChartDataManager.InputNewTrade(actualTrade->nTradePairID, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeTime);
-	if (setting.nIsInChargeOfMarketTradeHistory)
+	if (setting.nInChargeOfMarketTradeHistory)
 		userTradeHistoryManager.InputNewUserTradeHistory(CUserTradeHistory(actualTrade->nTradePairID, actualTrade->nUserPubKey1, actualTrade->nUserPubKey2, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeAmount, false, actualTrade->nTradeTime));
 	
 	actualTrade->Relay();
@@ -516,9 +516,9 @@ void CActualTradeManager::InputActualTrade(std::shared_ptr<CActualTrade> actualT
 			}
 		}
 	}
-	if (setting.nIsInChargeOfChartData)
+	if (setting.nInChargeOfChartData)
 		ChartDataManager.InputNewTrade(actualTrade->nTradePairID, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeTime);
-	if (setting.nIsInChargeOfMarketTradeHistory)
+	if (setting.nInChargeOfMarketTradeHistory)
 		userTradeHistoryManager.InputNewUserTradeHistory(CUserTradeHistory(actualTrade->nTradePairID, actualTrade->nUserPubKey1, actualTrade->nUserPubKey2, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeAmount, false, actualTrade->nTradeTime));
 }
 
@@ -556,35 +556,6 @@ bool CActualTradeManager::InputActualTradeFromNode(std::shared_ptr<CActualTrade>
 	return true;
 }
 
-uint64_t CActualTradeManager::GetTotalTradedQuantity(int TradePairID, int UserTradeID)
-{
-	mATIAT* temp = &mapActualTradeByUserTradeID[TradePairID][UserTradeID];
-	mATIAT::iterator it = temp->begin();
-	uint64_t qty = 0;
-	while (it != temp->end())
-	{
-		qty += it->second->nTradeQty;
-		it++;
-	}
-	return qty;
-}
-
-void CUserTradeManager::AssignBidBroadcastRole(int TradePairID)
-{
-	InitTradePair(TradePairID);
-	orderBookManager.InitTradePair(TradePairID);
-	mapUserTradeSetting[TradePairID].nInChargeOfBidBroadcast = true;
-	//request complete data from other node
-}
-
-void CUserTradeManager::AssignAskBroadcastRole(int TradePairID)
-{
-	InitTradePair(TradePairID);
-	orderBookManager.InitTradePair(TradePairID);
-	mapUserTradeSetting[TradePairID].nInChargeOfAskBroadcast = true;
-	//request complete data from other node
-}
-
 void CUserTradeManager::InitTradePair(int TradePairID)
 {
 	if (mapUserTradeSetting.count(TradePairID))
@@ -592,38 +563,47 @@ void CUserTradeManager::InitTradePair(int TradePairID)
 
 	mapBidUserTradeByPrice.insert(std::make_pair(TradePairID, mUTPIUTV()));
 	mapAskUserTradeByPrice.insert(std::make_pair(TradePairID, mUTPIUTV()));
-	mapUserTradeSetting.insert(std::make_pair(TradePairID, CUserTradeSetting(TradePairID, "")));
+	mapUserTradeSetting.insert(std::make_pair(TradePairID, CUserTradeSetting(TradePairID, ""))); //to update with actual MN key
 	mapActualTradeByActualTradeID.insert(std::make_pair(TradePairID, mATIAT()));
 	mapActualTradeByUserTradeID.insert(std::make_pair(TradePairID, mUTImAT()));
 	mapConflictTrade.insert(std::make_pair(TradePairID, std::vector<CActualTrade>()));
 	mapActualTradeHash.insert(std::make_pair(TradePairID, std::set<std::string>()));
 }
 
-bool CUserTradeManager::AssignNodeToMatchUserTrade(int TradePairID, bool toAssign)
+void CUserTradeManager::AssignBidBroadcastRole(int TradePairID, bool toAssign)
 {
-	if (!mapUserTradeSetting.count(TradePairID))
-	{
-		//to update with actual MN key
-		mapUserTradeSetting.insert(std::make_pair(TradePairID, CUserTradeSetting(TradePairID, "")));
-	}
-
-	mapUserTradeSetting[TradePairID].nIsInChargeOfMatchUserTrade = toAssign;
-	return true;
+	InitTradePair(TradePairID);
+	mapUserTradeSetting[TradePairID].nInChargeOfBidBroadcast = toAssign;
 }
 
-void CUserTradeManager::AssignUserHistoryProviderRole(int TradePairID)
+void CUserTradeManager::AssignAskBroadcastRole(int TradePairID, bool toAssign)
 {
-
+	InitTradePair(TradePairID);
+	mapUserTradeSetting[TradePairID].nInChargeOfAskBroadcast = toAssign;
 }
 
-void CUserTradeManager::AssignMarketHistoryProviderRole(int TradePairID)
+void CUserTradeManager::AssignMatchUserTradeRole(int TradePairID, bool toAssign)
 {
-
+	InitTradePair(TradePairID);
+	mapUserTradeSetting[TradePairID].nInChargeOfMatchUserTrade = toAssign;
 }
 
-void CUserTradeManager::AssignChartDataProviderRole(int TradePairID)
+void CUserTradeManager::AssignUserHistoryProviderRole(int TradePairID, bool toAssign)
 {
+	InitTradePair(TradePairID);
+	mapUserTradeSetting[TradePairID].nInChargeOfUserTradeHistory = toAssign;
+}
 
+void CUserTradeManager::AssignMarketHistoryProviderRole(int TradePairID, bool toAssign)
+{
+	InitTradePair(TradePairID);
+	mapUserTradeSetting[TradePairID].nInChargeOfMarketTradeHistory = toAssign;
+}
+
+void CUserTradeManager::AssignChartDataProviderRole(int TradePairID, bool toAssign)
+{
+	InitTradePair(TradePairID);
+	mapUserTradeSetting[TradePairID].nInChargeOfChartData = toAssign;
 }
 
 uint64_t CUserTradeManager::GetBidRequiredAmount(uint64_t Price, uint64_t Qty, int TradeFee)
