@@ -126,7 +126,7 @@ public:
 	int nTradePairID;
 	uint64_t nPrice;
 	uint64_t nQuantity;
-	uint64_t nAmount;
+	uint64_t nAmount; //to replace with uint256 on actual implementation
 	bool nIsBid;
 	int nTradeFee; //this is here to compare with trade pair fee & apply to whichever lower fee (benefit user)
 	std::string nUserPubKey;
@@ -140,11 +140,12 @@ public:
 	int64_t nBalanceAmount;
 	uint64_t nLastUpdate;
 
+	//to remove on actual implementation
 	CUserTrade(int nTradePairID, uint64_t nPrice, uint64_t nQuantity, bool nIsBid, int nTradeFee, std::string nUserPubKey, uint64_t nTimeSubmit, std::string nUserHash) :
 		nTradePairID(nTradePairID),
 		nPrice(nPrice),
 		nQuantity(nQuantity),
-		nAmount(nPrice * nQuantity),
+		nAmount(0),
 		nIsBid(nIsBid),
 		nTradeFee(nTradeFee),
 		nUserPubKey(nUserPubKey),

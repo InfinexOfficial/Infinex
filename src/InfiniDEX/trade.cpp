@@ -203,14 +203,14 @@ bool CUserTradeManager::ProcessUserTradeRequest(const std::shared_ptr<CUserTrade
 
 	if (userTrade->nIsBid)
 	{
-		if (!IsSubmittedBidAmountValid(userTrade, tradePair.nBidTradeFee))
+		if (!IsSubmittedBidAmountValid(userTrade, minTradeFee))
 			return false;
 	}
-	else
-	{
-		if (!IsSubmittedAskAmountValid(userTrade, tradePair.nBidTradeFee))
-			return false;
-	}
+	else if (!IsSubmittedAskAmountValid(userTrade, minTradeFee))
+		return false;
+
+	if (tradePair.nMaximumTradeAmount < userTrade->nAmount || userTrade->nAmount < tradePair.nMinimumTradeAmount)
+		return false;
 
 	int timeDiff = GetAdjustedTime() - userTrade->nTimeSubmit;
 	if (timeDiff > 10000 && timeDiff < -10000)
@@ -304,19 +304,21 @@ void CUserTradeManager::InputMatchUserBuyRequest(const std::shared_ptr<CUserTrad
 
 			int bidTradeFee = (userTrade->nTradeFee < tradePair.nAskTradeFee) ? userTrade->nTradeFee : tradePair.nAskTradeFee;
 			int askTradeFee = (ExistingTrade->nTradeFee < tradePair.nBidTradeFee) ? ExistingTrade->nTradeFee : tradePair.nBidTradeFee;
-			uint64_t bidAmount = GetBidRequiredAmount(userTrade->nPrice, qty, bidTradeFee);
+			uint64_t bidAmount = GetBidRequiredAmount(ExistingTrade->nPrice, qty, bidTradeFee);
 			uint64_t askAmount = GetAskExpectedAmount(ExistingTrade->nPrice, qty, askTradeFee);
 
-			std::shared_ptr<CActualTrade> actualTrade = std::make_shared<CActualTrade>(tradePair.nTradePairID, userTrade->nUserTradeID, ExistingTrade->nUserTradeID, userTrade->nPrice, qty, bidAmount, askAmount, userTrade->nUserPubKey, ExistingTrade->nUserPubKey, bidTradeFee, askTradeFee, GetAdjustedTime());
+			std::shared_ptr<CActualTrade> actualTrade = std::make_shared<CActualTrade>(tradePair.nTradePairID, userTrade->nUserTradeID, ExistingTrade->nUserTradeID, ExistingTrade->nPrice, qty, bidAmount, askAmount, userTrade->nUserPubKey, ExistingTrade->nUserPubKey, bidTradeFee, askTradeFee, GetAdjustedTime());
 			if (!actualTradeManager.GenerateActualTrade(actualTrade, actualTradeSetting))
 				return;
-
+			
 			ExistingTrade->nBalanceQty -= qty;
+			ExistingTrade->nBalanceAmount -= askAmount;
 			userTrade->nBalanceQty -= qty;
+			userTrade->nBalanceAmount -= bidAmount;
 			actualTradeManager.InputActualTrade(actualTrade, actualTradeSetting, tradePair);
 			if (actualTradeSetting.nInChargeOfAskBroadcast)
 				orderBookManager.AdjustAskQuantity(actualTrade->nTradePairID, actualTrade->nTradePrice, (0 - actualTrade->nTradeQty));
-
+						
 			if (userTrade->nBalanceQty <= 0)
 				return;
 
@@ -340,7 +342,7 @@ void CUserTradeManager::InputMatchUserBuyRequest(const std::shared_ptr<CUserTrad
 }
 
 void CUserTradeManager::InputMatchUserSellRequest(const std::shared_ptr<CUserTrade>& userTrade, CTradePair& tradePair)
-{	
+{
 	CActualTradeSetting& actualTradeSetting = mapActualTradeSetting[userTrade->nTradePairID];
 	if (actualTradeSetting.nTradePairID != userTrade->nTradePairID)
 		return;
@@ -364,9 +366,9 @@ void CUserTradeManager::InputMatchUserSellRequest(const std::shared_ptr<CUserTra
 			int bidTradeFee = (ExistingTrade->nTradeFee < tradePair.nBidTradeFee) ? ExistingTrade->nTradeFee : tradePair.nBidTradeFee;
 			int askTradeFee = (userTrade->nTradeFee < tradePair.nAskTradeFee) ? userTrade->nTradeFee : tradePair.nAskTradeFee;
 			uint64_t bidAmount = GetBidRequiredAmount(ExistingTrade->nPrice, qty, bidTradeFee);
-			uint64_t askAmount = GetAskExpectedAmount(userTrade->nPrice, qty, askTradeFee);
+			uint64_t askAmount = GetAskExpectedAmount(ExistingTrade->nPrice, qty, askTradeFee);
 			
-			std::shared_ptr<CActualTrade> actualTrade = std::make_shared<CActualTrade>(tradePair.nTradePairID, ExistingTrade->nUserTradeID, userTrade->nUserTradeID, userTrade->nPrice, qty, bidAmount, askAmount, ExistingTrade->nUserPubKey, userTrade->nUserPubKey, bidTradeFee, askTradeFee, GetAdjustedTime());			
+			std::shared_ptr<CActualTrade> actualTrade = std::make_shared<CActualTrade>(tradePair.nTradePairID, ExistingTrade->nUserTradeID, userTrade->nUserTradeID, ExistingTrade->nPrice, qty, bidAmount, askAmount, ExistingTrade->nUserPubKey, userTrade->nUserPubKey, bidTradeFee, askTradeFee, GetAdjustedTime());
 			if (!actualTradeManager.GenerateActualTrade(actualTrade, actualTradeSetting))
 				return;
 
