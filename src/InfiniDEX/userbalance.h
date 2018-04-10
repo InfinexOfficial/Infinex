@@ -15,6 +15,7 @@ class CUserBalance;
 class CUserBalanceSetting;
 class CUserBalanceManager;
 class CGlobalUserBalanceHandler;
+class CGlobalUserSetting;
 
 typedef std::map<std::string, std::shared_ptr<CUserBalance>> mapUserBalanceWithPubKey;
 typedef std::map<int, std::shared_ptr<CUserBalance>> mapUserBalanceWithCoinID;
@@ -23,8 +24,7 @@ extern std::map<int, mapUserBalanceWithPubKey> mapUserBalanceByCoinID;
 extern std::map<int, CUserBalanceSetting> mapUserBalanceSetting;
 extern CGlobalUserBalanceHandler globalUserBalanceHandler;
 extern CUserBalanceManager userBalanceManager;
-extern std::set<char> globalInChargeDeposit;
-extern std::set<char> globalInChargeDepositBackup;
+extern std::map<char, CGlobalUserSetting> mapGlobalUserSetting;
 
 enum userbalance_to_exchange_enum_t {
 	USER_ACCOUNT_NOT_FOUND = -1,
@@ -57,6 +57,26 @@ public:
 		Char1(),
 		Char2(),
 		nIsInChargeOfGlobalUserBalance(false)
+	{}
+};
+
+class CGlobalUserSetting
+{
+public:
+	char nChar;
+	bool nInChargeUserBalance;
+	bool nInChargeBackup;
+
+	CGlobalUserSetting(char nChar) :
+		nChar(nChar),
+		nInChargeUserBalance(false),
+		nInChargeBackup(false)
+	{}
+
+	CGlobalUserSetting() :
+		nChar(),
+		nInChargeUserBalance(false),
+		nInChargeBackup(false)
 	{}
 };
 
@@ -149,12 +169,15 @@ private:
 public:
 	CUserBalanceManager() {}
 	void InitCoin(int CoinID);
-	bool AssignUserBalanceRole(char Char1, char Char2, bool toAssign = true);
+	void InitGlobalUserSetting(char Char);
+	bool AssignUserBalanceRole(char Char, bool toAssign = true);
+	bool AssignBackupRole(char Char, bool toAssign = true);
 	bool UpdateUserBalance(CUserBalance UserBalance);
 	void InitUserBalance(int CoinID, std::string UserPubKey, std::shared_ptr<CUserBalance>& UserBalance);
 	int GetLastDepositID(int CoinID, std::string UserPubKey);
 	bool InChargeOfUserBalance(std::string pubKey);
-	bool InChargeOfUserBalanceBackup(std::string pubKey);
+	bool InChargeOfBackup(std::string pubKey);
+	bool InChargeOfUserTradeHistories(std::string pubKey);
 	bool IsInChargeOfCoinBalance(int CoinID);
 	bool IsCoinInList(int CoinID);
 	bool IsUserBalanceExist(int CoinID, std::string UserPubKey);	

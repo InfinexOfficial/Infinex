@@ -55,9 +55,7 @@ bool CNodeRoleManager::UpdateRole(CNodeRole Role)
 	{
 		CTradePair tp = tradePairManager.GetTradePair(Role.TradePairID);
 		if (Role.NodeRole == INFINIDEX_BALANCE_INFO)
-		{
-			globalUserBalanceHandler.nIsInChargeOfGlobalUserBalance = true;
-		}
+			userBalanceManager.AssignUserBalanceRole(Role.Char);
 		else if (Role.NodeRole == INFINIDEX_BID_BOOK_BROADCAST)
 		{
 			orderBookManager.InitTradePair(tp.nTradePairID);
@@ -73,7 +71,10 @@ bool CNodeRoleManager::UpdateRole(CNodeRole Role)
 		else if (Role.NodeRole == INFINIDEX_USER_HISTORY_PROVIDER)
 			userTradeManager.AssignUserHistoryProviderRole(tp.nTradePairID);
 		else if (Role.NodeRole == INFINIDEX_MARKET_HISTORY_PROVIDER)
+		{
 			userTradeManager.AssignMarketHistoryProviderRole(tp.nTradePairID);
+			userTradeHistoryManager.AssignMarketTradeHistoryBroadcastRole(tp.nTradePairID);
+		}
 		else if (Role.NodeRole == INFINIDEX_CHART_DATA_PROVIDER)
 			userTradeManager.AssignChartDataProviderRole(tp.nTradePairID);
 		else if (Role.NodeRole == INFINIDEX_TRADE_PROCESSOR)

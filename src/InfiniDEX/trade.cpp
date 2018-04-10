@@ -255,9 +255,7 @@ void CUserTradeManager::InputMatchUserBuyRequest(const std::shared_ptr<CUserTrad
 {
 	CUserTradeSetting& actualTradeSetting = mapUserTradeSetting[userTrade->nTradePairID];
 	if (actualTradeSetting.nTradePairID != userTrade->nTradePairID)
-		return;
-
-	std::cout << "User buy request: price: " << userTrade->nPrice << ", qty: " << userTrade->nBalanceQty << ", bid amount: " << userTrade->nBalanceAmount << std::endl;
+		return;	
 
 	mUTPIUTV::iterator Sellers = mapAskUserTradeByPrice[userTrade->nTradePairID].begin();
 	while (Sellers != mapAskUserTradeByPrice[userTrade->nTradePairID].end() && Sellers->first <= userTrade->nPrice)
@@ -292,8 +290,6 @@ void CUserTradeManager::InputMatchUserBuyRequest(const std::shared_ptr<CUserTrad
 			if (actualTradeSetting.nInChargeOfAskBroadcast)
 				orderBookManager.AdjustAskQuantity(actualTrade->nTradePairID, actualTrade->nTradePrice, (0 - actualTrade->nTradeQty));
 			
-			std::cout << "Matchup: price: " << ExistingTrade->nPrice << ", qty: " << qty << ", fee: " << bidAmount - askAmount << std::endl;
-
 			if (userTrade->nBalanceQty <= 0)
 				return;
 
@@ -302,7 +298,6 @@ void CUserTradeManager::InputMatchUserBuyRequest(const std::shared_ptr<CUserTrad
 		++Sellers;
 	}
 
-	std::cout << "User buy request after matchup: price: " << userTrade->nPrice << ", qty: " << userTrade->nBalanceQty << ", bid amount: " << userTrade->nBalanceAmount << std::endl;
 	auto& a = mapBidUserTradeByPrice[userTrade->nTradePairID];
 	if (!a.count(userTrade->nPrice))
 	{
@@ -322,8 +317,6 @@ void CUserTradeManager::InputMatchUserSellRequest(const std::shared_ptr<CUserTra
 	CUserTradeSetting& actualTradeSetting = mapUserTradeSetting[userTrade->nTradePairID];
 	if (actualTradeSetting.nTradePairID != userTrade->nTradePairID)
 		return;
-
-	std::cout << "User sell request: price: " << userTrade->nPrice << ", qty: " << userTrade->nBalanceQty << ", ask amount: " << userTrade->nBalanceAmount << std::endl;
 
 	mUTPIUTV::reverse_iterator Buyers = mapBidUserTradeByPrice[userTrade->nTradePairID].rbegin();
 	while (Buyers != mapBidUserTradeByPrice[userTrade->nTradePairID].rend() && Buyers->first >= userTrade->nPrice)
@@ -358,8 +351,6 @@ void CUserTradeManager::InputMatchUserSellRequest(const std::shared_ptr<CUserTra
 			if (actualTradeSetting.nInChargeOfBidBroadcast)
 				orderBookManager.AdjustBidQuantity(actualTrade->nTradePairID, actualTrade->nTradePrice, (0 - actualTrade->nTradeQty));
 
-			std::cout << "Matchup: price: " << ExistingTrade->nPrice << ", qty: " << qty << ", fee: " << bidAmount - askAmount << std::endl;
-
 			if (userTrade->nBalanceQty <= 0)
 				return;
 
@@ -368,7 +359,6 @@ void CUserTradeManager::InputMatchUserSellRequest(const std::shared_ptr<CUserTra
 		++Buyers;
 	}
 
-	std::cout << "User sell request after matchup: price: " << userTrade->nPrice << ", qty: " << userTrade->nBalanceQty << ", ask amount: " << userTrade->nBalanceAmount << std::endl;
 	auto& a = mapAskUserTradeByPrice[userTrade->nTradePairID];
 	if (!a.count(userTrade->nPrice))
 	{

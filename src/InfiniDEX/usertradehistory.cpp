@@ -7,69 +7,125 @@
 class CUserTradeHistory;
 class CUserTradeHistoryManager;
 
-std::map<int, mapUserTradeHistoryByPubKey> mapUserTradeHistories;
+std::map<std::string, mapUserTradeHistoryById2> mapUserTradeHistoriesByTradePair;
 std::map<int, mapUserTradeHistoryById> mapMarketTradeHistories;
 std::map<int, CUserTradeHistorySetting> mapUserTradeHistorySetting;
+std::set<std::string> mapMarketTradeHistoryHash;
+std::set<std::string> mapUserTradeHistoryHash;
 CUserTradeHistoryManager userTradeHistoryManager;
-
-bool CUserTradeHistoryManager::IsTradePairInlist(int TradePairID)
-{
-	return mapUserTradeHistorySetting.count(TradePairID);
-}
 
 void CUserTradeHistoryManager::InitTradePair(int TradePairID)
 {
-	if (IsTradePairInlist(TradePairID))
+	if (mapUserTradeHistorySetting.count(TradePairID))
 		return;
 
-	mapUserTradeHistories.insert(std::make_pair(TradePairID, mapUserTradeHistoryByPubKey()));
 	mapMarketTradeHistories.insert(std::make_pair(TradePairID, mapUserTradeHistoryById()));
 	mapUserTradeHistorySetting.insert(std::make_pair(TradePairID, CUserTradeHistorySetting(TradePairID)));
 }
 
-CUserTradeHistorySetting& CUserTradeHistoryManager::GetTradeHistorySetting(int TradePairID)
+void CUserTradeHistoryManager::AssignMarketTradeHistoryBroadcastRole(int TradePairID, bool toAssign)
 {
-	return mapUserTradeHistorySetting[TradePairID];
+	InitTradePair(TradePairID);
+	mapUserTradeHistorySetting[TradePairID].InChargeOfBroadcastMarketTradeHistory = true;
 }
 
-void CUserTradeHistoryManager::InputNewUserTradeHistory(CUserTradeHistory UTH)
+//initiated from actual trade info
+void CUserTradeHistoryManager::InputUserTradeHistory(const std::shared_ptr<CUserTradeHistory>& tradeHistory)
 {
-	CUserTradeHistorySetting& setting = GetTradeHistorySetting(UTH.nTradePairID);
+	tradeHistory->SetMNUserHash();
+
+	if (!mapUserTradeHistoriesByTradePair.count(tradeHistory->nUserPubKey))
+		mapUserTradeHistoriesByTradePair.insert(std::make_pair(tradeHistory->nUserPubKey, mapUserTradeHistoryById2()));
+
+	auto& a = mapUserTradeHistoriesByTradePair[tradeHistory->nUserPubKey];
+	if (!a.count(tradeHistory->nTradePairID))
+		a.insert(std::make_pair(tradeHistory->nTradePairID, std::make_pair(0, mapUserTradeHistoryById())));
+
+	auto& b = a[tradeHistory->nTradePairID];
+	tradeHistory->nUserTradeHistoryID = ++b.first;
+	tradeHistory->nMNUserPubKey = ""; //to update
+	if (!tradeHistory->MNUserSign())
+		return;
+	b.second.insert(std::make_pair(tradeHistory->nUserTradeHistoryID, tradeHistory));
+	mapUserTradeHistoryHash.insert(tradeHistory->nMNUserHash);
+}
+
+//initiated from actual trade info
+void CUserTradeHistoryManager::InputMarketTradeHistory(const std::shared_ptr<CUserTradeHistory>& tradeHistory)
+{
+	CUserTradeHistorySetting& setting = mapUserTradeHistorySetting[tradeHistory->nTradePairID];
 	if (setting.TradePairID == 0)
+	{
+		//to check from node list whether in charge of market trade history
+		//if not found, check status from seed server
+		//if in charge
+		InitTradePair(tradeHistory->nTradePairID);
+		mapUserTradeHistorySetting[tradeHistory->nTradePairID].InChargeOfBroadcastMarketTradeHistory = true;
+	}
+
+	tradeHistory->SetMNMarketHash();
+	tradeHistory->nMarketTradeHistoryID = ++setting.LastMarketTradeHistoryID;
+	tradeHistory->nMNMarketPubKey = ""; //to update
+	if (!tradeHistory->MNMarketSign())
 		return;
 
-	if (!setting.IsinChargeOfMarketTradeHistory && !setting.IsInChargeOfUserTradeHistory)
-		return;
-
-	std::shared_ptr<CUserTradeHistory> ut = std::make_shared<CUserTradeHistory>(UTH);
-	ut->nTradeHistoryID = ++setting.LastUserTradeHistoryID;
-	std::pair<int, std::shared_ptr<CUserTradeHistory>> pairTemp = std::make_pair(ut->nTradeHistoryID, ut);
-	mapUserTradeHistoryById& market = mapMarketTradeHistories[ut->nTradePairID];
-	market.insert(pairTemp);
-
-	if (!mapUserTradeHistories[ut->nTradePairID].count(ut->nUser1PubKey))
-		mapUserTradeHistories[ut->nTradePairID].insert(std::make_pair(ut->nUser1PubKey, mapUserTradeHistoryById()));
-	mapUserTradeHistoryById& user1 = mapUserTradeHistories[ut->nTradePairID][ut->nUser1PubKey];
-	user1.insert(pairTemp);
-
-	if (!mapUserTradeHistories[ut->nTradePairID].count(ut->nUser2PubKey))
-		mapUserTradeHistories[ut->nTradePairID].insert(std::make_pair(ut->nUser2PubKey, mapUserTradeHistoryById()));
-	mapUserTradeHistoryById& user2 = mapUserTradeHistories[ut->nTradePairID][ut->nUser2PubKey];
-	user2.insert(pairTemp);
+	mapUserTradeHistoryById& market = mapMarketTradeHistories[tradeHistory->nTradePairID];
+	market.insert(std::make_pair(tradeHistory->nMarketTradeHistoryID, tradeHistory));
+	mapMarketTradeHistoryHash.insert(tradeHistory->nMNMarketHash);
+	int dataCount = market.size();
+	if (dataCount > setting.ToStoreLimit)
+	{
+		mapUserTradeHistoryById::iterator it = market.begin();
+		int exceedCount = dataCount - setting.ToStoreLimit;
+		if (exceedCount == 1)
+			market.erase(it->first);
+		else
+		{
+			for (int i = 0; i < exceedCount; i++)
+			{
+				if (it != market.end())
+				{
+					market.erase(it->first);
+					++it; //to check
+				}
+				else
+					break;
+			}
+		}
+	}
 }
 
-bool CUserTradeHistoryManager::SetNodeAsMarketTradeHistoryProvider(CUserTradeHistorySetting& setting, bool mode)
+void CUserTradeHistoryManager::InputUserTradeHistoryFromNetwork(CUserTradeHistory tradeHistory)
 {
-	setting.IsinChargeOfMarketTradeHistory = mode;
-	//sync and setup for enabled
-	//data clearing if required for disabled
+
+}
+
+void CUserTradeHistory::SetMNUserHash()
+{
+	nMNUserHash = ""; //to update
+}
+
+void CUserTradeHistory::SetMNMarketHash()
+{
+	nMNMarketHash = ""; //to update
+}
+
+bool CUserTradeHistory::VerifyMNUserSignature()
+{
 	return true;
 }
 
-bool CUserTradeHistoryManager::SetNodeAsUserTradeHistoryProvider(CUserTradeHistorySetting& setting, bool mode)
-{	
-	setting.IsInChargeOfUserTradeHistory = mode;
-	//sync and setup for enabled
-	//data clearing if required for disabled
+bool CUserTradeHistory::VerifyMNMarketSignature()
+{
+	return true;
+}
+
+bool CUserTradeHistory::MNUserSign()
+{
+	return true;
+}
+
+bool CUserTradeHistory::MNMarketSign()
+{
 	return true;
 }

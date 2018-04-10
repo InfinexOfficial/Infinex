@@ -8,14 +8,14 @@
 
 class CUserBalance;
 class CUserBalanceManager;
+class CGlobalUserSetting;
 
 std::map<std::string, mapUserBalanceWithCoinID> mapUserBalanceByPubKey;
 std::map<int, mapUserBalanceWithPubKey> mapUserBalanceByCoinID;
 std::map<int, CUserBalanceSetting> mapUserBalanceSetting;
 CGlobalUserBalanceHandler globalUserBalanceHandler;
 CUserBalanceManager userBalanceManager;
-std::set<char> globalInChargeDeposit;
-std::set<char> globalInChargeDepositBackup;
+std::map<char, CGlobalUserSetting> mapGlobalUserSetting;
 
 bool CUserBalance::VerifySignature()
 {
@@ -31,9 +31,27 @@ void CUserBalanceManager::InitCoin(int CoinID)
 	mapUserBalanceByCoinID.insert(std::make_pair(CoinID, mapUserBalanceWithPubKey()));
 }
 
-bool CUserBalanceManager::AssignUserBalanceRole(char Char1, char Char2, bool toAssign)
+void CUserBalanceManager::InitGlobalUserSetting(char Char)
 {
-	globalUserBalanceHandler.nIsInChargeOfGlobalUserBalance = toAssign;
+	if (mapGlobalUserSetting.count(Char))
+		return;
+
+	mapGlobalUserSetting.insert(std::make_pair(Char, CGlobalUserSetting(Char)));
+}
+
+bool CUserBalanceManager::AssignUserBalanceRole(char Char, bool toAssign)
+{
+	InitGlobalUserSetting(Char);
+	auto& a = mapGlobalUserSetting[Char];
+	a.nInChargeUserBalance = toAssign;
+	return true;
+}
+
+bool CUserBalanceManager::AssignBackupRole(char Char, bool toAssign = true)
+{
+	InitGlobalUserSetting(Char);
+	auto& a = mapGlobalUserSetting[Char];
+	a.nInChargeBackup = toAssign;
 	return true;
 }
 
@@ -87,15 +105,26 @@ int CUserBalanceManager::GetLastDepositID(int CoinID, std::string UserPubKey)
 bool CUserBalanceManager::InChargeOfUserBalance(std::string pubKey)
 {
 	char c = pubKey[2];
-	if (globalInChargeDeposit.count(c))
+	auto a = mapGlobalUserSetting[c];
+	if (a.nInChargeUserBalance)
 		return true;
 	return false;
 }
 
-bool CUserBalanceManager::InChargeOfUserBalanceBackup(std::string pubKey)
+bool CUserBalanceManager::InChargeOfBackup(std::string pubKey)
 {
 	char c = pubKey[2];
-	if (globalInChargeDepositBackup.count(c))
+	auto a = mapGlobalUserSetting[c];
+	if (a.nInChargeBackup)
+		return true;
+	return false;
+}
+
+bool CUserBalanceManager::InChargeOfUserTradeHistories(std::string pubKey)
+{
+	char c = pubKey[2];
+	auto a = mapGlobalUserSetting[c];
+	if (a.nInChargeUserTradeHistories)
 		return true;
 	return false;
 }

@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <set>
 #include "userconnection.h"
 
 class CUserTradeHistory;
@@ -16,65 +17,75 @@ class CUserTradeHistoryManager;
 class CUserTradeHistorySetting;
 
 typedef std::map<int, std::shared_ptr<CUserTradeHistory>> mapUserTradeHistoryById;
+typedef std::pair<int, mapUserTradeHistoryById> pairLastCounterUserTradeHistory;
+typedef std::map<int, pairLastCounterUserTradeHistory> mapUserTradeHistoryById2;
 typedef std::map<std::string, mapUserTradeHistoryById> mapUserTradeHistoryByPubKey;
-extern std::map<int, mapUserTradeHistoryByPubKey> mapUserTradeHistories;
 extern std::map<int, mapUserTradeHistoryById> mapMarketTradeHistories;
 extern std::map<int, CUserTradeHistorySetting> mapUserTradeHistorySetting;
+extern std::map<std::string, mapUserTradeHistoryById2> mapUserTradeHistoriesByTradePair;
+extern std::set<std::string> mapMarketTradeHistoryHash;
+extern std::set<std::string> mapUserTradeHistoryHash;
 extern CUserTradeHistoryManager userTradeHistoryManager;
 
 class CUserTradeHistory
 {
 private:
-	std::vector<unsigned char> vchSig;
+	std::vector<unsigned char> mnMarketvchSig;
+	std::vector<unsigned char> mnUservchSig;
 
 public:
-	int nTradeHistoryID;
+	int nMarketTradeHistoryID;
+	int nUserTradeHistoryID;
 	int nTradePairID;
-	std::string nUser1PubKey;
-	std::string nUser2PubKey;
-	uint64_t nTradePrice;
+	std::string nUserPubKey;
+	uint64_t nPrice;
 	uint64_t nQty;
 	uint64_t nAmount;
 	bool nIsBid;
-	uint64_t nTradeProcessTime;
+	std::string nMNMarketHash;
+	std::string nMNMarketPubKey;
+	std::string nMNUserHash;
+	std::string nMNUserPubKey;
+	uint64_t nTradeTime;
 
-	CUserTradeHistory(int nTradePairID, std::string nUser1PubKey, std::string nUser2PubKey, uint64_t nTradePrice, uint64_t nQty,
-		uint64_t nAmount, bool nIsBid, uint64_t nTradeProcessTime) :
-		nTradeHistoryID(0),
+	CUserTradeHistory(int nTradePairID, std::string nUserPubKey, uint64_t nPrice, uint64_t nQty, uint64_t nAmount, bool nIsBid, uint64_t nTradeTime) :
+		nMarketTradeHistoryID(0),
+		nUserTradeHistoryID(0),
 		nTradePairID(nTradePairID),
-		nUser1PubKey(nUser1PubKey),
-		nUser2PubKey(nUser2PubKey),
-		nTradePrice(nTradePrice),
+		nUserPubKey(nUserPubKey),
+		nPrice(nPrice),
 		nQty(nQty),
 		nAmount(nAmount),
 		nIsBid(nIsBid),
-		nTradeProcessTime(nTradeProcessTime)
-	{}
-
-	CUserTradeHistory(int nTradeHistoryID, int nTradePairID, std::string nUser1PubKey, std::string nUser2PubKey, uint64_t nTradePrice, uint64_t nQty, 
-		uint64_t nAmount, bool nIsBid, uint64_t nTradeProcessTime) :
-		nTradeHistoryID(nTradeHistoryID),
-		nTradePairID(nTradePairID),
-		nUser1PubKey(nUser1PubKey),
-		nUser2PubKey(nUser2PubKey),
-		nTradePrice(nTradePrice),
-		nQty(nQty),
-		nAmount(nAmount),
-		nIsBid(nIsBid),
-		nTradeProcessTime(nTradeProcessTime)
+		nMNMarketHash(""),
+		nMNMarketPubKey(""),
+		nMNUserHash(""),
+		nMNUserPubKey(""),
+		nTradeTime(nTradeTime),
 	{}
 
 	CUserTradeHistory() :
-		nTradeHistoryID(0),
+		nMarketTradeHistoryID(0),
+		nUserTradeHistoryID(0),
 		nTradePairID(0),
-		nUser1PubKey(""),
-		nUser2PubKey(""),
-		nTradePrice(0),
+		nUserPubKey(""),
+		nPrice(0),
 		nQty(0),		
 		nAmount(0),
 		nIsBid(false),
-		nTradeProcessTime(0)
+		nMNMarketHash(""),
+		nMNMarketPubKey(""),
+		nMNUserHash(""),
+		nMNUserPubKey(""),
+		nTradeTime(0)
 	{}
+
+	void SetMNUserHash();
+	void SetMNMarketHash();
+	bool MNUserSign();
+	bool MNMarketSign();
+	bool VerifyMNUserSignature();
+	bool VerifyMNMarketSignature();
 };
 
 class CUserTradeHistoryManager
@@ -84,35 +95,33 @@ private:
 
 public:
 	CUserTradeHistoryManager() {}
-	bool IsTradePairInlist(int TradePairID);
 	void InitTradePair(int TradePairID);
-	CUserTradeHistorySetting& GetTradeHistorySetting(int TradePairID);
-	void InputNewUserTradeHistory(CUserTradeHistory UTH);
-	void InputUserTradeHistory(mapUserTradeHistoryById& container, std::shared_ptr<CUserTradeHistory> history);
-	bool SetNodeAsMarketTradeHistoryProvider(CUserTradeHistorySetting& setting, bool mode);
-	bool SetNodeAsUserTradeHistoryProvider(CUserTradeHistorySetting& setting, bool mode);
+	void AssignMarketTradeHistoryBroadcastRole(int TradePairID, bool toAssign = true);
+	void InputUserTradeHistory(const std::shared_ptr<CUserTradeHistory>& tradeHistory);
+	void InputMarketTradeHistory(const std::shared_ptr<CUserTradeHistory>& tradeHistory);
+	void InputUserTradeHistoryFromNetwork(CUserTradeHistory tradeHistory);
 };
 
 class CUserTradeHistorySetting
 {
 public:
 	int TradePairID;
-	int LastUserTradeHistoryID;
-	bool IsInChargeOfUserTradeHistory;
-	bool IsinChargeOfMarketTradeHistory;
+	int LastMarketTradeHistoryID;
+	int ToStoreLimit;
+	bool InChargeOfBroadcastMarketTradeHistory;	
 
 	CUserTradeHistorySetting(int TradePairID):
 		TradePairID(TradePairID),
-		LastUserTradeHistoryID(0),
-		IsInChargeOfUserTradeHistory(false),
-		IsinChargeOfMarketTradeHistory(false)
+		LastMarketTradeHistoryID(0),
+		ToStoreLimit(100),
+		InChargeOfBroadcastMarketTradeHistory(false)
 	{}
 
 	CUserTradeHistorySetting():
 		TradePairID(0),
-		LastUserTradeHistoryID(0),
-		IsInChargeOfUserTradeHistory(false),
-		IsinChargeOfMarketTradeHistory(false)
+		LastMarketTradeHistoryID(0),
+		ToStoreLimit(100),
+		InChargeOfBroadcastMarketTradeHistory(false)
 	{}
 };
 
