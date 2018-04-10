@@ -54,18 +54,24 @@ bool CChartDataManager::InitTradePair(int TradePairID)
 void CChartDataManager::InputNewTrade(int TradePairID, uint64_t Price, uint64_t Qty, uint64_t TradeTime)
 {
 	if (!IsTradePairInList(TradePairID))
-		return;
-
-	//process minute range	
-	mapTimeData::reverse_iterator ri = mapChartData[TradePairID][MINUTE_CHART_DATA].rbegin();
-	if (ri == mapChartData[TradePairID][MINUTE_CHART_DATA].rend())
 	{
+		//check if current node is assigned to process
+		//if true
+		InitTradePair(TradePairID);
+	}
+
+	//process minute range
+	auto& a = mapChartData[TradePairID][MINUTE_CHART_DATA];
+	mapTimeData::reverse_iterator ri = a.rbegin();
+	if (ri == a.rend())
+	{
+		//need to decide tradetime in second or milisecond
 		int TimeRoundDown = TradeTime % 60;
 		uint64_t newMinuteStart = TradeTime - TimeRoundDown;
 		uint64_t newMinuteEnd = newMinuteStart + 60;
 		TimeRange tr = std::make_pair(newMinuteStart, newMinuteEnd);
 		CChartData cd(TradePairID, newMinuteStart, newMinuteEnd, Price, Price, Price, Price, Price * Qty, Qty, 1);
-		mapChartData[TradePairID][MINUTE_CHART_DATA].insert(std::make_pair(tr, cd));
+		a.insert(std::make_pair(tr, cd));
 	}
 	else
 	{
@@ -87,20 +93,21 @@ void CChartDataManager::InputNewTrade(int TradePairID, uint64_t Price, uint64_t 
 			uint64_t newMinuteEnd = lastMinuteEnd + 60;
 			TimeRange tr = std::make_pair(newMinuteStart, newMinuteEnd);
 			CChartData cd(TradePairID, newMinuteStart, newMinuteEnd, Price, Price, Price, Price, Price * Qty, Qty, 1);
-			mapChartData[TradePairID][MINUTE_CHART_DATA].insert(std::make_pair(tr, cd));
+			a.insert(std::make_pair(tr, cd));
 		}
 	}
 
-	//process hour range	
-	mapTimeData::reverse_iterator ri2 = mapChartData[TradePairID][HOUR_CHART_DATA].rbegin();
-	if (ri2 == mapChartData[TradePairID][HOUR_CHART_DATA].rend())
+	//process hour range
+	auto& b = mapChartData[TradePairID][HOUR_CHART_DATA];
+	mapTimeData::reverse_iterator ri2 = b.rbegin();
+	if (ri2 == b.rend())
 	{
 		int TimeRoundDown = TradeTime % 3600;
 		uint64_t newHourStart = TradeTime - TimeRoundDown;
 		uint64_t newHourEnd = newHourStart + 3600;
 		TimeRange tr = std::make_pair(newHourStart, newHourEnd);
 		CChartData cd(TradePairID, newHourStart, newHourEnd, Price, Price, Price, Price, Price * Qty, Qty, 1);
-		mapChartData[TradePairID][HOUR_CHART_DATA].insert(std::make_pair(tr, cd));
+		b.insert(std::make_pair(tr, cd));
 	}
 	else
 	{
@@ -122,20 +129,21 @@ void CChartDataManager::InputNewTrade(int TradePairID, uint64_t Price, uint64_t 
 			uint64_t newHourEnd = newHourStart + 3600;
 			TimeRange tr = std::make_pair(newHourStart, newHourEnd);
 			CChartData cd(TradePairID, newHourStart, newHourEnd, Price, Price, Price, Price, Price * Qty, Qty, 1);
-			mapChartData[TradePairID][HOUR_CHART_DATA].insert(std::make_pair(tr, cd));
+			b.insert(std::make_pair(tr, cd));
 		}
 	}
 
-	//process day range	
-	mapTimeData::reverse_iterator ri3 = mapChartData[TradePairID][DAY_CHART_DATA].rbegin();
-	if (ri3 == mapChartData[TradePairID][DAY_CHART_DATA].rend())
+	//process day range
+	auto& c = mapChartData[TradePairID][DAY_CHART_DATA];
+	mapTimeData::reverse_iterator ri3 = c.rbegin();
+	if (ri3 == c.rend())
 	{
 		int TimeRoundDown = TradeTime % 86400;
 		uint64_t newDayStart = TradeTime - TimeRoundDown;
 		uint64_t newDayEnd = newDayStart + 86400;
 		TimeRange tr = std::make_pair(newDayStart, newDayEnd);
 		CChartData cd(TradePairID, newDayStart, newDayEnd, Price, Price, Price, Price, Price * Qty, Qty, 1);
-		mapChartData[TradePairID][DAY_CHART_DATA].insert(std::make_pair(tr, cd));
+		c.insert(std::make_pair(tr, cd));
 	}
 	else
 	{
@@ -157,7 +165,7 @@ void CChartDataManager::InputNewTrade(int TradePairID, uint64_t Price, uint64_t 
 			uint64_t newDayEnd = newDayStart + 86400;
 			TimeRange tr = std::make_pair(newDayStart, newDayEnd);
 			CChartData cd(TradePairID, newDayStart, newDayEnd, Price, Price, Price, Price, Price * Qty, Qty, 1);
-			mapChartData[TradePairID][DAY_CHART_DATA].insert(std::make_pair(tr, cd));
+			c.insert(std::make_pair(tr, cd));
 		}
 	}
 }
