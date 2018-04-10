@@ -47,7 +47,7 @@ bool CUserBalanceManager::AssignUserBalanceRole(char Char, bool toAssign)
 	return true;
 }
 
-bool CUserBalanceManager::AssignBackupRole(char Char, bool toAssign = true)
+bool CUserBalanceManager::AssignBackupRole(char Char, bool toAssign)
 {
 	InitGlobalUserSetting(Char);
 	auto& a = mapGlobalUserSetting[Char];
@@ -116,15 +116,6 @@ bool CUserBalanceManager::InChargeOfBackup(std::string pubKey)
 	char c = pubKey[2];
 	auto a = mapGlobalUserSetting[c];
 	if (a.nInChargeBackup)
-		return true;
-	return false;
-}
-
-bool CUserBalanceManager::InChargeOfUserTradeHistories(std::string pubKey)
-{
-	char c = pubKey[2];
-	auto a = mapGlobalUserSetting[c];
-	if (a.nInChargeUserTradeHistories)
 		return true;
 	return false;
 }

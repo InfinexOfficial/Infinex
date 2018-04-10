@@ -33,20 +33,33 @@ void CUserTradeHistoryManager::AssignMarketTradeHistoryBroadcastRole(int TradePa
 void CUserTradeHistoryManager::InputUserTradeHistory(const std::shared_ptr<CUserTradeHistory>& tradeHistory)
 {
 	tradeHistory->SetMNUserHash();
+	tradeHistory->nMNUserPubKey = ""; //to update
 
-	if (!mapUserTradeHistoriesByTradePair.count(tradeHistory->nUserPubKey))
-		mapUserTradeHistoriesByTradePair.insert(std::make_pair(tradeHistory->nUserPubKey, mapUserTradeHistoryById2()));
+	if (!mapUserTradeHistoriesByTradePair.count(tradeHistory->nUserPubKey1))
+		mapUserTradeHistoriesByTradePair.insert(std::make_pair(tradeHistory->nUserPubKey1, mapUserTradeHistoryById2()));
 
-	auto& a = mapUserTradeHistoriesByTradePair[tradeHistory->nUserPubKey];
+	if (!mapUserTradeHistoriesByTradePair.count(tradeHistory->nUserPubKey2))
+		mapUserTradeHistoriesByTradePair.insert(std::make_pair(tradeHistory->nUserPubKey2, mapUserTradeHistoryById2()));
+
+	auto& a = mapUserTradeHistoriesByTradePair[tradeHistory->nUserPubKey1];
 	if (!a.count(tradeHistory->nTradePairID))
 		a.insert(std::make_pair(tradeHistory->nTradePairID, std::make_pair(0, mapUserTradeHistoryById())));
 
+	auto& c = mapUserTradeHistoriesByTradePair[tradeHistory->nUserPubKey2];
+	if (!c.count(tradeHistory->nTradePairID))
+		c.insert(std::make_pair(tradeHistory->nTradePairID, std::make_pair(0, mapUserTradeHistoryById())));
+
 	auto& b = a[tradeHistory->nTradePairID];
-	tradeHistory->nUserTradeHistoryID = ++b.first;
-	tradeHistory->nMNUserPubKey = ""; //to update
+	tradeHistory->nUser1TradeHistoryID = ++b.first;
+	
+	auto& d = c[tradeHistory->nTradePairID];
+	tradeHistory->nUser2TradeHistoryID = ++b.first;
+	
 	if (!tradeHistory->MNUserSign())
 		return;
-	b.second.insert(std::make_pair(tradeHistory->nUserTradeHistoryID, tradeHistory));
+
+	b.second.insert(std::make_pair(tradeHistory->nUser1TradeHistoryID, tradeHistory));
+	d.second.insert(std::make_pair(tradeHistory->nUser2TradeHistoryID, tradeHistory));
 	mapUserTradeHistoryHash.insert(tradeHistory->nMNUserHash);
 }
 

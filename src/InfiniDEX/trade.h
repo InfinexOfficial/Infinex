@@ -263,12 +263,13 @@ public:
 	std::string nUserPubKey2;
 	int64_t nFee1; //during promo period, we can provide rebate instead of trade fee to user
 	int64_t nFee2; //during promo period, we can provide rebate instead of trade fee to user
+	bool nFromBid;
 	std::string nMasternodeInspector;
 	std::string nCurrentHash;
 	uint64_t nTradeTime;
 
 	CActualTrade(int nTradePairID, int nUserTrade1, int nUserTrade2, uint64_t nTradePrice, uint64_t nTradeQty, uint64_t nBidAmount, uint64_t nAskAmount, std::string nUserPubKey1,
-		std::string nUserPubKey2, int64_t nFee1, int64_t nFee2, uint64_t nTradeTime) :
+		std::string nUserPubKey2, int64_t nFee1, int64_t nFee2, bool nFromBid, uint64_t nTradeTime) :
 		nActualTradeID(0),
 		nTradePairID(nTradePairID),
 		nUserTrade1(nUserTrade1),
@@ -282,8 +283,9 @@ public:
 		nUserPubKey2(nUserPubKey2),
 		nFee1(nFee1),
 		nFee2(nFee2),
+		nFromBid(nFromBid),
 		nMasternodeInspector(""),
-		nCurrentHash(""),
+		nCurrentHash(""),		
 		nTradeTime(nTradeTime)
 	{}
 
@@ -301,6 +303,7 @@ public:
 		nUserPubKey2(""),
 		nFee1(0),
 		nFee2(0),
+		nFromBid(true),
 		nMasternodeInspector(""),
 		nCurrentHash(""),
 		nTradeTime(0)
@@ -319,8 +322,7 @@ public:
 	CActualTradeManager() {}
 	bool GenerateActualTrade(std::shared_ptr<CActualTrade> actualTrade, CUserTradeSetting& setting);
 	bool InputActualTrade(const std::shared_ptr<CActualTrade>& actualTrade, CUserTradeSetting& setting, CTradePair& tradePair);
-	void InputActualTrade(std::shared_ptr<CActualTrade> actualTrade);
-	bool InputActualTradeFromNode(std::shared_ptr<CActualTrade> actualTrade, CUserTradeSetting& setting, CTradePair& tradePair);
+	bool InputActualTradeFromNetwork(const std::shared_ptr<CActualTrade>& actualTrade, CUserTradeSetting& setting, CTradePair& tradePair);
 	bool IsActualTradeInList(int TradePairID, int ActualTradeID, std::string Hash);
 };
 

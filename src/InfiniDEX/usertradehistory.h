@@ -35,9 +35,11 @@ private:
 
 public:
 	int nMarketTradeHistoryID;
-	int nUserTradeHistoryID;
 	int nTradePairID;
-	std::string nUserPubKey;
+	int nUser1TradeHistoryID;
+	int nUser2TradeHistoryID;
+	std::string nUserPubKey1;
+	std::string nUserPubKey2;
 	uint64_t nPrice;
 	uint64_t nQty;
 	uint64_t nAmount;
@@ -48,11 +50,13 @@ public:
 	std::string nMNUserPubKey;
 	uint64_t nTradeTime;
 
-	CUserTradeHistory(int nTradePairID, std::string nUserPubKey, uint64_t nPrice, uint64_t nQty, uint64_t nAmount, bool nIsBid, uint64_t nTradeTime) :
+	CUserTradeHistory(int nTradePairID, std::string nUserPubKey1, std::string nUserPubKey2, uint64_t nPrice, uint64_t nQty, uint64_t nAmount, bool nIsBid, uint64_t nTradeTime) :
 		nMarketTradeHistoryID(0),
-		nUserTradeHistoryID(0),
 		nTradePairID(nTradePairID),
-		nUserPubKey(nUserPubKey),
+		nUser1TradeHistoryID(0),
+		nUser2TradeHistoryID(0),
+		nUserPubKey1(nUserPubKey1),
+		nUserPubKey2(nUserPubKey2),
 		nPrice(nPrice),
 		nQty(nQty),
 		nAmount(nAmount),
@@ -61,14 +65,16 @@ public:
 		nMNMarketPubKey(""),
 		nMNUserHash(""),
 		nMNUserPubKey(""),
-		nTradeTime(nTradeTime),
+		nTradeTime(nTradeTime)
 	{}
 
 	CUserTradeHistory() :
 		nMarketTradeHistoryID(0),
-		nUserTradeHistoryID(0),
 		nTradePairID(0),
-		nUserPubKey(""),
+		nUser1TradeHistoryID(0),
+		nUser2TradeHistoryID(0),
+		nUserPubKey1(""),
+		nUserPubKey2(""),
 		nPrice(0),
 		nQty(0),		
 		nAmount(0),

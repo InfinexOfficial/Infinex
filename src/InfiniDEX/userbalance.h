@@ -177,7 +177,6 @@ public:
 	int GetLastDepositID(int CoinID, std::string UserPubKey);
 	bool InChargeOfUserBalance(std::string pubKey);
 	bool InChargeOfBackup(std::string pubKey);
-	bool InChargeOfUserTradeHistories(std::string pubKey);
 	bool IsInChargeOfCoinBalance(int CoinID);
 	bool IsCoinInList(int CoinID);
 	bool IsUserBalanceExist(int CoinID, std::string UserPubKey);	

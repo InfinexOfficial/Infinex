@@ -174,7 +174,7 @@ void CUserTradeManager::InputUserTrade(const std::shared_ptr<CUserTrade>& userTr
 	if (userTrade->nMNBalancePubKey == "" || !userTrade->VerifyMNBalanceSignature())
 		return;
 
-	if (userBalanceManager.InChargeOfUserBalanceBackup(userTrade->nUserPubKey))
+	if (userBalanceManager.InChargeOfBackup(userTrade->nUserPubKey))
 		SaveProcessedUserTrade(userTrade, tradePair);
 
 	CUserTradeSetting& setting = mapUserTradeSetting[userTrade->nTradePairID];
@@ -278,7 +278,7 @@ void CUserTradeManager::InputMatchUserBuyRequest(const std::shared_ptr<CUserTrad
 			uint64_t bidAmount = GetBidRequiredAmount(ExistingTrade->nPrice, qty, bidTradeFee);
 			uint64_t askAmount = GetAskExpectedAmount(ExistingTrade->nPrice, qty, askTradeFee);
 
-			std::shared_ptr<CActualTrade> actualTrade = std::make_shared<CActualTrade>(tradePair.nTradePairID, userTrade->nUserTradeID, ExistingTrade->nUserTradeID, ExistingTrade->nPrice, qty, bidAmount, askAmount, userTrade->nUserPubKey, ExistingTrade->nUserPubKey, bidTradeFee, askTradeFee, GetAdjustedTime());
+			std::shared_ptr<CActualTrade> actualTrade = std::make_shared<CActualTrade>(tradePair.nTradePairID, userTrade->nUserTradeID, ExistingTrade->nUserTradeID, ExistingTrade->nPrice, qty, bidAmount, askAmount, userTrade->nUserPubKey, ExistingTrade->nUserPubKey, bidTradeFee, askTradeFee, true, GetAdjustedTime());
 			if (!actualTradeManager.GenerateActualTrade(actualTrade, actualTradeSetting))
 				return;
 			
@@ -339,7 +339,7 @@ void CUserTradeManager::InputMatchUserSellRequest(const std::shared_ptr<CUserTra
 			uint64_t bidAmount = GetBidRequiredAmount(ExistingTrade->nPrice, qty, bidTradeFee);
 			uint64_t askAmount = GetAskExpectedAmount(ExistingTrade->nPrice, qty, askTradeFee);
 			
-			std::shared_ptr<CActualTrade> actualTrade = std::make_shared<CActualTrade>(tradePair.nTradePairID, ExistingTrade->nUserTradeID, userTrade->nUserTradeID, ExistingTrade->nPrice, qty, bidAmount, askAmount, ExistingTrade->nUserPubKey, userTrade->nUserPubKey, bidTradeFee, askTradeFee, GetAdjustedTime());
+			std::shared_ptr<CActualTrade> actualTrade = std::make_shared<CActualTrade>(tradePair.nTradePairID, ExistingTrade->nUserTradeID, userTrade->nUserTradeID, ExistingTrade->nPrice, qty, bidAmount, askAmount, ExistingTrade->nUserPubKey, userTrade->nUserPubKey, bidTradeFee, askTradeFee, false, GetAdjustedTime());
 			if (!actualTradeManager.GenerateActualTrade(actualTrade, actualTradeSetting))
 				return;
 
@@ -416,29 +416,43 @@ bool CActualTradeManager::InputActualTrade(const std::shared_ptr<CActualTrade>& 
 	if (setting.nInChargeOfChartData)
 		ChartDataManager.InputNewTrade(actualTrade->nTradePairID, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeTime);
 	if (setting.nInChargeOfMarketTradeHistory)
-		userTradeHistoryManager.InputNewUserTradeHistory(CUserTradeHistory(actualTrade->nTradePairID, actualTrade->nUserPubKey1, actualTrade->nUserPubKey2, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeAmount, false, actualTrade->nTradeTime));
+	{
+		std::shared_ptr<CUserTradeHistory> tradeHistory = std::make_shared<CUserTradeHistory>(actualTrade->nTradePairID, actualTrade->nUserPubKey1, actualTrade->nUserPubKey2, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeAmount, false, actualTrade->nTradeTime);
+		userTradeHistoryManager.InputUserTradeHistory(tradeHistory);
+	}
 	
 	actualTrade->Relay();
 	return true;
 }
 
-void CActualTradeManager::InputActualTrade(std::shared_ptr<CActualTrade> actualTrade)
+bool CActualTradeManager::InputActualTradeFromNetwork(const std::shared_ptr<CActualTrade>& actualTrade, CUserTradeSetting& setting, CTradePair& tradePair)
 {
 	if (!actualTrade->VerifySignature())
-		return;
+		return false;
 
-	CTradePair& tradePair = mapCompleteTradePair[actualTrade->nTradePairID];
 	if (tradePair.nTradePairID != actualTrade->nTradePairID)
+		return false;
+
+	if (setting.nTradePairID != actualTrade->nTradePairID)
+		return false;
+
+	if (IsActualTradeInList(actualTrade->nTradePairID, actualTrade->nActualTradeID, actualTrade->nCurrentHash))
+		return false;
+
+	int sequence = actualTrade->nActualTradeID - setting.nLastActualTradeID;
+	if (sequence <= 0)
+		return false;
+
+	if (sequence > 1)
 	{
-		//request node setup
-		return;
+		//need to do something more here
+		return false;
 	}
 
-	CUserTradeSetting& setting = mapUserTradeSetting[actualTrade->nTradePairID];
-	if (setting.nTradePairID != actualTrade->nTradePairID)
-		return;
+	if (mapActualTradeHash[actualTrade->nTradePairID].count(actualTrade->GetHash()))
+		return false;
 
-	if (userBalanceManager.InChargeOfUserBalance(actualTrade->nUserPubKey1) || userBalanceManager.InChargeOfUserBalanceBackup(actualTrade->nUserPubKey1))
+	if (userBalanceManager.InChargeOfUserBalance(actualTrade->nUserPubKey1) || userBalanceManager.InChargeOfBackup(actualTrade->nUserPubKey1))
 	{
 		if (mapUserTrades.count(actualTrade->nUserPubKey1))
 		{
@@ -463,7 +477,7 @@ void CActualTradeManager::InputActualTrade(std::shared_ptr<CActualTrade> actualT
 				}
 				else
 				{
-					
+
 				}
 			}
 			else
@@ -472,7 +486,8 @@ void CActualTradeManager::InputActualTrade(std::shared_ptr<CActualTrade> actualT
 			}
 		}
 	}
-	if (userBalanceManager.InChargeOfUserBalance(actualTrade->nUserPubKey2) || userBalanceManager.InChargeOfUserBalanceBackup(actualTrade->nUserPubKey2))
+
+	if (userBalanceManager.InChargeOfUserBalance(actualTrade->nUserPubKey2) || userBalanceManager.InChargeOfBackup(actualTrade->nUserPubKey2))
 	{
 		if (mapUserTrades.count(actualTrade->nUserPubKey2))
 		{
@@ -509,39 +524,31 @@ void CActualTradeManager::InputActualTrade(std::shared_ptr<CActualTrade> actualT
 	if (setting.nInChargeOfChartData)
 		ChartDataManager.InputNewTrade(actualTrade->nTradePairID, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeTime);
 	if (setting.nInChargeOfMarketTradeHistory)
-		userTradeHistoryManager.InputNewUserTradeHistory(CUserTradeHistory(actualTrade->nTradePairID, actualTrade->nUserPubKey1, actualTrade->nUserPubKey2, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeAmount, false, actualTrade->nTradeTime));
-}
-
-bool CActualTradeManager::InputActualTradeFromNode(std::shared_ptr<CActualTrade> actualTrade, CUserTradeSetting& setting, CTradePair& tradePair)
-{
-	if (!actualTrade->VerifySignature())
-		return false;
-
-	if (tradePair.nTradePairID != actualTrade->nTradePairID)
-		return false;
-
-	if (setting.nTradePairID != actualTrade->nTradePairID)
-		return false;
-
-	if (IsActualTradeInList(actualTrade->nTradePairID, actualTrade->nActualTradeID, actualTrade->nCurrentHash))
-		return false;
-
-	int sequence = actualTrade->nActualTradeID - setting.nLastActualTradeID;
-	if (sequence <= 0)
-		return false;
-
-	if (sequence > 1)
 	{
-		//need to do something more here
-		return false;
+		std::shared_ptr<CUserTradeHistory> tradeHistory = std::make_shared<CUserTradeHistory>(actualTrade->nTradePairID, actualTrade->nUserPubKey1, actualTrade->nUserPubKey2, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeAmount, false, actualTrade->nTradeTime);
+		userTradeHistoryManager.InputMarketTradeHistory(tradeHistory);
 	}
-
-	if (mapActualTradeHash[actualTrade->nTradePairID].count(actualTrade->GetHash()))
-		return false;
-
-	userTradeManager.ReduceBalanceQty(actualTrade->nTradePairID, actualTrade->nUserTrade1, actualTrade->nUserTrade2, actualTrade->nTradeQty);
-	if (!InputActualTrade(actualTrade, setting, tradePair))
-		return false;
+	if (setting.nInChargeOfUserTradeHistory)
+	{
+		std::shared_ptr<CUserTradeHistory> tradeHistory = std::make_shared<CUserTradeHistory>(actualTrade->nTradePairID, actualTrade->nUserPubKey1, actualTrade->nUserPubKey2, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeAmount, false, actualTrade->nTradeTime);
+		userTradeHistoryManager.InputUserTradeHistory(tradeHistory);
+	}
+	if (setting.nInChargeOfBidBroadcast)
+	{
+		if (!actualTrade->nFromBid)
+		{
+			orderBookManager.AdjustBidQuantity(actualTrade->nTradePairID, actualTrade->nTradePrice, actualTrade->nTradeQty);
+			//broadcast
+		}
+	}
+	if (setting.nInChargeOfAskBroadcast)
+	{
+		if (actualTrade->nFromBid)
+		{
+			orderBookManager.AdjustAskQuantity(actualTrade->nTradePairID, actualTrade->nTradePrice, actualTrade->nTradeQty);
+			//broadcast
+		}
+	}
 
 	return true;
 }
