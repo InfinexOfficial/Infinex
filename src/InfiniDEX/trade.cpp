@@ -181,12 +181,25 @@ void CUserTradeManager::InputUserTrade(const std::shared_ptr<CUserTrade>& userTr
 	if (setting.nTradePairID != userTrade->nTradePairID)
 		return;
 
-	if (userTrade->nMNTradePubKey == "" && setting.nInChargeOfMatchUserTrade)
+	if (userTrade->nMNTradePubKey == "")
+	{
+		if (setting.nInChargeOfMatchUserTrade)
+		{
+			if (userTrade->nIsBid)
+				InputMatchUserBuyRequest(userTrade, tradePair);
+			else
+				InputMatchUserSellRequest(userTrade, tradePair);
+		}
+	}
+	else if (userTrade->nBalanceQty > 0 && userTrade->VerifyMNTradeSignature())
 	{
 		if (userTrade->nIsBid)
-			InputMatchUserBuyRequest(userTrade, tradePair);
-		else
-			InputMatchUserSellRequest(userTrade, tradePair);
+		{
+			if (setting.nInChargeOfBidBroadcast)
+				orderBookManager.AdjustBidQuantity(userTrade->nTradePairID, userTrade->nPrice, userTrade->nBalanceQty);
+		}
+		else if (setting.nInChargeOfAskBroadcast)
+			orderBookManager.AdjustAskQuantity(userTrade->nTradePairID, userTrade->nPrice, userTrade->nBalanceQty);
 	}
 }
 
