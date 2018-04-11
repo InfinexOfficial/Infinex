@@ -98,7 +98,7 @@ private:
 
 public:
 	CTradePairManager() {}
-	bool UpdateTradePair(CTradePair &tradePair);
+	bool InputTradePair(CTradePair &tradePair);
 	void ProcessMessage(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void SendCompleteTradePairs(CNode* node, CConnman& connman);
 	void SendTradePair(CTradePair TradePair, CNode* node, CConnman& connman);

@@ -21,7 +21,7 @@ bool RelayTo(CNode* node, CConnman& connman)
 	return true;
 }
 
-bool CTradePairManager::UpdateTradePair(CTradePair &tradePair)
+bool CTradePairManager::InputTradePair(CTradePair &tradePair)
 {
 	if (!tradePair.VerifySignature())
 		return false;
