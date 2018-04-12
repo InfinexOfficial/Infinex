@@ -19,6 +19,7 @@ extern std::map<std::string, std::vector<CUserConnection>> mapUserConnections; /
 extern std::map<std::string, CUserConnection> mapMNConnection; //MN IP address & connection info
 extern CUserConnectionManager userConnectionManager;
 extern std::string MNPubKey; //temp
+extern std::string DEXKey;
 
 class CUserConnection
 {

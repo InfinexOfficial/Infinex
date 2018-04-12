@@ -40,7 +40,6 @@
 #include "utilmoneystr.h"
 #include "utilstrencodings.h"
 #include "validationinterface.h"
-#include "InfiniDEX/activenoderole.h"
 #ifdef ENABLE_WALLET
 #include "wallet/db.h"
 #include "wallet/wallet.h"
@@ -1395,7 +1394,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         SetProxy(NET_TOR, addrProxy);
         SetNameProxy(addrProxy);
         SetLimited(NET_TOR, false); // by default, -proxy sets onion as reachable, unless -noonion later
-    }
+    }    
 
     // -onion can be used to set only a proxy for .onion, or override normal proxy for .onion addresses
     // -noonion (or -onion=0) disables connecting to .onion entirely

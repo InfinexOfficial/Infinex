@@ -9,7 +9,7 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include <userconnection.h>
+#include "userconnection.h"
 #include "hash.h"
 #include "net.h"
 #include "utilstrencodings.h"

@@ -77,11 +77,11 @@ public:
 	uint64_t nDepositAmount;
 	uint64_t nBlockNumber;
 	uint64_t nDepositTime;
-	userdeposit_status_enum nDepositStatus;
+	int nDepositStatus;
 	std::string nRemark;
 	uint64_t nLastUpdateTime;
 
-	CUserDeposit(int nUserDepositID, std::string nUserPubKey, int nCoinID, uint64_t nDepositAmount, uint64_t nBlockNumber, uint64_t nDepositTime, userdeposit_status_enum nDepositStatus, std::string nRemark, uint64_t nLastUpdateTime) :
+	CUserDeposit(int nUserDepositID, std::string nUserPubKey, int nCoinID, uint64_t nDepositAmount, uint64_t nBlockNumber, uint64_t nDepositTime, int nDepositStatus, std::string nRemark, uint64_t nLastUpdateTime) :
 		nUserDepositID(nUserDepositID),
 		nUserPubKey(nUserPubKey),
 		nCoinID(nCoinID),
@@ -104,8 +104,24 @@ public:
 		nRemark(""),
 		nLastUpdateTime(0)
 	{}
+	
+	ADD_SERIALIZE_METHODS;
 
-	bool Verify();
+	template <typename Stream, typename Operation>
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+		READWRITE(nUserDepositID);
+		READWRITE(nUserPubKey);
+		READWRITE(nCoinID);
+		READWRITE(nDepositAmount);
+		READWRITE(nBlockNumber);
+		READWRITE(nDepositTime);
+		READWRITE(nDepositStatus);
+		READWRITE(nRemark);
+		READWRITE(nLastUpdateTime);
+		READWRITE(vchSig);
+	}
+
+	bool VerifySignature();
 	void RelayTo(CNode* node, CConnman& connman);
 	void RelayToCoOpNode(CConnman& connman);
 };
@@ -117,9 +133,9 @@ private:
 
 public:
 	CUserDepositManager() {}
+	void ProcessDepositMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void InputUserDeposit(const std::shared_ptr<CUserDeposit>& UserDeposit);
 	void AssignDepositInfoRole(int TradePairID);
-	void ProcessMessage(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	bool IsInChargeOfUserDepositInfo(int CoinID);
 	void ToProvideUserDepositInfo(int CoinID, bool toProcess);
 	void SetSyncInProgress(int CoinID, bool status);

@@ -4,7 +4,6 @@
 
 #include "timedata.h"
 #include "orderbook.h"
-#include <chrono>
 
 class COrderBook;
 class COrderBookManager;
@@ -22,11 +21,6 @@ bool COrderBook::VerifySignature()
 bool Sign()
 {
 	return true;
-}
-
-uint64_t COrderBookManager::GetAdjustedTime()
-{
-	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();	
 }
 
 bool COrderBookManager::InsertNewBidOrder(int TradePairID, uint64_t Price, int64_t Qty)

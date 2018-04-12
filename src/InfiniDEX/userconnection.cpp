@@ -13,6 +13,7 @@ std::map<std::string, std::vector<CUserConnection>> mapUserConnections; //user p
 std::map<std::string, CUserConnection> mapMNConnection; //MN IP address & connection info
 CUserConnectionManager userConnectionManager;
 std::string MNPubKey;
+std::string DEXKey = "028afd3503f2aaa0898b853e1b28cdcb5fd422b5dc6426c92cf2b14c4b4ebeb969";
 
 bool CUserConnectionManager::IsUserInList(std::string PubKey)
 {

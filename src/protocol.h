@@ -244,6 +244,23 @@ extern const char *MNGOVERNANCESYNC;
 extern const char *MNGOVERNANCEOBJECT;
 extern const char *MNGOVERNANCEOBJECTVOTE;
 extern const char *MNVERIFY;
+extern const char *DEXCOININFO;
+extern const char *DEXTRADEPAIR;
+extern const char *DEXORDERBIDBOOK;
+extern const char *DEXORDERASKBOOK;
+extern const char *DEXMARKETOVERVIEW;
+extern const char *DEXUSERCONNECTION;
+extern const char *DEXMNCONNECTION;
+extern const char *DEXUSERBALANCE;
+extern const char *DEXUSERDEPOSIT;
+extern const char *DEXCHARTDATA;
+extern const char *DEXUSERTRADE;
+extern const char *DEXUSERTRADECANCEL;
+extern const char *DEXACTUALTRADE;
+extern const char *DEXUSERTRADEHISTORY;
+extern const char *DEXMARKETTRADEHISTORY;
+extern const char *DEXUSERWALLETADDRESS;
+extern const char *DEXUSERWITHDRAW;
 };
 
 /* Get a vector of all valid message types (see above) */

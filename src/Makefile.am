@@ -375,6 +375,23 @@ libbitcoin_common_a_SOURCES = \
   script/sign.cpp \
   script/standard.cpp \
   spork.cpp \
+  InfiniDEX/activenoderole.cpp \
+  InfiniDEX/chartdata.cpp \
+  InfiniDEX/coininfo.cpp \
+  InfiniDEX/marketoverview.cpp \
+  InfiniDEX/markettradehistory.cpp \
+  InfiniDEX/noderole.cpp \
+  InfiniDEX/nodesetup.cpp \
+  InfiniDEX/orderbook.cpp \
+  InfiniDEX/trade.cpp \
+  InfiniDEX/tradepair.cpp \
+  InfiniDEX/userbalance.cpp \
+  InfiniDEX/userconnection.cpp \
+  InfiniDEX/userdeposit.cpp \
+  InfiniDEX/userinfo.cpp \
+  InfiniDEX/usertradehistory.cpp \
+  InfiniDEX/userwalletaddress.cpp \
+  InfiniDEX/userwithdraw.cpp \
   $(BITCOIN_CORE_H)
 
 # util: shared between all executables.

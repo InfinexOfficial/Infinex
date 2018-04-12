@@ -49,15 +49,15 @@ bool CCoinInfoManager::UpdateCoinInfo(CCoinInfo &CoinInfo)
 	if (!CoinInfo.VerifySignature())
 		return false;
 
-	if (IsCoinInCompleteListByCoinID(CoinInfo.nCoinInfoID))
-	{
-		*mapCompleteCoinInfoWithID[CoinInfo.nCoinInfoID] = CoinInfo;
-	}
-	else
-	{
-		mapCompleteCoinInfoWithID.insert(std::make_pair(CoinInfo.nCoinInfoID, &CoinInfo));
-		mapCompleteCoinInfoWithSymbol.insert(std::make_pair(CoinInfo.nSymbol, &CoinInfo));
-	}
+	// if (IsCoinInCompleteListByCoinID(CoinInfo.nCoinInfoID))
+	// {
+	// 	*mapCompleteCoinInfoWithID[CoinInfo.nCoinInfoID] = CoinInfo;
+	// }
+	// else
+	// {
+	// 	mapCompleteCoinInfoWithID.insert(std::make_pair(CoinInfo.nCoinInfoID, &CoinInfo));
+	// 	mapCompleteCoinInfoWithSymbol.insert(std::make_pair(CoinInfo.nSymbol, &CoinInfo));
+	// }
 
 	return true;
 }

@@ -2,9 +2,16 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "chainparams.h"
+#include "validation.h"
+#include "messagesigner.h"
+#include "net_processing.h"
 #include "userdeposit.h"
 #include "userbalance.h"
 #include "noderole.h"
+
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 
 class CUserDeposit;
 class CUserDepositSetting;
@@ -16,16 +23,42 @@ std::map<int, mapLastRequestTimeByPubKey> mapUserLastRequestTime;
 std::map<int, CUserDepositSetting> mapUserDepositSetting;
 CUserDepositManager userDepositManager;
 
-bool CUserDeposit::Verify()
+void CUserDepositManager::ProcessDepositMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
+	if (strCommand == NetMsgType::DEXUSERDEPOSIT) {
+
+		CUserDeposit userDeposit;
+		vRecv >> userDeposit;
+
+		if (!userDeposit.VerifySignature()) {
+			LogPrintf("CUserDepositManager::ProcessMessage -- invalid signature\n");
+			Misbehaving(pfrom->GetId(), 100);
+			return;
+		}
+		
+		std::shared_ptr<CUserDeposit> UserDeposit = std::make_shared<CUserDeposit>(userDeposit);
+		InputUserDeposit(UserDeposit);
+	}
+}
+
+bool CUserDeposit::VerifySignature()
+{
+	std::string strError = "";
+	std::string strMessage = boost::lexical_cast<std::string>(nUserDepositID) + nUserPubKey + boost::lexical_cast<std::string>(nCoinID) + boost::lexical_cast<std::string>(nDepositAmount)
+		+ boost::lexical_cast<std::string>(nBlockNumber)+ boost::lexical_cast<std::string>(nDepositTime)+ boost::lexical_cast<std::string>(nDepositStatus)
+		+ nRemark + boost::lexical_cast<std::string>(nLastUpdateTime);
+	CPubKey pubkey(ParseHex(DEXKey));
+
+	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
+		LogPrintf("CUserDeposit::VerifySignature -- VerifyMessage() failed, error: %s\n", strError);
+		return false;
+	}
+
 	return true;
 }
 
 void CUserDepositManager::InputUserDeposit(const std::shared_ptr<CUserDeposit>& UserDeposit)
-{
-	if (!UserDeposit->Verify())
-		return;
-	
+{	
 	if (userBalanceManager.InChargeOfUserBalance(UserDeposit->nUserPubKey))
 	{		
 		if (!mapUserDepositByPubKey.count(UserDeposit->nUserPubKey))
@@ -133,11 +166,6 @@ void CUserDepositManager::AssignDepositInfoRole(int TradePairID)
 
 }
 
-void CUserDepositManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
-{
-
-}
-
 bool CUserDepositManager::IsInChargeOfUserDepositInfo(int CoinID)
 {
 	return mapUserDepositSetting[CoinID].ProvideUserDepositInfo;
@@ -193,9 +221,6 @@ void CUserDepositManager::AddPendingDeposit(std::shared_ptr<CUserDeposit> UserDe
 	if (UserDeposit->nDepositStatus != USER_DEPOSIT_PENDING)
 		return;
 
-	if (!UserDeposit->Verify())
-		return;
-
 	mapUserDepositWithPubKey& temp = mapUserDepositByCoinID[UserDeposit->nCoinID];
 	if (!temp.count(UserDeposit->nUserPubKey))
 		temp.insert(std::make_pair(UserDeposit->nUserPubKey, UserDepositInfo()));
@@ -240,9 +265,6 @@ void CUserDepositManager::RequestConfirmDepositData(int StartingID)
 
 void CUserDepositManager::AddConfirmDeposit(std::shared_ptr<CUserDeposit> UserDeposit)
 {
-	if (!UserDeposit->Verify())
-		return;
-
 	if (UserDeposit->nDepositStatus != USER_DEPOSIT_CONFIRMED)
 		return;
 
