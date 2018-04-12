@@ -198,8 +198,24 @@ BITCOIN_CORE_H = \
   zmq/zmqabstractnotifier.h \
   zmq/zmqconfig.h\
   zmq/zmqnotificationinterface.h \
-  zmq/zmqpublishnotifier.h
-
+  zmq/zmqpublishnotifier.h \
+  InfiniDEX/activenoderole.h \
+  InfiniDEX/chartdata.h \
+  InfiniDEX/coininfo.h \
+  InfiniDEX/marketoverview.h \
+  InfiniDEX/markettradehistory.h \
+  InfiniDEX/noderole.h \
+  InfiniDEX/nodesetup.h \
+  InfiniDEX/orderbook.h \
+  InfiniDEX/trade.h \
+  InfiniDEX/tradepair.h \
+  InfiniDEX/userbalance.h \
+  InfiniDEX/userconnection.h \
+  InfiniDEX/userdeposit.h \
+  InfiniDEX/userinfo.h \
+  InfiniDEX/usertradehistory.h \
+  InfiniDEX/userwalletaddress.h \
+  InfiniDEX/userwithdraw.h
 
 obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj

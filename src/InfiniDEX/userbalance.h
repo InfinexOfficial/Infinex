@@ -10,6 +10,9 @@
 #include <map>
 #include <memory>
 #include <set>
+#include "hash.h"
+#include "net.h"
+#include "utilstrencodings.h"
 
 class CUserBalance;
 class CUserBalanceSetting;

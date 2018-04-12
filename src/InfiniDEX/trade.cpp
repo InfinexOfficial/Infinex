@@ -2,6 +2,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "timedata.h"
 #include "trade.h"
 #include "chartdata.h"
 #include "orderbook.h"
@@ -832,11 +833,6 @@ void CUserTrade::RelayTo(CUserConnection& conn)
 void CUserTrade::RelayToHandler()
 {
 
-}
-
-uint64_t CUserTradeManager::GetAdjustedTime()
-{
-	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 bool CCancelTrade::VerifyUserSignature()

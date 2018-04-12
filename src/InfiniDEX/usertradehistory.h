@@ -11,6 +11,9 @@
 #include <memory>
 #include <set>
 #include "userconnection.h"
+#include "hash.h"
+#include "net.h"
+#include "utilstrencodings.h"
 
 class CUserTradeHistory;
 class CUserTradeHistoryManager;

@@ -9,6 +9,9 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include "hash.h"
+#include "net.h"
+#include "utilstrencodings.h"
 
 class CCoinInfo;
 class CCoinInfoManager;

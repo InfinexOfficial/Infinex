@@ -10,6 +10,9 @@
 #include <map>
 #include <memory>
 #include "userconnection.h"
+#include "hash.h"
+#include "net.h"
+#include "utilstrencodings.h"
 
 enum infinidex_node_role_enum {
 	INFINIDEX_NOTHING = 0,

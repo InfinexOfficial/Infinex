@@ -8,6 +8,9 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include "hash.h"
+#include "net.h"
+#include "utilstrencodings.h"
 
 class CChartData;
 class CChartDataManager;

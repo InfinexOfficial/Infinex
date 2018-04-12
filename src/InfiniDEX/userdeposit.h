@@ -11,6 +11,9 @@
 #include <set>
 #include <memory>
 #include "userconnection.h"
+#include "hash.h"
+#include "net.h"
+#include "utilstrencodings.h"
 
 enum userdeposit_status_enum {
 	USER_DEPOSIT_INVALID = 1,

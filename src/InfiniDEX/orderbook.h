@@ -9,6 +9,9 @@
 #include <vector>
 #include <map>
 #include "userconnection.h"
+#include "hash.h"
+#include "net.h"
+#include "utilstrencodings.h"
 
 class COrderBook;
 class COrderBookManager;
@@ -53,8 +56,7 @@ public:
 class COrderBookManager
 {
 private:
-	std::vector<unsigned char> vchSig;
-	uint64_t GetAdjustedTime();
+	std::vector<unsigned char> vchSig;	
 	bool InsertNewBidOrder(int TradePairID, uint64_t Price, int64_t Qty);
 	bool InsertNewAskOrder(int TradePairID, uint64_t Price, int64_t Qty);
 

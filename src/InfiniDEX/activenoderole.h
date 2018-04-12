@@ -9,7 +9,10 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include <noderole.h>
+#include "noderole.h"
+#include "hash.h"
+#include "net.h"
+#include "utilstrencodings.h"
 
 class CNodeRoleManager;
 extern CNodeRoleManager nodeRoleManager;

@@ -12,6 +12,9 @@
 #include <set>
 #include "tradepair.h"
 #include "userconnection.h"
+#include "hash.h"
+#include "net.h"
+#include "utilstrencodings.h"
 
 class CUserTrade;
 class CUserTradeSetting;
@@ -218,7 +221,7 @@ private:
 	std::vector<unsigned char> vchSig;
 
 public:
-	uint64_t GetAdjustedTime();
+	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);	
 	void InputTradeCancel(CCancelTrade& cancelTrade);
 	void ProcessTradeCancelRequest(CCancelTrade& cancelTrade);
 	void ReturnTradeCancelBalance(CCancelTrade& cancelTrade);

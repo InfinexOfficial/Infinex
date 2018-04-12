@@ -9,6 +9,9 @@
 #include <vector>
 #include <map>
 #include "userconnection.h"
+#include "hash.h"
+#include "net.h"
+#include "utilstrencodings.h"
 
 class CTradePair;
 class CTradePairManager;

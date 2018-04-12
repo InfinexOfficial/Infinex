@@ -8,6 +8,9 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include "hash.h"
+#include "net.h"
+#include "utilstrencodings.h"
 
 class CUserConnection;
 class CUserConnectionManager;
@@ -16,10 +19,6 @@ extern std::map<std::string, std::vector<CUserConnection>> mapUserConnections; /
 extern std::map<std::string, CUserConnection> mapMNConnection; //MN IP address & connection info
 extern CUserConnectionManager userConnectionManager;
 extern std::string MNPubKey; //temp
-
-class CNode{};
-class CDataStream{};
-class CConnman{};
 
 class CUserConnection
 {
