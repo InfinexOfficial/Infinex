@@ -84,7 +84,7 @@ public:
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void ProcessUserWithdrawRequest(CUserWithdraw UserWithdrawRequest);
 	void SendUserWithdrawalRecords(std::string UserPubKey, int CoinID);
-	void SendUsersWithdrawalRecords(CNode* node, CConnman& connman, int CoinID);
+	void SendUsersWithdrawalRecords(CNode* node, CConnman& connman, int CoinID);	
 };
 
 #endif
