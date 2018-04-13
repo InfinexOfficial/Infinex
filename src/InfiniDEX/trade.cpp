@@ -2,10 +2,12 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "activemasternode.h"
 #include "timedata.h"
 #include "trade.h"
 #include "chartdata.h"
 #include "orderbook.h"
+#include "messagesigner.h"
 #include "tradepair.h"
 #include "userbalance.h"
 #include "usertradehistory.h"
@@ -808,7 +810,7 @@ bool CUserTrade::VerifyUserSignature()
 		+ boost::lexical_cast<std::string>(nTimeSubmit) + nUserHash;
 	CPubKey pubkey(ParseHex(nUserPubKey));
 
-	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
+	if (!CMessageSigner::VerifyMessage(pubkey, userVchSig, strMessage, strError)) {
 		LogPrintf("CUserTrade::VerifyUserSignature -- VerifyMessage() failed, error: %s\n", strError);
 		return false;
 	}
@@ -825,7 +827,7 @@ bool CUserTrade::VerifyMNBalanceSignature()
 		+ boost::lexical_cast<std::string>(nBalanceQty) + boost::lexical_cast<std::string>(nBalanceAmount) + boost::lexical_cast<std::string>(nLastUpdate);
 	CPubKey pubkey(ParseHex(nMNBalancePubKey));
 
-	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
+	if (!CMessageSigner::VerifyMessage(pubkey, mnBalanceVchSig, strMessage, strError)) {
 		LogPrintf("CUserTrade::VerifyUserSignature -- VerifyMessage() failed, error: %s\n", strError);
 		return false;
 	}
@@ -843,7 +845,7 @@ bool CUserTrade::VerifyMNTradeSignature()
 		+ boost::lexical_cast<std::string>(nLastUpdate);
 	CPubKey pubkey(ParseHex(nMNTradePubKey));
 
-	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
+	if (!CMessageSigner::VerifyMessage(pubkey, mnTradeVchSig, strMessage, strError)) {
 		LogPrintf("CUserTrade::VerifyMNTradeSignature -- VerifyMessage() failed, error: %s\n", strError);
 		return false;
 	}
@@ -857,7 +859,24 @@ bool CUserTrade::MNBalanceSign()
 }
 
 bool CUserTrade::MNTradeSign()
-{	
+{
+	std::string strError = "";
+	std::string strMessage = boost::lexical_cast<std::string>(nTradePairID) + boost::lexical_cast<std::string>(nPrice) + boost::lexical_cast<std::string>(nQuantity)
+		+ boost::lexical_cast<std::string>(nAmount) + boost::lexical_cast<std::string>(nIsBid)+ boost::lexical_cast<std::string>(nTradeFee) + nUserPubKey
+		+ boost::lexical_cast<std::string>(nTimeSubmit) + nUserHash + boost::lexical_cast<std::string>(nUserTradeID) + boost::lexical_cast<std::string>(nPairTradeID)
+		+ nMNBalancePubKey + nMNTradePubKey	+ boost::lexical_cast<std::string>(nBalanceQty) + boost::lexical_cast<std::string>(nBalanceAmount) 
+		+ boost::lexical_cast<std::string>(nLastUpdate);
+
+	if (!CMessageSigner::SignMessage(strMessage, mnTradeVchSig, activeMasternode.keyMasternode)) {
+		LogPrintf("CUserTrade::MNTradeSign -- SignMessage() failed\n");
+		return false;
+	}
+
+	if (!CMessageSigner::VerifyMessage(activeMasternode.pubKeyMasternode, mnTradeVchSig, strMessage, strError)) {
+		LogPrintf("CUserTrade::MNTradeSign -- VerifyMessage() failed, error: %s\n", strError);
+		return false;
+	}
+
 	return true;
 }
 
@@ -883,7 +902,7 @@ bool CCancelTrade::VerifyUserSignature()
 		+ boost::lexical_cast<std::string>(nUserSubmitTime) + boost::lexical_cast<std::string>(nPrice);
 	CPubKey pubkey(ParseHex(nUserPubKey));
 
-	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
+	if (!CMessageSigner::VerifyMessage(pubkey, userVchSig, strMessage, strError)) {
 		LogPrintf("CCancelTrade::VerifyUserSignature -- VerifyMessage() failed, error: %s\n", strError);
 		return false;
 	}
@@ -899,7 +918,7 @@ bool CCancelTrade::VerifyMNSignature()
 		+ boost::lexical_cast<std::string>(nBalanceAmount) + nMNTradePubKey + boost::lexical_cast<std::string>(nMNProcessTime);
 	CPubKey pubkey(ParseHex(MNPubKey));
 
-	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
+	if (!CMessageSigner::VerifyMessage(pubkey, mnVchSig, strMessage, strError)) {
 		LogPrintf("CCancelTrade::VerifyMNSignature -- VerifyMessage() failed, error: %s\n", strError);
 		return false;
 	}
