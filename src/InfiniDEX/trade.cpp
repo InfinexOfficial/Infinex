@@ -13,7 +13,7 @@
 #include "usertradehistory.h"
 
 #include <boost/multiprecision/cpp_int.hpp>
-#include <chrono>
+#include <boost/lexical_cast.hpp>
 
 class CUserTrade;
 class CUserTradeSetting;

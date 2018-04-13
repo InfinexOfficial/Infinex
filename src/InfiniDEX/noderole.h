@@ -58,14 +58,14 @@ public:
 	int TradePairID;
 	int CoinID;
 	char Char;
-	infinidex_node_role_enum NodeRole;
+	int NodeRole;
 	std::string NodeIP;
 	std::string NodePubKey;
 	bool IsValid;
 	int ToReplaceNodeRoleID;
 	uint64_t LastUpdateTime;
 
-	CNodeRole(int NodeRoleID, int TradePairID, int CoinID, char Char, infinidex_node_role_enum NodeRole, std::string NodeIP, std::string NodePubKey, bool IsValid, int ToReplaceNodeRoleID, uint64_t LastUpdateTime):
+	CNodeRole(int NodeRoleID, int TradePairID, int CoinID, char Char, int NodeRole, std::string NodeIP, std::string NodePubKey, bool IsValid, int ToReplaceNodeRoleID, uint64_t LastUpdateTime):
 		NodeRoleID(NodeRoleID),
 		TradePairID(TradePairID),
 		CoinID(CoinID),
@@ -90,6 +90,23 @@ public:
 		ToReplaceNodeRoleID(0),
 		LastUpdateTime(0)
 	{}
+
+	ADD_SERIALIZE_METHODS;
+
+	template <typename Stream, typename Operation>
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+		READWRITE(NodeRoleID);
+		READWRITE(TradePairID);
+		READWRITE(CoinID);
+		READWRITE(Char);
+		READWRITE(NodeRole);
+		READWRITE(NodeIP);
+		READWRITE(NodePubKey);
+		READWRITE(IsValid);
+		READWRITE(ToReplaceNodeRoleID);
+		READWRITE(LastUpdateTime);
+		READWRITE(vchSig);
+	}
 
 	bool VerifySignature();
 };

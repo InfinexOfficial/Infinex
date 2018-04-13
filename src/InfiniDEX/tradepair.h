@@ -125,7 +125,6 @@ public:
 	CTradePairManager() {}
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	bool InputTradePair(CTradePair &tradePair);
-	void ProcessMessage(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void SendCompleteTradePairs(CNode* node, CConnman& connman);
 	void SendTradePair(CTradePair TradePair, CNode* node, CConnman& connman);
 	tradepair_enum ProcessTradePair(CTradePair TradePair);

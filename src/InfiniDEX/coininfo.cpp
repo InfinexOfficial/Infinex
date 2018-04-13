@@ -3,6 +3,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "coininfo.h"
+#include "messagesigner.h"
+#include "net_processing.h"
+#include <boost/lexical_cast.hpp>
 
 class CCoinInfo;
 class CCoinInfoManager;
@@ -11,8 +14,57 @@ std::map<int, std::shared_ptr<CCoinInfo>> mapCompleteCoinInfoWithID;
 std::map<std::string, std::shared_ptr<CCoinInfo>> mapCompleteCoinInfoWithSymbol;
 CCoinInfoManager coinInfoManager;
 
-bool CCoinInfo::VerifySignature()
+void CCoinInfoManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
+	if (strCommand == NetMsgType::DEXCOININFO)
+	{
+		CCoinInfo coinInfo;
+		vRecv >> coinInfo;
+
+		if (!coinInfo.VerifySignature()) {
+			LogPrintf("CCoinInfoManager::ProcessMessage -- invalid signature\n");
+			Misbehaving(pfrom->GetId(), 100);
+			return;
+		}
+
+		std::shared_ptr<CCoinInfo> CoinInfo = std::make_shared<CCoinInfo>(coinInfo);
+		InputCoinInfo(CoinInfo);
+	}
+}
+
+void CCoinInfoManager::InputCoinInfo(const std::shared_ptr<CCoinInfo>& CoinInfo)
+{
+	if (!mapCompleteCoinInfoWithID.count(CoinInfo->nCoinInfoID))
+		mapCompleteCoinInfoWithID.insert(std::make_pair(CoinInfo->nCoinInfoID, CoinInfo));
+	else
+	{
+		auto& a = mapCompleteCoinInfoWithID[CoinInfo->nCoinInfoID];
+		if (a->nLastUpdate < CoinInfo->nLastUpdate)
+			*a = *CoinInfo;
+	}
+
+	if (!mapCompleteCoinInfoWithSymbol.count(CoinInfo->nSymbol))
+		mapCompleteCoinInfoWithSymbol.insert(std::make_pair(CoinInfo->nSymbol, CoinInfo));
+	else
+	{
+		auto& a = mapCompleteCoinInfoWithSymbol[CoinInfo->nSymbol];
+		if (a->nLastUpdate < CoinInfo->nLastUpdate)
+			*a = *CoinInfo;
+	}
+}
+
+bool CCoinInfo::VerifySignature()
+{	
+	std::string strError = "";
+	std::string strMessage = boost::lexical_cast<std::string>(nCoinInfoID) + nName + nSymbol + nLogoURL + boost::lexical_cast<std::string>(nBlockTime) 
+		+ boost::lexical_cast<std::string>(nBlockHeight) + nWalletVersion + boost::lexical_cast<std::string>(nWalletActive) + nWalletStatus + boost::lexical_cast<std::string>(nLastUpdate);
+	CPubKey pubkey(ParseHex(DEXKey));
+
+	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
+		LogPrintf("CCoinInfo::VerifySignature -- VerifyMessage() failed, error: %s\n", strError);
+		return false;
+	}
+
 	return true;
 }
 
@@ -41,23 +93,5 @@ bool CCoinInfoManager::GetCoinInfoBySymbol(std::string Symbol, CCoinInfo &CoinIn
 		return false;
 
 	CoinInfo = *mapCompleteCoinInfoWithSymbol[Symbol];
-	return true;
-}
-
-bool CCoinInfoManager::UpdateCoinInfo(CCoinInfo &CoinInfo)
-{
-	if (!CoinInfo.VerifySignature())
-		return false;
-
-	// if (IsCoinInCompleteListByCoinID(CoinInfo.nCoinInfoID))
-	// {
-	// 	*mapCompleteCoinInfoWithID[CoinInfo.nCoinInfoID] = CoinInfo;
-	// }
-	// else
-	// {
-	// 	mapCompleteCoinInfoWithID.insert(std::make_pair(CoinInfo.nCoinInfoID, &CoinInfo));
-	// 	mapCompleteCoinInfoWithSymbol.insert(std::make_pair(CoinInfo.nSymbol, &CoinInfo));
-	// }
-
 	return true;
 }
