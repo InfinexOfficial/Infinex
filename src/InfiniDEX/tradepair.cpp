@@ -11,8 +11,38 @@ class CTradePairManager;
 std::map<int, CTradePair> mapCompleteTradePair;
 CTradePairManager tradePairManager;
 
+void CTradePairManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
+{
+	if (strCommand == NetMsgType::DEXTRADEPAIR) {
+
+		CTradePair tradePair;
+		vRecv >> tradePair;
+
+		if (!tradePair.VerifySignature()) {
+			LogPrintf("CTradePairManager::ProcessMessage -- invalid signature\n");
+			Misbehaving(pfrom->GetId(), 100);
+			return;
+		}
+		
+		std::shared_ptr<CUserDeposit> TradePair = std::make_shared<CUserDeposit>(tradePair);
+		InputTradePair(TradePair);
+	}
+}
+
 bool CTradePair::VerifySignature()
 {
+	std::string strError = "";
+	std::string strMessage = boost::lexical_cast<std::string>(nTradePairID) + nName + boost::lexical_cast<std::string>(nCoinID1) + nSymbol1 + boost::lexical_cast<std::string>(nCoinID2)
+		+ nSymbol2 + boost::lexical_cast<std::string>(nTradeEnabled) + boost::lexical_cast<std::string>(nMinimumTradeQuantity)+ boost::lexical_cast<std::string>(nMaximumTradeQuantity)
+		+ boost::lexical_cast<std::string>(nMinimumTradeAmount) + boost::lexical_cast<std::string>(nMaximumTradeAmount) + boost::lexical_cast<std::string>(nBidTradeFee)
+		+ boost::lexical_cast<std::string>(nAskTradeFee) + nStatus + boost::lexical_cast<std::string>(nLastUpdateTime);
+	CPubKey pubkey(ParseHex(DEXKey));
+
+	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
+		LogPrintf("CTradePair::VerifySignature -- VerifyMessage() failed, error: %s\n", strError);
+		return false;
+	}
+
 	return true;
 }
 

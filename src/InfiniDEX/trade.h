@@ -79,6 +79,25 @@ public:
 		nMNProcessTime(0)
 	{}
 
+	ADD_SERIALIZE_METHODS;
+
+	template <typename Stream, typename Operation>
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+		READWRITE(nUserTradeID);
+		READWRITE(nPairTradeID);
+		READWRITE(nTradePairID);
+		READWRITE(nUserPubKey);
+		READWRITE(isBid);
+		READWRITE(nUserSubmitTime);
+		READWRITE(nPrice);
+		READWRITE(nBalanceQty);
+		READWRITE(nBalanceAmount);
+		READWRITE(nMNTradePubKey);
+		READWRITE(nMNProcessTime);
+		READWRITE(userVchSig);
+		READWRITE(mnVchSig);
+	}
+
 	bool VerifyUserSignature();
 	bool VerifyMNSignature();
 	bool MNSign();
@@ -90,18 +109,18 @@ public:
 	int nTradePairID;
 	int nLastPairTradeID;
 	int nLastActualTradeID;
-	uint32_t nMaxSubmissionTimeDiff;	
+	uint32_t nMaxSubmissionTimeDiff;
 	uint16_t nToStoreLowerLimit;
-	uint16_t nToStoreUpperLimit;	
+	uint16_t nToStoreUpperLimit;
 	uint64_t nLastPairTradeTime;
 	uint64_t nLastActualTradeTime;
 	std::string nMNPubKey;
 	bool nInChargeOfBidBroadcast;
 	bool nInChargeOfAskBroadcast;
-	bool nInChargeOfMatchUserTrade;	
+	bool nInChargeOfMatchUserTrade;
 	bool nInChargeOfChartData;
 	bool nInChargeOfMarketTradeHistory;
-	bool nInChargeOfUserTradeHistory;	
+	bool nInChargeOfUserTradeHistory;
 
 	CUserTradeSetting(int nTradePairID, std::string nMNPubKey) :
 		nTradePairID(nTradePairID),

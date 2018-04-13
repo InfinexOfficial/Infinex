@@ -23,7 +23,7 @@ std::map<int, mapLastRequestTimeByPubKey> mapUserLastRequestTime;
 std::map<int, CUserDepositSetting> mapUserDepositSetting;
 CUserDepositManager userDepositManager;
 
-void CUserDepositManager::ProcessDepositMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
+void CUserDepositManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
 	if (strCommand == NetMsgType::DEXUSERDEPOSIT) {
 

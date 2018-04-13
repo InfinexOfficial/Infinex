@@ -90,6 +90,28 @@ public:
 		nLastUpdate(0)
 	{}
 
+	ADD_SERIALIZE_METHODS;
+
+	template <typename Stream, typename Operation>
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+		READWRITE(nTradePairID);
+		READWRITE(nName);
+		READWRITE(nCoinID1);
+		READWRITE(nSymbol1);
+		READWRITE(nCoinID2);
+		READWRITE(nSymbol2);
+		READWRITE(nTradeEnabled);
+		READWRITE(nMinimumTradeQuantity);
+		READWRITE(nMaximumTradeQuantity);
+		READWRITE(nMinimumTradeAmount);
+		READWRITE(nMaximumTradeAmount);
+		READWRITE(nBidTradeFee);
+		READWRITE(nAskTradeFee);
+		READWRITE(nStatus);
+		READWRITE(nLastUpdate);
+		READWRITE(vchSig);
+	}
+
 	bool VerifySignature();
 	bool RelayTo(CNode* node, CConnman& connman);
 };
@@ -101,6 +123,7 @@ private:
 
 public:
 	CTradePairManager() {}
+	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	bool InputTradePair(CTradePair &tradePair);
 	void ProcessMessage(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void SendCompleteTradePairs(CNode* node, CConnman& connman);

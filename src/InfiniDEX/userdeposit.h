@@ -133,7 +133,7 @@ private:
 
 public:
 	CUserDepositManager() {}
-	void ProcessDepositMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void InputUserDeposit(const std::shared_ptr<CUserDeposit>& UserDeposit);
 	void AssignDepositInfoRole(int TradePairID);
 	bool IsInChargeOfUserDepositInfo(int CoinID);
