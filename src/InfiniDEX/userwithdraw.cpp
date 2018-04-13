@@ -10,6 +10,11 @@ class CUserWithdrawManager;
 std::map<int, PairPubKeyUserWithdraw> mapCoinUserWithdraw; //coin ID and users withdraw details
 CUserWithdrawManager userWithdrawManager;
 
+void CUserWithdrawManager::ProcessUserWithdraw(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
+{
+
+}
+
 void CUserWithdrawManager::InputUserWithdraw(std::shared_ptr<CUserWithdraw> userWithdraw)
 {
 	if (!userWithdraw->VerifyWithdrawalSignature())

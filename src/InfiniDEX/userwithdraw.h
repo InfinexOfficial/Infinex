@@ -78,13 +78,14 @@ private:
 
 public:
     CUserWithdrawManager() {}
+	void ProcessUserWithdraw(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void InputUserWithdraw(std::shared_ptr<CUserWithdraw> userWithdraw);
 	void AssignWithdrawProcessorRole(int CoinID);
 	void AssignWithdrawInfoRole(int CoinID);
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void ProcessUserWithdrawRequest(CUserWithdraw UserWithdrawRequest);
 	void SendUserWithdrawalRecords(std::string UserPubKey, int CoinID);
-	void SendUsersWithdrawalRecords(CNode* node, CConnman& connman, int CoinID);	
+	void SendUsersWithdrawalRecords(CNode* node, CConnman& connman, int CoinID);
 };
 
 #endif
