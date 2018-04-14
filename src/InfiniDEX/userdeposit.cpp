@@ -2,14 +2,11 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "chainparams.h"
-#include "validation.h"
 #include "messagesigner.h"
 #include "net_processing.h"
 #include "userdeposit.h"
 #include "userbalance.h"
 #include "noderole.h"
-
 #include <boost/lexical_cast.hpp>
 
 class CUserDeposit;
@@ -47,12 +44,10 @@ bool CUserDeposit::VerifySignature()
 		+ boost::lexical_cast<std::string>(nBlockNumber)+ boost::lexical_cast<std::string>(nDepositTime)+ boost::lexical_cast<std::string>(nDepositStatus)
 		+ nRemark + boost::lexical_cast<std::string>(nLastUpdateTime);
 	CPubKey pubkey(ParseHex(DEXKey));
-
 	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
 		LogPrintf("CUserDeposit::VerifySignature -- VerifyMessage() failed, error: %s\n", strError);
 		return false;
 	}
-
 	return true;
 }
 

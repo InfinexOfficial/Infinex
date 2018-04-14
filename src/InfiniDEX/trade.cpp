@@ -865,12 +865,14 @@ bool CUserTrade::MNTradeSign()
 		+ nMNBalancePubKey + nMNTradePubKey	+ boost::lexical_cast<std::string>(nBalanceQty) + boost::lexical_cast<std::string>(nBalanceAmount) 
 		+ boost::lexical_cast<std::string>(nLastUpdate);
 
-	if (!CMessageSigner::SignMessage(strMessage, mnTradeVchSig, activeMasternode.keyMasternode)) {
+	if (!CMessageSigner::SignMessage(strMessage, mnTradeVchSig, activeMasternode.keyMasternode)) 
+	{
 		LogPrintf("CUserTrade::MNTradeSign -- SignMessage() failed\n");
 		return false;
 	}
 
-	if (!CMessageSigner::VerifyMessage(activeMasternode.pubKeyMasternode, mnTradeVchSig, strMessage, strError)) {
+	if (!CMessageSigner::VerifyMessage(activeMasternode.pubKeyMasternode, mnTradeVchSig, strMessage, strError)) 
+	{
 		LogPrintf("CUserTrade::MNTradeSign -- VerifyMessage() failed, error: %s\n", strError);
 		return false;
 	}
