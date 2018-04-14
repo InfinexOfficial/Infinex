@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include "userconnection.h"
 #include "hash.h"
 #include "net.h"
 #include "utilstrencodings.h"
@@ -64,6 +65,23 @@ public:
 		nLastUpdate(0)
 	{}
 
+	ADD_SERIALIZE_METHODS;
+
+	template <typename Stream, typename Operation>
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+		READWRITE(nCoinInfoID);
+		READWRITE(nName);
+		READWRITE(nSymbol);
+		READWRITE(nLogoURL);
+		READWRITE(nBlockTime);
+		READWRITE(nBlockHeight);
+		READWRITE(nWalletVersion);
+		READWRITE(nWalletActive);
+		READWRITE(nWalletStatus);
+		READWRITE(nLastUpdate);
+		READWRITE(vchSig);
+	}
+
 	bool VerifySignature();
 };
 
@@ -71,11 +89,12 @@ class CCoinInfoManager
 {
 public:
 	CCoinInfoManager() {}
+	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	void InputCoinInfo(const std::shared_ptr<CCoinInfo>& CoinInfo);
 	bool IsCoinInCompleteListByCoinID(int CoinID);
 	bool IsCoinInCompleteListBySymbol(std::string Symbol);
 	bool GetCoinInfoByCoinID(int CoinID, CCoinInfo &CoinInfo);
 	bool GetCoinInfoBySymbol(std::string Symbol, CCoinInfo &CoinInfo);
-	bool UpdateCoinInfo(CCoinInfo &CoinInfo);
 };
 
 #endif

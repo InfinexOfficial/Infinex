@@ -2,8 +2,11 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "activemasternode.h"
+#include "messagesigner.h"
 #include "timedata.h"
 #include "orderbook.h"
+#include <boost/lexical_cast.hpp>
 
 class COrderBook;
 class COrderBookManager;
@@ -15,38 +18,36 @@ COrderBookManager orderBookManager;
 
 bool COrderBook::VerifySignature()
 {
+	std::string strError = "";
+	std::string strMessage = boost::lexical_cast<std::string>(nTradePairID) + boost::lexical_cast<std::string>(nIsBid) + boost::lexical_cast<std::string>(nPrice)
+		+ boost::lexical_cast<std::string>(nQty) + boost::lexical_cast<std::string>(nLastUpdateTime) + nMNPubKey;
+	CPubKey pubkey(ParseHex(nMNPubKey));
+	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
+		LogPrintf("COrderBook::VerifySignature -- VerifyMessage() failed, error: %s\n", strError);
+		return false;
+	}
 	return true;
 }
 
-bool Sign()
+bool COrderBook::Sign()
 {
+	std::string strError = "";
+	std::string strMessage = boost::lexical_cast<std::string>(nTradePairID) + boost::lexical_cast<std::string>(nIsBid) + boost::lexical_cast<std::string>(nPrice)
+		+ boost::lexical_cast<std::string>(nQty) + boost::lexical_cast<std::string>(nLastUpdateTime) + nMNPubKey;
+	if (!CMessageSigner::SignMessage(strMessage, vchSig, activeMasternode.keyMasternode)) {
+		LogPrintf("COrderBook::Sign -- SignMessage() failed\n");
+		return false;
+	}
+	if (!CMessageSigner::VerifyMessage(activeMasternode.pubKeyMasternode, vchSig, strMessage, strError)) {
+		LogPrintf("COrderBook::Sign -- VerifyMessage() failed, error: %s\n", strError);
+		return false;
+	}
 	return true;
 }
 
-bool COrderBookManager::InsertNewBidOrder(int TradePairID, uint64_t Price, int64_t Qty)
+void COrderBook::Broadcast()
 {
-	if (!mapOrderBidBook.count(TradePairID))
-		return false;
 
-	if (mapOrderBidBook[TradePairID].count(Price))
-		return false;
-	
-	COrderBook NewOrder(Price, Qty, Price*Qty, "", GetAdjustedTime());
-	mapOrderBidBook[TradePairID].insert(std::make_pair(Price, NewOrder));
-	return true;
-}
-
-bool COrderBookManager::InsertNewAskOrder(int TradePairID, uint64_t Price, int64_t Qty)
-{
-	if (!mapOrderAskBook.count(TradePairID))
-		return false;
-
-	if (mapOrderAskBook[TradePairID].count(Price))
-		return false;
-
-	COrderBook NewOrder(Price, Qty, Price*Qty, "", GetAdjustedTime());
-	mapOrderAskBook[TradePairID].insert(std::make_pair(Price, NewOrder));
-	return true;
 }
 
 void COrderBookManager::AdjustBidQuantity(int TradePairID, uint64_t Price, int64_t Qty)
@@ -56,17 +57,24 @@ void COrderBookManager::AdjustBidQuantity(int TradePairID, uint64_t Price, int64
 		//need to sync with seed server or check node task
 	}
 
-	if (InsertNewBidOrder(TradePairID, Price, Qty))
-		return;
-
-	int finalQty = mapOrderBidBook[TradePairID][Price].nQuantity + Qty;
-	if (finalQty < 0)
+	auto& a = mapOrderBidBook[TradePairID];
+	if (!a.count(Price))
 	{
-		//some check need to be done here
-		finalQty = 0;
+		COrderBook temp(TradePairID, true, Price, Qty, GetAdjustedTime(), MNPubKey);
+		if (!temp.Sign())
+			return;
+		a.insert(std::make_pair(Price, temp));
+		temp.Broadcast();
 	}
-
-	mapOrderBidBook[TradePairID][Price].nQuantity = finalQty;
+	else
+	{
+		auto& b = a[Price];
+		b.nQty += Qty;
+		b.nLastUpdateTime = GetAdjustedTime();
+		if (!b.Sign())
+			return;
+		b.Broadcast();
+	}
 }
 
 void COrderBookManager::AdjustAskQuantity(int TradePairID, uint64_t Price, int64_t Qty)
@@ -76,43 +84,78 @@ void COrderBookManager::AdjustAskQuantity(int TradePairID, uint64_t Price, int64
 		//need to sync with seed server or check node task
 	}
 
-	if (InsertNewAskOrder(TradePairID, Price, Qty))
-		return;
-
-	int finalQty = mapOrderAskBook[TradePairID][Price].nQuantity + Qty;
-	if (finalQty < 0)
+	auto& a = mapOrderAskBook[TradePairID];
+	if (!a.count(Price))
 	{
-		//some check need to be done here
-		finalQty = 0;
+		COrderBook temp(TradePairID, false, Price, Qty, GetAdjustedTime(), MNPubKey);
+		if (!temp.Sign())
+			return;
+		a.insert(std::make_pair(Price, temp));
+		temp.Broadcast();
 	}
-
-	mapOrderAskBook[TradePairID][Price].nQuantity = finalQty;
+	else
+	{
+		auto& b = a[Price];
+		b.nQty += Qty;
+		b.nLastUpdateTime = GetAdjustedTime();
+		if (!b.Sign())
+			return;
+		b.Broadcast();
+	}
 }
 
-void COrderBookManager::UpdateBidOrder(int TradePairID, uint64_t Price, uint64_t Qty)
+void COrderBookManager::UpdateBidQuantity(int TradePairID, uint64_t Price, uint64_t Qty)
 {
 	if (!mapOrderBidBook.count(TradePairID))
 	{
 		//need to sync with seed server or check node task
 	}
 
-	if (InsertNewBidOrder(TradePairID, Price, Qty))
-		return;
-
-	mapOrderBidBook[TradePairID][Price].nQuantity = Qty;
+	auto& a = mapOrderBidBook[TradePairID];
+	if (!a.count(Price))
+	{
+		COrderBook temp(TradePairID, true, Price, Qty, GetAdjustedTime(), MNPubKey);
+		if (!temp.Sign())
+			return;
+		a.insert(std::make_pair(Price, temp));
+		temp.Broadcast();
+	}
+	else
+	{
+		auto& b = a[Price];
+		b.nQty = Qty;
+		b.nLastUpdateTime = GetAdjustedTime();
+		if (!b.Sign())
+			return;
+		b.Broadcast();
+	}
 }
 
-void COrderBookManager::UpdateAskOrder(int TradePairID, uint64_t Price, uint64_t Qty)
+void COrderBookManager::UpdateAskQuantity(int TradePairID, uint64_t Price, uint64_t Qty)
 {
 	if (!mapOrderAskBook.count(TradePairID))
 	{
 		//need to sync with seed server or check node task
 	}
 
-	if (InsertNewAskOrder(TradePairID, Price, Qty))
-		return;
-
-	mapOrderAskBook[TradePairID][Price].nQuantity = Qty;
+	auto& a = mapOrderAskBook[TradePairID];
+	if (!a.count(Price))
+	{
+		COrderBook temp(TradePairID, false, Price, Qty, GetAdjustedTime(), MNPubKey);
+		if (!temp.Sign())
+			return;
+		a.insert(std::make_pair(Price, temp));
+		temp.Broadcast();
+	}
+	else
+	{
+		auto& b = a[Price];
+		b.nQty = Qty;
+		b.nLastUpdateTime = GetAdjustedTime();
+		if (!b.Sign())
+			return;
+		b.Broadcast();
+	}
 }
 
 void COrderBookManager::InitTradePair(int TradePairID)
@@ -122,24 +165,4 @@ void COrderBookManager::InitTradePair(int TradePairID)
 
 	mapOrderBidBook.insert(std::make_pair(TradePairID, PriceOrderBook()));
 	mapOrderAskBook.insert(std::make_pair(TradePairID, PriceOrderBook()));
-}
-
-void COrderBookManager::BroadcastBidOrder(int TradePairID, uint64_t Price)
-{
-
-}
-
-void COrderBookManager::BroadcastAskOrder(int TradePairID, uint64_t Price)
-{
-
-}
-
-void COrderBookManager::BroadcastBidOrders(int TradePairID)
-{
-
-}
-
-void COrderBookManager::BroadcastAskOrders(int TradePairID)
-{
-
 }

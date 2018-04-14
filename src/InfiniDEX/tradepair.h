@@ -124,7 +124,11 @@ private:
 public:
 	CTradePairManager() {}
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+<<<<<<< HEAD
 	bool InputTradePair(CTradePair &tradePair);	
+=======
+	bool InputTradePair(CTradePair &tradePair);
+>>>>>>> InfiniDEX-dev
 	void SendCompleteTradePairs(CNode* node, CConnman& connman);
 	void SendTradePair(CTradePair TradePair, CNode* node, CConnman& connman);
 	tradepair_enum ProcessTradePair(CTradePair TradePair);

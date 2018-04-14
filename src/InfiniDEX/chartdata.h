@@ -31,6 +31,9 @@ extern CChartDataManager ChartDataManager;
 
 class CChartData
 {
+private:
+	std::vector<unsigned char> vchSig;
+
 public:
 	int nTradePairID;
 	uint64_t nStartTime;
@@ -42,9 +45,11 @@ public:
 	uint64_t nAmount;
 	uint64_t nQty;
 	uint64_t nNoOfTrades;
+	uint64_t nLastUpdate;
+	std::string nMNPubKey;
 
 	CChartData(int nTradePairID, uint64_t nStartTime, uint64_t nEndTime, uint64_t nOpenPrice, uint64_t nHighPrice, uint64_t nLowPrice,
-		uint64_t nClosePrice, uint64_t nAmount, uint64_t nQty, uint64_t nNoOfTrades) :
+		uint64_t nClosePrice, uint64_t nAmount, uint64_t nQty, uint64_t nNoOfTrades, uint64_t nLastUpdate, std::string nMNPubKey) :
 		nTradePairID(nTradePairID),
 		nStartTime(nStartTime),
 		nEndTime(nEndTime),
@@ -54,7 +59,9 @@ public:
 		nClosePrice(nClosePrice),
 		nAmount(nAmount),
 		nQty(nQty),
-		nNoOfTrades(nNoOfTrades)
+		nNoOfTrades(nNoOfTrades),
+		nLastUpdate(nLastUpdate),
+		nMNPubKey(nMNPubKey)
 	{}
 
 	CChartData() :
@@ -67,8 +74,31 @@ public:
 		nClosePrice(0),
 		nAmount(0),
 		nQty(0),
-		nNoOfTrades(0)
+		nNoOfTrades(0),
+		nLastUpdate(0),
+		nMNPubKey("")
 	{}
+
+	ADD_SERIALIZE_METHODS;
+	template <typename Stream, typename Operation>
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+		READWRITE(nTradePairID);
+		READWRITE(nStartTime);
+		READWRITE(nEndTime);
+		READWRITE(nOpenPrice);
+		READWRITE(nHighPrice);
+		READWRITE(nLowPrice);
+		READWRITE(nClosePrice);
+		READWRITE(nAmount);
+		READWRITE(nQty);
+		READWRITE(nNoOfTrades);
+		READWRITE(nLastUpdate);
+		READWRITE(nMNPubKey);
+		READWRITE(vchSig);
+	}
+
+	bool VerifySignature();
+	bool Sign();
 };
 
 class CChartDataManager
@@ -84,9 +114,16 @@ public:
 class CChartDataSetting 
 {
 public:
+	int TradePairID;
 	bool IsInChargeOfChartData;
 
+	CChartDataSetting(int TradePairID):
+		TradePairID(TradePairID),
+		IsInChargeOfChartData(false)
+	{}
+
 	CChartDataSetting():
+		TradePairID(0),
 		IsInChargeOfChartData(false)
 	{}
 };

@@ -4,6 +4,10 @@
 
 #include "coininfo.h"
 #include "tradepair.h"
+#include "messagesigner.h"
+#include "net_processing.h"
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 
 class CTradePair;
 class CTradePairManager;
@@ -13,8 +17,8 @@ CTradePairManager tradePairManager;
 
 void CTradePairManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
-	if (strCommand == NetMsgType::DEXTRADEPAIR) {
-
+	if (strCommand == NetMsgType::DEXTRADEPAIR) 
+	{
 		CTradePair tradePair;
 		vRecv >> tradePair;
 
@@ -22,10 +26,9 @@ void CTradePairManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CD
 			LogPrintf("CTradePairManager::ProcessMessage -- invalid signature\n");
 			Misbehaving(pfrom->GetId(), 100);
 			return;
-		}
-		
-		std::shared_ptr<CUserDeposit> TradePair = std::make_shared<CUserDeposit>(tradePair);
-		InputTradePair(TradePair);
+		}	
+
+		InputTradePair(tradePair);
 	}
 }
 
@@ -35,7 +38,7 @@ bool CTradePair::VerifySignature()
 	std::string strMessage = boost::lexical_cast<std::string>(nTradePairID) + nName + boost::lexical_cast<std::string>(nCoinID1) + nSymbol1 + boost::lexical_cast<std::string>(nCoinID2)
 		+ nSymbol2 + boost::lexical_cast<std::string>(nTradeEnabled) + boost::lexical_cast<std::string>(nMinimumTradeQuantity)+ boost::lexical_cast<std::string>(nMaximumTradeQuantity)
 		+ boost::lexical_cast<std::string>(nMinimumTradeAmount) + boost::lexical_cast<std::string>(nMaximumTradeAmount) + boost::lexical_cast<std::string>(nBidTradeFee)
-		+ boost::lexical_cast<std::string>(nAskTradeFee) + nStatus + boost::lexical_cast<std::string>(nLastUpdateTime);
+		+ boost::lexical_cast<std::string>(nAskTradeFee) + nStatus + boost::lexical_cast<std::string>(nLastUpdate);
 	CPubKey pubkey(ParseHex(DEXKey));
 
 	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
@@ -84,11 +87,6 @@ bool CTradePairManager::InputTradePair(CTradePair &tradePair)
 		mapCompleteTradePair[tradePair.nTradePairID] = tradePair;
 
 	return true;
-}
-
-void CTradePairManager::ProcessMessage(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
-{
-
 }
 
 void CTradePairManager::SendCompleteTradePairs(CNode* node, CConnman& connman)

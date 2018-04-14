@@ -27,48 +27,55 @@ private:
 	std::vector<unsigned char> vchSig;
 
 public:
-	uint64_t nOrderPrice;
-	uint64_t nQuantity;
-	uint64_t nAmount;
-	std::string nMNPubKey;
+	int nTradePairID;
+	bool nIsBid;
+	uint64_t nPrice;
+	uint64_t nQty;
 	uint64_t nLastUpdateTime;
+	std::string nMNPubKey;
 
-	COrderBook(uint64_t nOrderPrice, uint64_t nQuantity, uint64_t nAmount, std::string nMNPubKey, uint64_t nLastUpdateTime) :
-		nOrderPrice(nOrderPrice),
-		nQuantity(nQuantity),
-		nAmount(nAmount),
-		nMNPubKey(nMNPubKey),
-		nLastUpdateTime(nLastUpdateTime)
+	COrderBook(int nTradePairID, bool nIsBid, uint64_t nPrice, uint64_t nQty, uint64_t nLastUpdateTime, std::string nMNPubKey) :
+		nTradePairID(nTradePairID),
+		nIsBid(nIsBid),
+		nPrice(nPrice),
+		nQty(nQty),
+		nLastUpdateTime(nLastUpdateTime),
+		nMNPubKey(nMNPubKey)
 	{}
 
 	COrderBook() :
-		nOrderPrice(0),
-		nQuantity(0),
-		nAmount(0),
-		nMNPubKey(""),
-		nLastUpdateTime(0)
+		nTradePairID(0),
+		nIsBid(true),
+		nPrice(0),
+		nQty(0),
+		nLastUpdateTime(0),
+		nMNPubKey("")
 	{}
+
+	ADD_SERIALIZE_METHODS;
+	template <typename Stream, typename Operation>
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+		READWRITE(nTradePairID);
+		READWRITE(nIsBid);
+		READWRITE(nPrice);
+		READWRITE(nQty);
+		READWRITE(nLastUpdateTime);
+		READWRITE(nMNPubKey);
+		READWRITE(vchSig);
+	}
 
 	bool VerifySignature();
 	bool Sign();
+	void Broadcast();
 };
 
 class COrderBookManager
 {
-private:
-	std::vector<unsigned char> vchSig;	
-	bool InsertNewBidOrder(int TradePairID, uint64_t Price, int64_t Qty);
-	bool InsertNewAskOrder(int TradePairID, uint64_t Price, int64_t Qty);
-
 public:
 	void InitTradePair(int TradePairID);
 	void AdjustBidQuantity(int TradePairID, uint64_t Price, int64_t Qty);
 	void AdjustAskQuantity(int TradePairID, uint64_t Price, int64_t Qty);
-	void UpdateBidOrder(int TradePairID, uint64_t Price, uint64_t Quantity);
-	void UpdateAskOrder(int TradePairID, uint64_t Price, uint64_t Quantity);
-	void BroadcastBidOrder(int TradePairID, uint64_t Price);
-	void BroadcastAskOrder(int TradePairID, uint64_t Price);
-	void BroadcastBidOrders(int TradePairID);
-	void BroadcastAskOrders(int TradePairID);
+	void UpdateBidQuantity(int TradePairID, uint64_t Price, uint64_t Quantity);
+	void UpdateAskQuantity(int TradePairID, uint64_t Price, uint64_t Quantity);
 };
 #endif
