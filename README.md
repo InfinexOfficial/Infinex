@@ -48,6 +48,8 @@
 
 :small_blue_diamond: Crypto-Bridge: https://wallet.crypto-bridge.org/market/BRIDGE.IFX_BRIDGE.BTC
 
+:small_blue_diamond: Coin Exchange: https://www.coinexchange.io/market/IFX/BTC
+
 ----------------------------------------------------------------------------------------
 
 # **Infinex Masternode ROI Info**
