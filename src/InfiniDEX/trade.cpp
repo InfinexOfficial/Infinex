@@ -56,14 +56,12 @@ void CUserTradeManager::InputTradeCancel(CCancelTrade& cancelTrade)
 
 		if (setting.nInChargeOfBidBroadcast && cancelTrade.isBid)
 		{
-			orderBookManager.AdjustBidQuantity(cancelTrade.nTradePairID, cancelTrade.nPrice, (0 - cancelTrade.nBalanceQty));
-			orderBookManager.BroadcastBidOrder(cancelTrade.nTradePairID, cancelTrade.nPrice);
+			orderBookManager.AdjustBidQuantity(cancelTrade.nTradePairID, cancelTrade.nPrice, (0 - cancelTrade.nBalanceQty));			
 		}
 
 		if (setting.nInChargeOfAskBroadcast && !cancelTrade.isBid)
 		{
 			orderBookManager.AdjustAskQuantity(cancelTrade.nTradePairID, cancelTrade.nPrice, (0 - cancelTrade.nBalanceQty));
-			orderBookManager.BroadcastAskOrder(cancelTrade.nTradePairID, cancelTrade.nPrice);
 		}
 	}
 	else if (setting.nInChargeOfMatchUserTrade)
@@ -701,7 +699,7 @@ uint64_t CUserTradeManager::GetAskExpectedAmount(uint64_t Price, uint64_t Qty, i
 bool CUserTradeManager::IsSubmittedBidAmountValid(const std::shared_ptr<CUserTrade>& userTrade, int nTradeFee)
 {
 	uint64_t ExpectedAmount = GetBidRequiredAmount(userTrade->nPrice, userTrade->nQuantity, nTradeFee);
-	if ((ExpectedAmount - 1) <= userTrade->nAmount <= (ExpectedAmount + 1))
+	if ((ExpectedAmount - 1) <= userTrade->nAmount && userTrade->nAmount <= (ExpectedAmount + 1))
 		return true;
 	return false;
 }
@@ -709,7 +707,7 @@ bool CUserTradeManager::IsSubmittedBidAmountValid(const std::shared_ptr<CUserTra
 bool CUserTradeManager::IsSubmittedAskAmountValid(const std::shared_ptr<CUserTrade>& userTrade, int nTradeFee)
 {
 	uint64_t ExpectedAmount = GetAskExpectedAmount(userTrade->nPrice, userTrade->nQuantity, nTradeFee);
-	if ((ExpectedAmount - 1) <= userTrade->nAmount <= (ExpectedAmount + 1))
+	if ((ExpectedAmount - 1) <= userTrade->nAmount && userTrade->nAmount <= (ExpectedAmount + 1))
 		return true;
 	return false;
 }

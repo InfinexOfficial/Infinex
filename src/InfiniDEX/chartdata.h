@@ -49,7 +49,7 @@ public:
 	std::string nMNPubKey;
 
 	CChartData(int nTradePairID, uint64_t nStartTime, uint64_t nEndTime, uint64_t nOpenPrice, uint64_t nHighPrice, uint64_t nLowPrice,
-		uint64_t nClosePrice, uint64_t nAmount, uint64_t nQty, uint64_t nNoOfTrades, uint64_t nlastUpdate, std::string nMNPubKey) :
+		uint64_t nClosePrice, uint64_t nAmount, uint64_t nQty, uint64_t nNoOfTrades, uint64_t nLastUpdate, std::string nMNPubKey) :
 		nTradePairID(nTradePairID),
 		nStartTime(nStartTime),
 		nEndTime(nEndTime),

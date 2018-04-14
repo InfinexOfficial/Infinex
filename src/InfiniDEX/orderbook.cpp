@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "activemasternode.h"
+#include "messagesigner.h"
 #include "timedata.h"
 #include "orderbook.h"
 #include <boost/lexical_cast.hpp>
