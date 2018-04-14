@@ -203,7 +203,6 @@ BITCOIN_CORE_H = \
   InfiniDEX/chartdata.h \
   InfiniDEX/coininfo.h \
   InfiniDEX/marketoverview.h \
-  InfiniDEX/markettradehistory.h \
   InfiniDEX/noderole.h \
   InfiniDEX/nodesetup.h \
   InfiniDEX/orderbook.h \
@@ -379,7 +378,6 @@ libbitcoin_common_a_SOURCES = \
   InfiniDEX/chartdata.cpp \
   InfiniDEX/coininfo.cpp \
   InfiniDEX/marketoverview.cpp \
-  InfiniDEX/markettradehistory.cpp \
   InfiniDEX/noderole.cpp \
   InfiniDEX/nodesetup.cpp \
   InfiniDEX/orderbook.cpp \

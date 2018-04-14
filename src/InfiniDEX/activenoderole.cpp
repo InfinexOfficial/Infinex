@@ -5,8 +5,6 @@
 #include "activenoderole.h"
 #include "chartdata.h"
 #include "coininfo.h"
-#include "marketoverview.h"
-#include "markettradehistory.h"
 #include "orderbook.h"
 #include "trade.h"
 #include "tradepair.h"
