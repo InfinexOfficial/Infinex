@@ -114,7 +114,7 @@ class CCoinInfoManager
 public:
 	CCoinInfoManager() {}
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
-	void AddCoinInfo(CCoinInfo CoinInfo);
+	bool AddCoinInfo(std::string coinID, std::string name, std::string symbol, std::string logoURL, std::string blockTime, std::string blockHeight, std::string walletVersion, std::string walletActive, std::string walletStatus);
 	void InputCoinInfo(const std::shared_ptr<CCoinInfo>& CoinInfo);
 	bool IsCoinInCompleteListByCoinID(int CoinID);
 	bool IsCoinInCompleteListBySymbol(std::string Symbol);

@@ -5,6 +5,7 @@
 #include "coininfo.h"
 #include "messagesigner.h"
 #include "net_processing.h"
+#include "timedata.h"
 #include <boost/lexical_cast.hpp>
 
 class CCoinInfo;
@@ -56,10 +57,24 @@ void CCoinInfoSync::Relay(CNode* node, CConnman& connman)
 	connman.PushMessage(node, NetMsgType::DEXCOININFO, *this);
 }
 
-void CCoinInfoManager::AddCoinInfo(CCoinInfo CoinInfo)
+bool CCoinInfoManager::AddCoinInfo(std::string coinID, std::string name, std::string symbol, std::string logoURL, std::string blockTime, std::string blockHeight, std::string walletVersion, std::string walletActive, std::string walletStatus)
 {
-	std::shared_ptr<CCoinInfo> temp = std::make_shared<CCoinInfo>(CoinInfo);
-	InputCoinInfo(temp);
+	try
+	{		
+		int CoinID = boost::lexical_cast<int>(coinID);	
+		int BlockTime = boost::lexical_cast<int>(blockTime);		
+		int BlockHeight = boost::lexical_cast<int>(blockHeight);		
+		bool WalletActive = boost::lexical_cast<bool>(walletActive);
+		std::shared_ptr<CCoinInfo> temp = std::make_shared<CCoinInfo>(CoinID, name, symbol, logoURL, BlockTime, BlockHeight, walletVersion, WalletActive, walletStatus, GetAdjustedTime());
+		if (!temp->Sign())
+			return false;
+		InputCoinInfo(temp);
+		return true;
+	}	
+	catch (boost::bad_lexical_cast& e)
+	{
+		return false;
+	}
 }
 
 void CCoinInfoManager::InputCoinInfo(const std::shared_ptr<CCoinInfo>& CoinInfo)
@@ -98,15 +113,20 @@ bool CCoinInfo::VerifySignature()
 
 bool CCoinInfo::Sign()
 {
+	CKey key;
+	CPubKey pubkey;
 	std::string strError = "";
 	std::string strMessage = boost::lexical_cast<std::string>(nCoinInfoID) + nName + nSymbol + nLogoURL + boost::lexical_cast<std::string>(nBlockTime)
 		+ boost::lexical_cast<std::string>(nBlockHeight) + nWalletVersion + boost::lexical_cast<std::string>(nWalletActive) + nWalletStatus + boost::lexical_cast<std::string>(nLastUpdate);
-	if (!CMessageSigner::SignMessage(strMessage, vchSig, dexMasterPrivKey))
+	if (!CMessageSigner::GetKeysFromSecret(dexMasterPrivKey, key, pubkey)) {
+		LogPrintf("CCoinInfo::Sign -- GetKeysFromSecret() failed, invalid dex key %s\n", dexMasterPrivKey);
+		return false;
+	}
+	if (!CMessageSigner::SignMessage(strMessage, vchSig, key))
 	{
 		LogPrintf("CCoinInfo::Sign -- SignMessage() failed\n");
 		return false;
 	}
-	CPubKey pubkey(ParseHex(DEXKey));
 	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError))
 	{
 		LogPrintf("CCoinInfo::Sign -- VerifyMessage() failed, error: %s\n", strError);

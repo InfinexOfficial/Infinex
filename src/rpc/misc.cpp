@@ -25,6 +25,8 @@
 #endif
 
 #include <stdint.h>
+#include <stdio.h>
+#include <iostream>
 
 #include <boost/assign/list_of.hpp>
 #include <boost/algorithm/string.hpp>
@@ -226,23 +228,27 @@ UniValue infinidex(const UniValue& params, bool fHelp)
     if(params[0].get_str() == "coininfo"){
         if(params.size()==11 && params[1].get_str() == "add")
         {
-            int coinID = params[2].get_int();
+            std::string coinID = params[2].get_str();
             std::string name = params[3].get_str();
             std::string symbol = params[4].get_str();
             std::string logoURL = params[5].get_str();
-            int blockTime = params[6].get_int();
-            int blockHeight = params[7].get_int();
+            std::string blockTime = params[6].get_str();
+            std::string blockHeight = params[7].get_str();
             std::string walletVersion = params[8].get_str();
-            bool walletActive = params[9].get_bool();
+            std::string walletActive = params[9].get_str();
             std::string walletStatus = params[10].get_str();
-            uint64_t lastUpdate = GetAdjustedTime();
-            CCoinInfo coinInfo(coinID,name,symbol,logoURL,blockTime,blockHeight,walletVersion,walletActive,walletStatus,lastUpdate);
-            if(!coinInfo.Sign())
-                return "Invalid DEX key";            
-            coinInfoManager.AddCoinInfo(coinInfo);
+            if(!coinInfoManager.AddCoinInfo(coinID,name,symbol,logoURL,blockTime,blockHeight,walletVersion,walletActive,walletStatus))
+                return "Fail";
             return "Success";
         }
+        else if(params[1].get_str() == "show")
+        {
+            
+        }
+        else
+            return "Invalid command";
     }
+    return "Invalid command";
 }
 
 /*
