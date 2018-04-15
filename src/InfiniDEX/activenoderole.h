@@ -6,9 +6,6 @@
 #define ACTIVENODEROLE_H
 
 #include <iostream>
-#include <vector>
-#include <map>
-#include <memory>
 #include "noderole.h"
 #include "hash.h"
 #include "net.h"
@@ -20,6 +17,7 @@ extern CNodeRoleManager nodeRoleManager;
 class CNodeRoleManager
 {
 public:
+	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	bool IsInCharge(int TradePairID, infinidex_node_role_enum RoleType);
 	bool UpdateRole(CNodeRole Role);
 	bool RemoveRole(int TradePairID, int NodeRoleID);

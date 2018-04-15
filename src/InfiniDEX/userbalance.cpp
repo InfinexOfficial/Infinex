@@ -104,19 +104,13 @@ int CUserBalanceManager::GetLastDepositID(int CoinID, std::string UserPubKey)
 bool CUserBalanceManager::InChargeOfUserBalance(std::string pubKey)
 {
 	char c = pubKey[2];
-	auto a = mapGlobalUserSetting[c];
-	if (a.nInChargeUserBalance)
-		return true;
-	return false;
+	return mapGlobalUserSetting[c].nInChargeUserBalance;	
 }
 
 bool CUserBalanceManager::InChargeOfBackup(std::string pubKey)
 {
 	char c = pubKey[2];
-	auto a = mapGlobalUserSetting[c];
-	if (a.nInChargeBackup)
-		return true;
-	return false;
+	return mapGlobalUserSetting[c].nInChargeBackup;
 }
 
 bool CUserBalanceManager::IsInChargeOfCoinBalance(int CoinID)
