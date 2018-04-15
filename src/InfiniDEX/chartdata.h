@@ -5,10 +5,8 @@
 #ifndef CHARTDATA_H
 #define CHARTDATA_H
 
-#include <iostream>
 #include <vector>
 #include <map>
-#include "hash.h"
 #include "net.h"
 #include "utilstrencodings.h"
 
@@ -101,10 +99,23 @@ public:
 	bool Sign();
 };
 
+class CChartSyncData
+{
+public:
+	mapPeriodTimeData data;
+
+	ADD_SERIALIZE_METHODS;
+	template <typename Stream, typename Operation>
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+		READWRITE(data);
+	}	
+};
+
 class CChartDataManager
 {
 public:
 	CChartDataManager() {}
+	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	bool IsInChargeOfChartData(int TradePairID);
 	bool IsTradePairInList(int TradePairID);
 	bool InitTradePair(int TradePairID);

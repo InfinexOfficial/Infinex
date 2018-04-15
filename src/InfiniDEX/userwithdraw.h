@@ -107,6 +107,30 @@ public:
 	{}
 };
 
+class CUserWithdrawSync
+{
+public:
+	mapCoinUserWithdraw data;
+
+	ADD_SERIALIZE_METHODS;
+	template <typename Stream, typename Operation>
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+		READWRITE(data);
+	}
+
+	void BroadcastTo(CNode* node, CConnman& connman);
+};
+
+class CUserWithdrawSyncRequest
+{
+public:
+	std::string UserPubKey;
+
+	CUserWithdrawSyncRequest(std::string UserPubKey) :
+		UserPubKey(UserPubKey)
+	{}
+};
+
 class CUserWithdrawManager
 {
 private:

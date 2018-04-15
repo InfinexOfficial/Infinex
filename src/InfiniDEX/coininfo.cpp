@@ -9,10 +9,12 @@
 
 class CCoinInfo;
 class CCoinInfoManager;
+class CCoinInfoSync;
 
 std::map<int, std::shared_ptr<CCoinInfo>> mapCompleteCoinInfoWithID;
 std::map<std::string, std::shared_ptr<CCoinInfo>> mapCompleteCoinInfoWithSymbol;
 CCoinInfoManager coinInfoManager;
+CCoinInfoSync coinInfoSync;
 
 void CCoinInfoManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
@@ -30,6 +32,28 @@ void CCoinInfoManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDa
 		std::shared_ptr<CCoinInfo> CoinInfo = std::make_shared<CCoinInfo>(coinInfo);
 		InputCoinInfo(CoinInfo);
 	}
+	else if (strCommand == NetMsgType::DEXCOMPLETECOININFO)
+	{
+		CCoinInfoSync completeCoinInfo;
+		vRecv >> completeCoinInfo;
+		for (int i = 0; i < completeCoinInfo.CompleteCoinInfo.size(); i++)
+		{
+			if (completeCoinInfo.CompleteCoinInfo[i].VerifySignature())
+			{
+				std::shared_ptr<CCoinInfo> info = std::make_shared<CCoinInfo>(completeCoinInfo.CompleteCoinInfo[i]);
+				InputCoinInfo(info);
+			}
+		}
+	}
+	else if (strCommand == NetMsgType::DEXGETCOININFO)
+	{
+		coinInfoSync.Relay(pfrom, connman);
+	}
+}
+
+void CCoinInfoSync::Relay(CNode* node, CConnman& connman)
+{
+	connman.PushMessage(node, NetMsgType::DEXCOININFO, *this);
 }
 
 void CCoinInfoManager::InputCoinInfo(const std::shared_ptr<CCoinInfo>& CoinInfo)
@@ -59,12 +83,10 @@ bool CCoinInfo::VerifySignature()
 	std::string strMessage = boost::lexical_cast<std::string>(nCoinInfoID) + nName + nSymbol + nLogoURL + boost::lexical_cast<std::string>(nBlockTime) 
 		+ boost::lexical_cast<std::string>(nBlockHeight) + nWalletVersion + boost::lexical_cast<std::string>(nWalletActive) + nWalletStatus + boost::lexical_cast<std::string>(nLastUpdate);
 	CPubKey pubkey(ParseHex(DEXKey));
-
 	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
 		LogPrintf("CCoinInfo::VerifySignature -- VerifyMessage() failed, error: %s\n", strError);
 		return false;
 	}
-
 	return true;
 }
 

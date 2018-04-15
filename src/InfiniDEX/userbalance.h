@@ -5,12 +5,9 @@
 #ifndef USERBALANCE_H
 #define USERBALANCE_H
 
-#include <iostream>
 #include <vector>
 #include <map>
 #include <memory>
-#include <set>
-#include "hash.h"
 #include "net.h"
 #include "utilstrencodings.h"
 

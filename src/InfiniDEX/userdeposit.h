@@ -5,13 +5,10 @@
 #ifndef USERDEPOSIT_H
 #define USERDEPOSIT_H
 
-#include <iostream>
 #include <vector>
 #include <map>
-#include <set>
 #include <memory>
 #include "userconnection.h"
-#include "hash.h"
 #include "net.h"
 #include "utilstrencodings.h"
 
@@ -123,6 +120,11 @@ public:
 	bool VerifySignature();
 	void RelayTo(CNode* node, CConnman& connman);
 	void RelayToCoOpNode(CConnman& connman);
+};
+
+class CUserDepositSync
+{
+
 };
 
 class CUserDepositManager

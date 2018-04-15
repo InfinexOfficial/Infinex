@@ -16,6 +16,11 @@ std::map<int, mapPeriodTimeData> mapChartData;
 std::map<int, CChartDataSetting> mapChartDataSetting;
 CChartDataManager ChartDataManager;
 
+void CChartDataManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
+{
+
+}
+
 bool CChartDataManager::IsInChargeOfChartData(int TradePairID)
 {
 	return mapChartDataSetting[TradePairID].IsInChargeOfChartData;

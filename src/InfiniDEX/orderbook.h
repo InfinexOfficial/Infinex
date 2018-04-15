@@ -73,6 +73,7 @@ class COrderBookManager
 {
 public:
 	void InitTradePair(int TradePairID);
+	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void AdjustBidQuantity(int TradePairID, uint64_t Price, int64_t Qty);
 	void AdjustAskQuantity(int TradePairID, uint64_t Price, int64_t Qty);
 	void UpdateBidQuantity(int TradePairID, uint64_t Price, uint64_t Quantity);

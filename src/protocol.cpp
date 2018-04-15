@@ -78,6 +78,9 @@ const char *DEXUSERTRADEHISTORY="dexusertradehistory";
 const char *DEXMARKETTRADEHISTORY="dexmarkettradehistory";
 const char *DEXUSERWALLETADDRESS="dexuserwalletaddress";
 const char *DEXUSERWITHDRAW="dexuserwithdraw";
+const char *DEXGETCOININFO="dexgetcoininfo";
+const char *DEXCOMPLETECOININFO="dexcompletecoininfo";
+const char *DEXGETUSERWITHDRAW="dexgetuserwithdraw";
 };
 
 static const char* ppszTypeName[] =
@@ -171,6 +174,9 @@ const static std::string allNetMessageTypes[] = {
     NetMsgType::DEXMARKETTRADEHISTORY,
     NetMsgType::DEXUSERWALLETADDRESS,
     NetMsgType::DEXUSERWITHDRAW,
+    NetMsgType::DEXGETCOININFO,
+    NetMsgType::DEXCOMPLETECOININFO,
+    NetMsgType::DEXGETUSERWITHDRAW,
 };
 const static std::vector<std::string> allNetMessageTypesVec(allNetMessageTypes, allNetMessageTypes+ARRAYLEN(allNetMessageTypes));
 

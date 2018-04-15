@@ -4,8 +4,9 @@
 
 #include "activemasternode.h"
 #include "messagesigner.h"
-#include "timedata.h"
+#include "net_processing.h"
 #include "orderbook.h"
+#include "timedata.h"
 #include <boost/lexical_cast.hpp>
 
 class COrderBook;
@@ -15,6 +16,22 @@ class COrderBookSetting;
 std::map<int, PriceOrderBook> mapOrderBidBook;
 std::map<int, PriceOrderBook> mapOrderAskBook;
 COrderBookManager orderBookManager;
+
+void COrderBookManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
+{
+	if (strCommand == NetMsgType::DEXORDERBIDBOOK) 
+	{
+		COrderBook orderBook;
+		vRecv >> orderBook;
+
+		if (!orderBook.VerifySignature()) {
+			LogPrintf("COrderBookManager::ProcessMessage -- invalid signature\n");
+			Misbehaving(pfrom->GetId(), 100);
+			return;
+		}
+
+	}
+}
 
 bool COrderBook::VerifySignature()
 {

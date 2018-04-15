@@ -61,6 +61,9 @@ void CUserWithdrawManager::ProcessMessage(CNode* pfrom, std::string& strCommand,
 			InputUserWithdraw(userWithdraw);
 		}
 	}
+	else if (strCommand == NetMsgType::DEXGETUSERWITHDRAW)
+	{
+	}
 }
 
 void CUserWithdrawManager::InputUserWithdraw(CUserWithdraw userWithdraw)

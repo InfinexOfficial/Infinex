@@ -244,6 +244,7 @@ extern const char *MNGOVERNANCESYNC;
 extern const char *MNGOVERNANCEOBJECT;
 extern const char *MNGOVERNANCEOBJECTVOTE;
 extern const char *MNVERIFY;
+//InfiniDEX message types
 extern const char *DEXCOININFO;
 extern const char *DEXTRADEPAIR;
 extern const char *DEXORDERBIDBOOK;
@@ -261,6 +262,9 @@ extern const char *DEXUSERTRADEHISTORY;
 extern const char *DEXMARKETTRADEHISTORY;
 extern const char *DEXUSERWALLETADDRESS;
 extern const char *DEXUSERWITHDRAW;
+extern const char *DEXGETCOININFO;
+extern const char *DEXCOMPLETECOININFO;
+extern const char *DEXGETUSERWITHDRAW;
 };
 
 /* Get a vector of all valid message types (see above) */
