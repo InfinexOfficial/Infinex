@@ -16,6 +16,7 @@
 #include "txmempool.h"
 #include "util.h"
 #include "spork.h"
+#include "InfiniDEX/coininfo.h"
 #include "utilstrencodings.h"
 #ifdef ENABLE_WALLET
 #include "masternode-sync.h"
@@ -219,6 +220,30 @@ public:
     }
 };
 #endif
+
+UniValue infinidex(const UniValue& params, bool fHelp)
+{
+    if(params[0].get_str() == "coininfo"){
+        if(params.size()==11 && params[1].get_str() == "add")
+        {
+            int coinID = params[2].get_int();
+            std::string name = params[3].get_str();
+            std::string symbol = params[4].get_str();
+            std::string logoURL = params[5].get_str();
+            int blockTime = params[6].get_int();
+            int blockHeight = params[7].get_int();
+            std::string walletVersion = params[8].get_str();
+            bool walletActive = params[9].get_bool();
+            std::string walletStatus = params[10].get_str();
+            uint64_t lastUpdate = GetAdjustedTime();
+            CCoinInfo coinInfo(coinID,name,symbol,logoURL,blockTime,blockHeight,walletVersion,walletActive,walletStatus,lastUpdate);
+            if(!coinInfo.Sign())
+                return "Invalid DEX key";            
+            coinInfoManager.AddCoinInfo(coinInfo);
+            return "Success";
+        }
+    }
+}
 
 /*
     Used for updating/reading spork settings on the network

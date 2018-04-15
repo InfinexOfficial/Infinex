@@ -20,6 +20,7 @@ extern std::map<std::string, CUserConnection> mapMNConnection; //MN IP address &
 extern CUserConnectionManager userConnectionManager;
 extern std::string MNPubKey; //temp
 extern std::string DEXKey;
+extern std::string dexMasterPrivKey;
 
 class CUserConnection
 {
@@ -53,6 +54,7 @@ private:
 
 public:
     CUserConnectionManager() {}
+    bool SetDEXPrivKey(std::string dexPrivKey);
     void ProcessUserConnection(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void AddUserConnection(CNode* node, std::string IP, std::string port, std::string PubKey); //to remove IP & port on actual implementation
 	bool GetUserConnection(std::string PubKey, std::vector<CUserConnection>& nodes);

@@ -84,6 +84,7 @@ public:
 	}
 
 	bool VerifySignature();
+	bool Sign();
 };
 
 class CCoinInfoSync
@@ -113,6 +114,7 @@ class CCoinInfoManager
 public:
 	CCoinInfoManager() {}
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	void AddCoinInfo(CCoinInfo CoinInfo);
 	void InputCoinInfo(const std::shared_ptr<CCoinInfo>& CoinInfo);
 	bool IsCoinInCompleteListByCoinID(int CoinID);
 	bool IsCoinInCompleteListBySymbol(std::string Symbol);

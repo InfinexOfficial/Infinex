@@ -2,6 +2,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "noderole.h"
 #include "userconnection.h"
 
 class CUserConnection;
@@ -14,6 +15,7 @@ std::map<std::string, CUserConnection> mapMNConnection; //MN IP address & connec
 CUserConnectionManager userConnectionManager;
 std::string MNPubKey;
 std::string DEXKey = "028afd3503f2aaa0898b853e1b28cdcb5fd422b5dc6426c92cf2b14c4b4ebeb969";
+std::string dexMasterPrivKey;
 
 bool CUserConnectionManager::IsUserInList(std::string PubKey)
 {
@@ -52,4 +54,18 @@ void CUserConnectionManager::UserDisconnected(std::string PubKey, std::string IP
 
 void CUserConnectionManager::MNDisconnected(std::string IPAddress)
 {
+}
+
+bool CUserConnectionManager::SetDEXPrivKey(std::string dexPrivKey)
+{
+	CNodeRole role;
+	role.DEXSign(dexPrivKey);
+	if (role.VerifySignature()) {		
+		LogPrintf("CUserConnectionManager::SetDEXPrivKey -- Successfully initialized as dex signer\n");
+		dexMasterPrivKey = dexPrivKey;
+		return true;
+	}
+	else {
+		return false;
+	}
 }

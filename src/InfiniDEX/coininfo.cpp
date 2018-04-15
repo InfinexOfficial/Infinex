@@ -56,6 +56,12 @@ void CCoinInfoSync::Relay(CNode* node, CConnman& connman)
 	connman.PushMessage(node, NetMsgType::DEXCOININFO, *this);
 }
 
+void CCoinInfoManager::AddCoinInfo(CCoinInfo CoinInfo)
+{
+	std::shared_ptr<CCoinInfo> temp = std::make_shared<CCoinInfo>(CoinInfo);
+	InputCoinInfo(temp);
+}
+
 void CCoinInfoManager::InputCoinInfo(const std::shared_ptr<CCoinInfo>& CoinInfo)
 {
 	if (!mapCompleteCoinInfoWithID.count(CoinInfo->nCoinInfoID))
@@ -85,6 +91,25 @@ bool CCoinInfo::VerifySignature()
 	CPubKey pubkey(ParseHex(DEXKey));
 	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
 		LogPrintf("CCoinInfo::VerifySignature -- VerifyMessage() failed, error: %s\n", strError);
+		return false;
+	}
+	return true;
+}
+
+bool CCoinInfo::Sign()
+{
+	std::string strError = "";
+	std::string strMessage = boost::lexical_cast<std::string>(nCoinInfoID) + nName + nSymbol + nLogoURL + boost::lexical_cast<std::string>(nBlockTime)
+		+ boost::lexical_cast<std::string>(nBlockHeight) + nWalletVersion + boost::lexical_cast<std::string>(nWalletActive) + nWalletStatus + boost::lexical_cast<std::string>(nLastUpdate);
+	if (!CMessageSigner::SignMessage(strMessage, vchSig, dexMasterPrivKey))
+	{
+		LogPrintf("CCoinInfo::Sign -- SignMessage() failed\n");
+		return false;
+	}
+	CPubKey pubkey(ParseHex(DEXKey));
+	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError))
+	{
+		LogPrintf("CCoinInfo::Sign -- VerifyMessage() failed, error: %s\n", strError);
 		return false;
 	}
 	return true;

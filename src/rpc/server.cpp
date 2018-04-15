@@ -356,6 +356,7 @@ static const CRPCCommand vRPCCommands[] =
     { "infinex",               "spork",                  &spork,                  true  },    
     { "infinex",               "getpoolinfo",            &getpoolinfo,            true  },
     { "infinex",               "sentinelping",           &sentinelping,           true  },
+    { "infinex",               "infinidex",              &infinidex,              true  },
 #ifdef ENABLE_WALLET
     { "infinex",               "privatesend",            &privatesend,            false },
 

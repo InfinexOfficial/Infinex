@@ -63,6 +63,7 @@
 #include "privatesend-client.h"
 #include "privatesend-server.h"
 #include "spork.h"
+#include "InfiniDEX/userconnection.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -1269,6 +1270,12 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     {
         if (!sporkManager.SetPrivKey(GetArg("-sporkkey", "")))
             return InitError(_("Unable to sign spork message, wrong key?"));
+    }
+
+    if(mapArgs.count("-dexkey"))
+    {
+        if(!userConnectionManager.SetDEXPrivKey(GetArg("-dexkey", "")))
+            return InitError(_("Unable to sign dex message, wrong key?"));
     }
 
     // Start the lightweight task scheduler thread

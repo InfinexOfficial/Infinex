@@ -30,3 +30,26 @@ bool CNodeRole::VerifySignature()
 
 	return true;
 }
+
+bool CNodeRole::DEXSign(std::string dexSignKey)
+{
+	CKey key;
+	CPubKey pubkey;
+	std::string strError = "";
+	std::string strMessage = boost::lexical_cast<std::string>(NodeRoleID) + boost::lexical_cast<std::string>(TradePairID) + boost::lexical_cast<std::string>(CoinID)
+		+ Char + boost::lexical_cast<std::string>(NodeRole) + NodeIP + NodePubKey + boost::lexical_cast<std::string>(IsValid) + boost::lexical_cast<std::string>(ToReplaceNodeRoleID)
+		+ boost::lexical_cast<std::string>(LastUpdateTime);
+	if (!CMessageSigner::GetKeysFromSecret(dexSignKey, key, pubkey)) {
+		LogPrintf("CNodeRole::DEXSign -- GetKeysFromSecret() failed, invalid DEX key %s\n", dexSignKey);
+		return false;
+	}
+	if (!CMessageSigner::SignMessage(strMessage, vchSig, key)) {
+		LogPrintf("CNodeRole::DEXSign -- SignMessage() failed\n");
+		return false;
+	}
+	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
+		LogPrintf("CNodeRole::DEXSign -- VerifyMessage() failed, error: %s\n", strError);
+		return false;
+	}
+	return true;
+}
