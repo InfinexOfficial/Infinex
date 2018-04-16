@@ -245,6 +245,7 @@ extern const char *MNGOVERNANCEOBJECT;
 extern const char *MNGOVERNANCEOBJECTVOTE;
 extern const char *MNVERIFY;
 //InfiniDEX message types
+extern const char *DEXNODEROLE;
 extern const char *DEXCOININFO;
 extern const char *DEXTRADEPAIR;
 extern const char *DEXORDERBIDBOOK;

@@ -61,6 +61,7 @@ const char *MNGOVERNANCEOBJECT="govobj";
 const char *MNGOVERNANCEOBJECTVOTE="govobjvote";
 const char *MNVERIFY="mnv";
 // InfiniDEX message types
+const char *DEXNODEROLE="dexnoderole";
 const char *DEXCOININFO="dexcoininfo";
 const char *DEXTRADEPAIR="dextradepair";
 const char *DEXORDERBIDBOOK="dexorderbidbook";
@@ -159,6 +160,7 @@ const static std::string allNetMessageTypes[] = {
     NetMsgType::MNGOVERNANCEOBJECTVOTE,
     NetMsgType::MNVERIFY,
     // InfiniDEX message types
+    NetMsgType::DEXNODEROLE,
     NetMsgType::DEXUSERCONNECTION,
     NetMsgType::DEXMNCONNECTION,
     NetMsgType::DEXUSERBALANCE,

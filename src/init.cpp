@@ -63,7 +63,7 @@
 #include "privatesend-client.h"
 #include "privatesend-server.h"
 #include "spork.h"
-#include "InfiniDEX/userconnection.h"
+#include "InfiniDEX/noderole.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -1274,7 +1274,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 
     if(mapArgs.count("-dexkey"))
     {
-        if(!userConnectionManager.SetDEXPrivKey(GetArg("-dexkey", "")))
+        if(!nodeRoleManager.SetDEXPrivKey(GetArg("-dexkey", "")))
             return InitError(_("Unable to sign dex message, wrong key?"));
     }
 

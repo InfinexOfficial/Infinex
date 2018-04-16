@@ -21,6 +21,10 @@ enum chart_period_enum {
 	DAY_CHART_DATA = 3
 };
 
+static const int DEX_CHARTDATA = 1;
+static const int DEX_COMPLETECHARTDATA = 2;
+static const int DEX_GETCOMPLETECHARTDATA = 3;
+
 typedef std::pair<uint64_t, uint64_t> TimeRange;
 typedef std::map<TimeRange, CChartData> mapTimeData;
 typedef std::map<chart_period_enum, mapTimeData> mapPeriodTimeData;

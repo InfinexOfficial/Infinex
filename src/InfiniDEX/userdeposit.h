@@ -8,7 +8,6 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include "userconnection.h"
 #include "net.h"
 #include "utilstrencodings.h"
 

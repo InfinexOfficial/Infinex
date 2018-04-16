@@ -6,7 +6,9 @@
 #include "messagesigner.h"
 #include "timedata.h"
 #include "chartdata.h"
+#include "noderole.h"
 #include "tradepair.h"
+#include "userconnection.h"
 #include <boost/lexical_cast.hpp>
 
 class CChartData;
@@ -20,7 +22,7 @@ CChartDataManager ChartDataManager;
 
 void CChartDataManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
-	if (strCommand == NetMsgType::DEXGETCHARTDATA)
+	if (strCommand == NetMsgType::DEXCHARTDATA)
 	{
 		int TradePairID;
 		vRecv >> TradePairID;

@@ -2,6 +2,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "noderole.h"
+#include "userconnection.h"
 #include "usertradehistory.h"
 
 class CUserTradeHistory;
@@ -33,7 +35,7 @@ void CUserTradeHistoryManager::AssignMarketTradeHistoryBroadcastRole(int TradePa
 void CUserTradeHistoryManager::InputUserTradeHistory(const std::shared_ptr<CUserTradeHistory>& tradeHistory)
 {
 	tradeHistory->SetMNUserHash();
-	tradeHistory->nMNUserPubKey = ""; //to update
+	tradeHistory->nMNUserPubKey = MNPubKey;
 
 	if (!mapUserTradeHistoriesByTradePair.count(tradeHistory->nUserPubKey1))
 		mapUserTradeHistoriesByTradePair.insert(std::make_pair(tradeHistory->nUserPubKey1, mapUserTradeHistoryById2()));
@@ -78,7 +80,7 @@ void CUserTradeHistoryManager::InputMarketTradeHistory(const std::shared_ptr<CUs
 
 	tradeHistory->SetMNMarketHash();
 	tradeHistory->nMarketTradeHistoryID = ++setting.LastMarketTradeHistoryID;
-	tradeHistory->nMNMarketPubKey = ""; //to update
+	tradeHistory->nMNMarketPubKey = MNPubKey;
 	if (!tradeHistory->MNMarketSign())
 		return;
 

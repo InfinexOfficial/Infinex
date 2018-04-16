@@ -5,8 +5,10 @@
 #include "activemasternode.h"
 #include "messagesigner.h"
 #include "net_processing.h"
+#include "noderole.h"
 #include "orderbook.h"
 #include "timedata.h"
+#include "userconnection.h"
 #include <boost/lexical_cast.hpp>
 
 class COrderBook;

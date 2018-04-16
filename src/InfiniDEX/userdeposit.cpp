@@ -4,9 +4,10 @@
 
 #include "messagesigner.h"
 #include "net_processing.h"
-#include "userdeposit.h"
-#include "userbalance.h"
 #include "noderole.h"
+#include "userbalance.h"
+#include "userconnection.h"
+#include "userdeposit.h"
 #include <boost/lexical_cast.hpp>
 
 class CUserDeposit;

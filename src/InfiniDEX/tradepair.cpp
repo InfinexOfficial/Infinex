@@ -6,8 +6,9 @@
 #include "tradepair.h"
 #include "messagesigner.h"
 #include "net_processing.h"
+#include "noderole.h"
+#include "userconnection.h"
 #include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
 
 class CTradePair;
 class CTradePairManager;

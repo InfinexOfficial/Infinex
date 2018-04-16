@@ -5,12 +5,10 @@
 #ifndef USERTRADEHISTORY_H
 #define USERTRADEHISTORY_H
 
-#include <iostream>
 #include <vector>
 #include <map>
 #include <memory>
 #include <set>
-#include "userconnection.h"
 #include "hash.h"
 #include "net.h"
 #include "utilstrencodings.h"

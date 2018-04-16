@@ -32,9 +32,17 @@ enum infinidex_node_role_enum {
 };
 
 class CNodeRole;
+class CNodeRoles;
+class CNodeRoleManager;
 
-extern std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapGlobalNodeRoles;
-extern std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapNodeRole;
+extern std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapGlobalNodeRolesByRole;
+extern std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapNodeRoleByRole;
+extern std::map<int, std::vector<CNodeRole>> mapGlobalNodeRolesByID;
+extern std::map<int, std::vector<CNodeRole>> mapNodeRoleByID;
+extern CNodeRoleManager nodeRoleManager;
+extern std::string DEXKey;
+extern std::string dexMasterPrivKey;
+extern std::string MNPubKey; //temp
 
 class CNodeRole
 {
@@ -97,6 +105,38 @@ public:
 
 	bool VerifySignature();
 	bool DEXSign(std::string dexSignKey);
+};
+
+class CNodeRoles
+{
+public:
+	std::vector<CNodeRole> data;
+
+	CNodeRoles(std::vector<CNodeRole> data) :
+		data(data)
+	{}
+
+	CNodeRoles() :
+		data()
+	{}
+
+	ADD_SERIALIZE_METHODS;
+	template <typename Stream, typename Operation>
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+		READWRITE(data);
+	}
+
+	void RelayTo(CNode* node, CConnman& connman);
+};
+
+class CNodeRoleManager
+{
+public:
+	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	bool IsInCharge(int TradePairID, infinidex_node_role_enum RoleType);
+	bool UpdateRole(CNodeRole Role);
+	bool RemoveRole(int TradePairID, int NodeRoleID);
+	bool SetDEXPrivKey(std::string dexPrivKey);
 };
 
 #endif

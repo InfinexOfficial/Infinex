@@ -5,10 +5,8 @@
 #ifndef USERCONNECTION_H
 #define USERCONNECTION_H
 
-#include <iostream>
 #include <vector>
 #include <map>
-#include "hash.h"
 #include "net.h"
 #include "utilstrencodings.h"
 
@@ -20,9 +18,6 @@ extern std::map<int, std::vector<pairConnectionInfo>> mapTradePairConnections;
 extern std::map<std::string, std::vector<pairConnectionInfo>> mapUserConnections; //user public key & connection info
 extern std::map<std::string, pairConnectionInfo> mapMNConnection; //MN IP address & connection info
 extern CUserConnectionManager userConnectionManager;
-extern std::string MNPubKey; //temp
-extern std::string DEXKey;
-extern std::string dexMasterPrivKey;
 
 class CUserConnection
 {
@@ -80,7 +75,6 @@ public:
     void ProcessUserConnection(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	bool IsTargetedIPLocal(std::string TargetIP);
 	void InputUserConnection(CNode* node, std::string PubKey);
-    bool SetDEXPrivKey(std::string dexPrivKey);
 	bool GetUserConnection(std::string PubKey, std::vector<CUserConnection>& nodes);
 };
 

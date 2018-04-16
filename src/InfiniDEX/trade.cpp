@@ -3,13 +3,14 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "activemasternode.h"
+#include "chartdata.h"
+#include "messagesigner.h"
+#include "noderole.h"
+#include "orderbook.h"
 #include "timedata.h"
 #include "trade.h"
-#include "chartdata.h"
-#include "orderbook.h"
-#include "messagesigner.h"
-#include "tradepair.h"
 #include "userbalance.h"
+#include "userconnection.h"
 #include "usertradehistory.h"
 
 #include <boost/multiprecision/cpp_int.hpp>
@@ -247,7 +248,7 @@ bool CUserTradeManager::ProcessUserTradeRequest(const std::shared_ptr<CUserTrade
 	userTrade->nUserTradeID = a.first + 1;
 	userTrade->nBalanceAmount = userTrade->nAmount;
 	userTrade->nBalanceQty = userTrade->nQuantity;
-	userTrade->nMNBalancePubKey = "TEMP"; //to update with actual MN pub key
+	userTrade->nMNBalancePubKey = MNPubKey;
 	userTrade->nLastUpdate = GetAdjustedTime();
 	if (!userTrade->MNBalanceSign())
 		return false;
@@ -448,7 +449,7 @@ void CUserTradeManager::InputMatchUserSellRequest(const std::shared_ptr<CUserTra
 bool CActualTradeManager::GenerateActualTrade(std::shared_ptr<CActualTrade> actualTrade, CUserTradeSetting& setting)
 {
 	actualTrade->nActualTradeID = (setting.nLastActualTradeID + 1);
-	actualTrade->nMasternodeInspector = setting.nMNPubKey;
+	actualTrade->nMasternodeInspector = MNPubKey;
 	setting.nLastActualTradeTime = actualTrade->nTradeTime;
 	actualTrade->nCurrentHash = actualTrade->GetHash();
 	//to enable on actual implementation, testing phase disable
@@ -639,7 +640,7 @@ void CUserTradeManager::InitTradePair(int TradePairID)
 
 	mapBidUserTradeByPrice.insert(std::make_pair(TradePairID, mUTPIUTV()));
 	mapAskUserTradeByPrice.insert(std::make_pair(TradePairID, mUTPIUTV()));
-	mapUserTradeSetting.insert(std::make_pair(TradePairID, CUserTradeSetting(TradePairID, ""))); //to update with actual MN key
+	mapUserTradeSetting.insert(std::make_pair(TradePairID, CUserTradeSetting(TradePairID)));
 	mapActualTradeByActualTradeID.insert(std::make_pair(TradePairID, mATIAT()));
 	mapActualTradeByUserTradeID.insert(std::make_pair(TradePairID, mUTImAT()));
 	mapConflictTrade.insert(std::make_pair(TradePairID, std::vector<CActualTrade>()));
@@ -880,7 +881,7 @@ bool CUserTrade::MNTradeSign()
 	return true;
 }
 
-void CUserTrade::RelayTo(CUserConnection& conn)
+void CUserTrade::RelayTo(CNode* node, CConnman& connman)
 {
 
 }

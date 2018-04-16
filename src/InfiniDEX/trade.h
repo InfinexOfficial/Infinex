@@ -5,15 +5,13 @@
 #ifndef TRADE_H
 #define TRADE_H
 
-#include <iostream>
 #include <vector>
 #include <map>
 #include <memory>
 #include <set>
-#include "tradepair.h"
-#include "userconnection.h"
 #include "hash.h"
 #include "net.h"
+#include "tradepair.h"
 #include "utilstrencodings.h"
 
 class CUserTrade;
@@ -114,7 +112,6 @@ public:
 	uint16_t nToStoreUpperLimit;
 	uint64_t nLastPairTradeTime;
 	uint64_t nLastActualTradeTime;
-	std::string nMNPubKey;
 	bool nInChargeOfBidBroadcast;
 	bool nInChargeOfAskBroadcast;
 	bool nInChargeOfMatchUserTrade;
@@ -122,7 +119,7 @@ public:
 	bool nInChargeOfMarketTradeHistory;
 	bool nInChargeOfUserTradeHistory;
 
-	CUserTradeSetting(int nTradePairID, std::string nMNPubKey) :
+	CUserTradeSetting(int nTradePairID) :
 		nTradePairID(nTradePairID),
 		nLastPairTradeID(0),
 		nLastActualTradeID(0),
@@ -131,7 +128,6 @@ public:
 		nToStoreUpperLimit(100),
 		nLastPairTradeTime(0),
 		nLastActualTradeTime(0),
-		nMNPubKey(nMNPubKey),
 		nInChargeOfBidBroadcast(false),
 		nInChargeOfAskBroadcast(false),
 		nInChargeOfMatchUserTrade(false),
@@ -148,8 +144,7 @@ public:
 		nToStoreLowerLimit(50),
 		nToStoreUpperLimit(100),
 		nLastPairTradeTime(0),
-		nLastActualTradeTime(0),
-		nMNPubKey(""),
+		nLastActualTradeTime(0),		
 		nInChargeOfBidBroadcast(false),
 		nInChargeOfAskBroadcast(false),
 		nInChargeOfMatchUserTrade(false),
@@ -230,7 +225,7 @@ public:
 	bool VerifyMNTradeSignature();
 	bool MNBalanceSign();
 	bool MNTradeSign();
-	void RelayTo(CUserConnection& conn);
+	void RelayTo(CNode* node, CConnman& connman);
 	void RelayToHandler();
 };
 

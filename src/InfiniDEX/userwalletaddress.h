@@ -5,12 +5,9 @@
 #ifndef USERWALLETADDRESS_H
 #define USERWALLETADDRESS_H
 
-#include <iostream>
 #include <vector>
 #include <map>
 #include <memory>
-#include "userconnection.h"
-#include "hash.h"
 #include "net.h"
 #include "utilstrencodings.h"
 

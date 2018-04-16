@@ -5,19 +5,15 @@
 #ifndef ACTIVENODEROLE_H
 #define ACTIVENODEROLE_H
 
-#include "noderole.h"
 #include "net.h"
 
-class CNodeRoleManager;
-extern CNodeRoleManager nodeRoleManager;
+class CActiveNodeRole;
 
-class CNodeRoleManager
+extern CActiveNodeRole activeNodeRole;
+
+class CActiveNodeRole
 {
-public:
-	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
-	bool IsInCharge(int TradePairID, infinidex_node_role_enum RoleType);
-	bool UpdateRole(CNodeRole Role);
-	bool RemoveRole(int TradePairID, int NodeRoleID);
+
 };
 
 #endif

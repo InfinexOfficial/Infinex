@@ -5,6 +5,7 @@
 #include "activemasternode.h"
 #include "messagesigner.h"
 #include "net_processing.h"
+#include "noderole.h"
 #include "timedata.h"
 #include "userbalance.h"
 #include "userconnection.h"
