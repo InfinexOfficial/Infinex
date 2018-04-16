@@ -12,6 +12,7 @@
  */
 
 static const int PROTOCOL_VERSION = 10001;
+static const int INFINEX_MN_MIN_VERSION = 10000;
 static const int INFINIDEX_MIN_VERSION = 10001;
 
 //! initial proto version, to be increased after version/verack negotiation
