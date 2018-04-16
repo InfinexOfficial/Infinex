@@ -34,13 +34,15 @@ public:
     std::string nIP;
     std::string nPort;
     std::string nTargetIP;
+	int nTargetRoleID;
 	uint64_t nLastSeenTime;
 
-	CUserConnection(std::string nUserPubKey, std::string nIP, std::string nPort, std::string nTargetIP, uint64_t nLastSeenTime) :
+	CUserConnection(std::string nUserPubKey, std::string nIP, std::string nPort, std::string nTargetIP, int nTargetRoleID, uint64_t nLastSeenTime) :
 		nUserPubKey(nUserPubKey),
         nIP(nIP),
         nPort(nPort),
 		nTargetIP(nTargetIP),
+		nTargetRoleID(nTargetRoleID),
         nLastSeenTime(nLastSeenTime)
 	{}
 
@@ -49,6 +51,7 @@ public:
         nIP(""),
         nPort(""),
 		nTargetIP(""),
+		nTargetRoleID(0),
         nLastSeenTime(0)
 	{}
 
@@ -59,6 +62,7 @@ public:
 		READWRITE(nIP);
 		READWRITE(nPort);
 		READWRITE(nTargetIP);
+		READWRITE(nTargetRoleID);
 		READWRITE(nLastSeenTime);
 		READWRITE(vchSig);
 	}
@@ -73,14 +77,11 @@ private:
 
 public:
     CUserConnectionManager() {}
-    bool SetDEXPrivKey(std::string dexPrivKey);
-	bool IsTargetedIPLocal(std::string TargetIP);
     void ProcessUserConnection(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
-	void AddUserConnection(CNode* node, std::string IP, std::string port, std::string PubKey); //to remove IP & port on actual implementation
+	bool IsTargetedIPLocal(std::string TargetIP);
+	void InputUserConnection(CNode* node, std::string PubKey);
+    bool SetDEXPrivKey(std::string dexPrivKey);
 	bool GetUserConnection(std::string PubKey, std::vector<CUserConnection>& nodes);
-	bool GetUsersBroadcastList();
-    void UserDisconnected(std::string PubKey, std::string IPAddress);
-    void MNDisconnected(std::string IPAddress);
 };
 
 #endif
