@@ -5,12 +5,8 @@
 #ifndef NODEROLE_H
 #define NODEROLE_H
 
-#include <iostream>
 #include <vector>
 #include <map>
-#include <memory>
-#include "userconnection.h"
-#include "hash.h"
 #include "net.h"
 #include "utilstrencodings.h"
 
@@ -37,16 +33,8 @@ enum infinidex_node_role_enum {
 
 class CNodeRole;
 
-typedef std::pair <std::string, std::string> pairIPPubkey;
-typedef std::pair <pairIPPubkey, std::vector<std::shared_ptr<CNodeRole>>> pairIPPubKeyNodeRole;
-typedef std::pair <infinidex_node_role_enum, std::vector<std::shared_ptr<CNodeRole>>> pairNodeRoleByRole;
-extern std::map<int, pairIPPubKeyNodeRole> mapTradePairGlobalRoleByIPPubKey;
-extern std::map<int, pairNodeRoleByRole> mapTradePairGlobalRoleByRole;
-extern std::map<int, std::vector<infinidex_node_role_enum>> mapCoinIDNodeRoles;
-
-extern std::map<int, std::shared_ptr<CNodeRole>> mapNodeRole;
-extern std::map<int, std::shared_ptr<CNodeRole>> mapNodeRoleByID;
-extern std::map<int, std::vector<std::shared_ptr<CNodeRole>>> mapTradePairNodeRole;
+extern std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapGlobalNodeRoles;
+extern std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapNodeRole;
 
 class CNodeRole
 {

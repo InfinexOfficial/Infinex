@@ -18,6 +18,11 @@
 
 CNodeRoleManager nodeRoleManager;
 
+void CNodeRoleManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
+{
+
+}
+
 bool CNodeRoleManager::IsInCharge(int TradePairID, infinidex_node_role_enum RoleType)
 {
 	if (!mapTradePairNodeRole.count(TradePairID))

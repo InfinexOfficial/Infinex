@@ -265,6 +265,8 @@ extern const char *DEXUSERWITHDRAW;
 extern const char *DEXGETCOININFO;
 extern const char *DEXCOMPLETECOININFO;
 extern const char *DEXGETUSERWITHDRAW;
+extern const char *DEXGETCHARTDATA;
+extern const char *DEXCOMPLETECHARTDATA;
 };
 
 /* Get a vector of all valid message types (see above) */

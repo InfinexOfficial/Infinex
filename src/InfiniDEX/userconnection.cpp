@@ -9,9 +9,9 @@ class CUserConnection;
 class CUserConnectionManager;
 
 //new user to verify their private key to public key signing
-
-std::map<std::string, std::vector<CUserConnection>> mapUserConnections; //user public key & connection info
-std::map<std::string, CUserConnection> mapMNConnection; //MN IP address & connection info
+std::map<int, std::vector<pairConnectionInfo>> mapTradePairConnections;
+std::map<std::string, std::vector<pairConnectionInfo>> mapUserConnections; //user public key & connection info
+std::map<std::string, pairConnectionInfo> mapMNConnection; //MN IP address & connection info
 CUserConnectionManager userConnectionManager;
 std::string MNPubKey;
 std::string DEXKey = "028afd3503f2aaa0898b853e1b28cdcb5fd422b5dc6426c92cf2b14c4b4ebeb969";
@@ -25,6 +25,17 @@ bool CUserConnectionManager::IsUserInList(std::string PubKey)
 void CUserConnectionManager::ProcessUserConnection(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
     
+}
+
+bool CUserConnectionManager::IsTargetedIPLocal(std::string TargetIP)
+{
+	LOCK(cs_mapLocalHost);
+    BOOST_FOREACH(const PAIRTYPE(CNetAddr, LocalServiceInfo) &item, mapLocalHost)
+    {
+        if(item.first.ToString() == TargetIP)
+			return true;
+    }
+	return false;
 }
 
 void CUserConnectionManager::AddUserConnection(CNode* node, std::string IP, std::string port, std::string PubKey)

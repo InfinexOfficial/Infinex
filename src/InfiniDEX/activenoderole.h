@@ -5,11 +5,8 @@
 #ifndef ACTIVENODEROLE_H
 #define ACTIVENODEROLE_H
 
-#include <iostream>
 #include "noderole.h"
-#include "hash.h"
 #include "net.h"
-#include "utilstrencodings.h"
 
 class CNodeRoleManager;
 extern CNodeRoleManager nodeRoleManager;

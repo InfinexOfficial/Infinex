@@ -13,6 +13,7 @@
 class CChartData;
 class CChartDataManager;
 class CChartDataSetting;
+class CChartSyncData;
 
 enum chart_period_enum {
 	MINUTE_CHART_DATA = 1,
@@ -108,7 +109,9 @@ public:
 	template <typename Stream, typename Operation>
 	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
 		READWRITE(data);
-	}	
+	}
+
+	void RelayTo(CNode* node, CConnman& connman);
 };
 
 class CChartDataManager

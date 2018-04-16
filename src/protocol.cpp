@@ -81,6 +81,8 @@ const char *DEXUSERWITHDRAW="dexuserwithdraw";
 const char *DEXGETCOININFO="dexgetcoininfo";
 const char *DEXCOMPLETECOININFO="dexcompletecoininfo";
 const char *DEXGETUSERWITHDRAW="dexgetuserwithdraw";
+const char *DEXGETCHARTDATA="dexgetchartdata";
+const char *DEXCOMPLETECHARTDATA="dexcompletechartdata";
 };
 
 static const char* ppszTypeName[] =
@@ -177,6 +179,8 @@ const static std::string allNetMessageTypes[] = {
     NetMsgType::DEXGETCOININFO,
     NetMsgType::DEXCOMPLETECOININFO,
     NetMsgType::DEXGETUSERWITHDRAW,
+    NetMsgType::DEXGETCHARTDATA,
+    NetMsgType::DEXCOMPLETECHARTDATA,
 };
 const static std::vector<std::string> allNetMessageTypesVec(allNetMessageTypes, allNetMessageTypes+ARRAYLEN(allNetMessageTypes));
 

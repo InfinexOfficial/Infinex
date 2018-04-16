@@ -11,6 +11,8 @@
 
 class CChartData;
 class CChartDataManager;
+class CChartDataSetting;
+class CChartSyncData;
 
 std::map<int, mapPeriodTimeData> mapChartData;
 std::map<int, CChartDataSetting> mapChartDataSetting;
@@ -18,7 +20,24 @@ CChartDataManager ChartDataManager;
 
 void CChartDataManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
+	if (strCommand == NetMsgType::DEXGETCHARTDATA)
+	{
+		int TradePairID;
+		vRecv >> TradePairID;
+		//to add check whether this node requested within allowed time
+		//also to add check whether the data is complete (node not in sync mode)
+		if(IsInChargeOfChartData(TradePairID))
+		{
+			CChartSyncData temp;
+			temp.data = mapChartData[TradePairID];
+			temp.RelayTo(pfrom, connman);
+		}
+	}	
+}
 
+void CChartSyncData::RelayTo(CNode* node, CConnman& connman)
+{
+	connman.PushMessage(node, NetMsgType::DEXCOMPLETECHARTDATA, *this);
 }
 
 bool CChartDataManager::IsInChargeOfChartData(int TradePairID)

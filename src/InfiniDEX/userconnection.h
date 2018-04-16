@@ -15,8 +15,10 @@
 class CUserConnection;
 class CUserConnectionManager;
 
-extern std::map<std::string, std::vector<CUserConnection>> mapUserConnections; //user public key & connection info
-extern std::map<std::string, CUserConnection> mapMNConnection; //MN IP address & connection info
+typedef std::pair<CNode*, CUserConnection> pairConnectionInfo;
+extern std::map<int, std::vector<pairConnectionInfo>> mapTradePairConnections;
+extern std::map<std::string, std::vector<pairConnectionInfo>> mapUserConnections; //user public key & connection info
+extern std::map<std::string, pairConnectionInfo> mapMNConnection; //MN IP address & connection info
 extern CUserConnectionManager userConnectionManager;
 extern std::string MNPubKey; //temp
 extern std::string DEXKey;
@@ -24,18 +26,21 @@ extern std::string dexMasterPrivKey;
 
 class CUserConnection
 {
+private:
+	std::vector<unsigned char> vchSig;
+
 public:
-    CNode* nNode;
     std::string nUserPubKey;
     std::string nIP;
     std::string nPort;
+    std::string nTargetIP;
 	uint64_t nLastSeenTime;
 
-	CUserConnection(CNode* Node, std::string nUserPubKey, std::string nIP, std::string nPort, uint64_t nLastSeenTime) :
-		nNode(Node),
+	CUserConnection(std::string nUserPubKey, std::string nIP, std::string nPort, std::string nTargetIP, uint64_t nLastSeenTime) :
 		nUserPubKey(nUserPubKey),
         nIP(nIP),
         nPort(nPort),
+		nTargetIP(nTargetIP),
         nLastSeenTime(nLastSeenTime)
 	{}
 
@@ -43,8 +48,22 @@ public:
 		nUserPubKey(""),
         nIP(""),
         nPort(""),
+		nTargetIP(""),
         nLastSeenTime(0)
 	{}
+
+    ADD_SERIALIZE_METHODS;
+	template <typename Stream, typename Operation>
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+		READWRITE(nUserPubKey);
+		READWRITE(nIP);
+		READWRITE(nPort);
+		READWRITE(nTargetIP);
+		READWRITE(nLastSeenTime);
+		READWRITE(vchSig);
+	}
+
+    bool VerifySignature();
 };
 
 class CUserConnectionManager
@@ -55,6 +74,7 @@ private:
 public:
     CUserConnectionManager() {}
     bool SetDEXPrivKey(std::string dexPrivKey);
+	bool IsTargetedIPLocal(std::string TargetIP);
     void ProcessUserConnection(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void AddUserConnection(CNode* node, std::string IP, std::string port, std::string PubKey); //to remove IP & port on actual implementation
 	bool GetUserConnection(std::string PubKey, std::vector<CUserConnection>& nodes);
