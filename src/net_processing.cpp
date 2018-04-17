@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "InfiniDEX/coininfo.h"
 #include "net_processing.h"
 
 #include "alert.h"
@@ -2134,6 +2135,17 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             }
         }
     }
+
+    else if (strCommand == NetMsgType::DEXCOMPLETECOININFO)
+    {
+        coinInfoManager.ProcessMessage(pfrom, strCommand, vRecv, connman);
+    }
+
+    else if (strCommand == NetMsgType::DEXCOININFO)
+    {
+        coinInfoManager.ProcessMessage(pfrom, strCommand, vRecv, connman);
+    }
+    
     else
     {
         bool found = false;
@@ -2148,6 +2160,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         if (found)
         {
             //probably one the extensions
+            coinInfoManager.ProcessMessage(pfrom, strCommand, vRecv, connman);
             privateSendClient.ProcessMessage(pfrom, strCommand, vRecv, connman);
             privateSendServer.ProcessMessage(pfrom, strCommand, vRecv, connman);
             mnodeman.ProcessMessage(pfrom, strCommand, vRecv, connman);

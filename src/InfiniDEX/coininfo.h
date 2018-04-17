@@ -13,12 +13,10 @@
 
 class CCoinInfo;
 class CCoinInfoManager;
-class CCoinInfoSync;
 
 extern std::map<int, std::shared_ptr<CCoinInfo>> mapCompleteCoinInfoWithID;
 extern std::map<std::string, std::shared_ptr<CCoinInfo>> mapCompleteCoinInfoWithSymbol;
 extern CCoinInfoManager coinInfoManager;
-extern CCoinInfoSync coinInfoSync;
 
 class CCoinInfo
 {
@@ -82,28 +80,7 @@ public:
 
 	bool VerifySignature();
 	bool Sign();
-};
-
-class CCoinInfoSync
-{
-public:
-	std::vector<CCoinInfo> CompleteCoinInfo;
-
-	CCoinInfoSync(std::vector<CCoinInfo> CompleteCoinInfo) :
-		CompleteCoinInfo(CompleteCoinInfo)
-	{}
-
-	CCoinInfoSync() :
-		CompleteCoinInfo()
-	{}
-
-	// ADD_SERIALIZE_METHODS;
-	// template <typename Stream, typename Operation>
-	// inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-	// 	READWRITE(CompleteCoinInfo);
-	// }
-
-	void Relay(CNode* node, CConnman& connman);
+	void Relay(CNode* node, CConnman& connman);	
 };
 
 class CCoinInfoManager
@@ -117,6 +94,7 @@ public:
 	bool IsCoinInCompleteListBySymbol(std::string Symbol);
 	bool GetCoinInfoByCoinID(int CoinID, CCoinInfo &CoinInfo);
 	bool GetCoinInfoBySymbol(std::string Symbol, CCoinInfo &CoinInfo);
+	void Broadcast();
 };
 
 #endif

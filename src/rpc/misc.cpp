@@ -243,7 +243,18 @@ UniValue infinidex(const UniValue& params, bool fHelp)
         }
         else if(params[1].get_str() == "show")
         {
-            
+            std::map<int, std::shared_ptr<CCoinInfo>>::iterator it = mapCompleteCoinInfoWithID.begin();
+            while(it != mapCompleteCoinInfoWithID.end())
+            {
+                std::cout << "Coin symbol " << it->second->nSymbol << std::endl;
+                ++it;
+            }
+            return "Success";
+        }
+        else if(params[1].get_str() == "broadcast")
+        {
+            coinInfoManager.Broadcast();
+            return "Success";
         }
         else
             return "Invalid command";

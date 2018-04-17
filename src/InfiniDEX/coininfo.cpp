@@ -2,6 +2,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "masternodeman.h"
+#include "version.h"
 #include "coininfo.h"
 #include "messagesigner.h"
 #include "net_processing.h"
@@ -13,12 +15,10 @@
 
 class CCoinInfo;
 class CCoinInfoManager;
-class CCoinInfoSync;
 
 std::map<int, std::shared_ptr<CCoinInfo>> mapCompleteCoinInfoWithID;
 std::map<std::string, std::shared_ptr<CCoinInfo>> mapCompleteCoinInfoWithSymbol;
 CCoinInfoManager coinInfoManager;
-CCoinInfoSync coinInfoSync;
 
 void CCoinInfoManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
@@ -38,26 +38,29 @@ void CCoinInfoManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDa
 	}
 	else if (strCommand == NetMsgType::DEXCOMPLETECOININFO)
 	{
-		CCoinInfoSync completeCoinInfo;
-		vRecv >> completeCoinInfo;
-		for (int i = 0; i < completeCoinInfo.CompleteCoinInfo.size(); i++)
-		{
-			if (completeCoinInfo.CompleteCoinInfo[i].VerifySignature())
-			{
-				std::shared_ptr<CCoinInfo> info = std::make_shared<CCoinInfo>(completeCoinInfo.CompleteCoinInfo[i]);
-				InputCoinInfo(info);
-			}
-		}
 	}
 	else if (strCommand == NetMsgType::DEXGETCOININFO)
-	{
-		coinInfoSync.Relay(pfrom, connman);
+	{		
 	}
 }
 
-void CCoinInfoSync::Relay(CNode* node, CConnman& connman)
+void CCoinInfoManager::Broadcast()
 {
-	//connman.PushMessage(node, NetMsgType::DEXCOMPLETECOININFO, *this);
+	auto a = mnodeman.GetFullMasternodeMap();
+	for(auto b: a)
+	{
+		if(b.second.nProtocolVersion >= INFINIDEX_MIN_VERSION)
+		{
+			std::cout<<"IP: " << b.second.addr.ToStringIPPort() << std::endl;
+			CNode* pnode = g_connman->ConnectNode(CAddress(b.second.addr, NODE_NETWORK), NULL);
+			mapCompleteCoinInfoWithID[1]->Relay(pnode, *g_connman);
+		}
+	}
+}
+
+void CCoinInfo::Relay(CNode* node, CConnman& connman)
+{	
+	connman.PushMessage(node, NetMsgType::DEXCOININFO, *this);
 }
 
 bool CCoinInfoManager::AddCoinInfo(std::string coinID, std::string name, std::string symbol, std::string logoURL, std::string blockTime, std::string blockHeight, std::string walletVersion, std::string walletActive, std::string walletStatus)
