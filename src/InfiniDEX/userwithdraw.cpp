@@ -13,6 +13,8 @@
 #include <boost/lexical_cast.hpp>
 
 class CUserWithdraw;
+class CUserWithdrawSetting;
+class CUserWithdrawSync;
 class CUserWithdrawManager;
 
 std::map<std::string, mapCoinUserWithdraw> mapUserWithdraw;
@@ -243,6 +245,11 @@ void CUserWithdrawManager::SendUserWithdrawalRecords(std::string UserPubKey, int
 }
 
 void CUserWithdrawManager::SendUsersWithdrawalRecords(CNode* node, CConnman& connman, int CoinID)
+{
+
+}
+
+void CUserWithdrawSync::BroadcastTo(CNode* node, CConnman& connman)
 {
 
 }

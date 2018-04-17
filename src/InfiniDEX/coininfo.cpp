@@ -57,7 +57,7 @@ void CCoinInfoManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDa
 
 void CCoinInfoSync::Relay(CNode* node, CConnman& connman)
 {
-	connman.PushMessage(node, NetMsgType::DEXCOMPLETECOININFO, *this);
+	//connman.PushMessage(node, NetMsgType::DEXCOMPLETECOININFO, *this);
 }
 
 bool CCoinInfoManager::AddCoinInfo(std::string coinID, std::string name, std::string symbol, std::string logoURL, std::string blockTime, std::string blockHeight, std::string walletVersion, std::string walletActive, std::string walletStatus)

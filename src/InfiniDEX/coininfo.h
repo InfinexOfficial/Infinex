@@ -97,11 +97,11 @@ public:
 		CompleteCoinInfo()
 	{}
 
-	ADD_SERIALIZE_METHODS;
-	template <typename Stream, typename Operation>
-	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-		READWRITE(CompleteCoinInfo);
-	}
+	// ADD_SERIALIZE_METHODS;
+	// template <typename Stream, typename Operation>
+	// inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+	// 	READWRITE(CompleteCoinInfo);
+	// }
 
 	void Relay(CNode* node, CConnman& connman);
 };

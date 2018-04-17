@@ -39,7 +39,7 @@ void CChartDataManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CD
 
 void CChartSyncData::RelayTo(CNode* node, CConnman& connman)
 {
-	connman.PushMessage(node, NetMsgType::DEXCOMPLETECHARTDATA, *this);
+	//connman.PushMessage(node, NetMsgType::DEXCOMPLETECHARTDATA, *this);
 }
 
 bool CChartDataManager::IsInChargeOfChartData(int TradePairID)

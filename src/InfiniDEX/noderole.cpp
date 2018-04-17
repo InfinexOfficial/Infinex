@@ -59,7 +59,7 @@ bool CNodeRole::DEXSign(std::string dexSignKey)
 
 void CNodeRoles::RelayTo(CNode* node, CConnman& connman)
 {
-	connman.PushMessage(node, NetMsgType::DEXNODEROLE, *this);
+	//connman.PushMessage(node, NetMsgType::DEXNODEROLE, *this);
 }
 
 void CNodeRoleManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
