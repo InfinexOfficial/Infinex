@@ -5,15 +5,16 @@
 #ifndef TRADEPAIR_H
 #define TRADEPAIR_H
 
-#include <vector>
 #include <map>
+#include <vector>
 #include "net.h"
 #include "utilstrencodings.h"
 
 class CTradePair;
 class CTradePairManager;
 
-extern std::map<int, CTradePair> mapCompleteTradePair;
+extern std::map<int, CTradePair> mapTradePair;
+extern std::vector<CTradePair> completeTradePair;
 extern CTradePairManager tradePairManager;
 
 enum tradepair_enum {
@@ -88,9 +89,9 @@ public:
 	{}
 
 	ADD_SERIALIZE_METHODS;
-
 	template <typename Stream, typename Operation>
-	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) 
+	{
 		READWRITE(nTradePairID);
 		READWRITE(nName);
 		READWRITE(nCoinID1);
@@ -110,17 +111,14 @@ public:
 	}
 
 	bool VerifySignature();
-	bool RelayTo(CNode* node, CConnman& connman);
 };
 
 class CTradePairManager
 {
-private:
-	std::vector<unsigned char> vchSig;
-
 public:
 	CTradePairManager() {}
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	void BroadcastToConnectedNode(CConnman& connman, std::vector<CTradePair> tradePairs);
 	bool InputTradePair(CTradePair &tradePair);	
 	void SendCompleteTradePairs(CNode* node, CConnman& connman);
 	void SendTradePair(CTradePair TradePair, CNode* node, CConnman& connman);

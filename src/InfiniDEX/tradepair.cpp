@@ -14,22 +14,43 @@ class CTradePair;
 class CTradePairManager;
 
 std::map<int, CTradePair> mapCompleteTradePair;
+extern std::vector<CTradePair> completeTradePair;
 CTradePairManager tradePairManager;
 
 void CTradePairManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
 	if (strCommand == NetMsgType::DEXTRADEPAIR) 
 	{
-		CTradePair tradePair;
-		vRecv >> tradePair;
+		std::vector<CTradePair> incomingTradePair;
+		vRecv >> incomingTradePair;
 
-		if (!tradePair.VerifySignature()) {
-			LogPrintf("CTradePairManager::ProcessMessage -- invalid signature\n");
-			Misbehaving(pfrom->GetId(), 100);
-			return;
-		}	
+		for (auto tradePair : incomingTradePair)
+		{
+			if (!tradePair.VerifySignature()) {
+				LogPrintf("CTradePairManager::ProcessMessage -- invalid signature\n");
+				Misbehaving(pfrom->GetId(), 100);
+				return;
+			}
+			InputTradePair(tradePair);
+		}
+		BroadcastToConnectedNode(connman, incomingTradePair);
+	}
+}
 
-		InputTradePair(tradePair);
+void CTradePairManager::BroadcastToConnectedNode(CConnman& connman, std::vector<CTradePair> tradePairs)
+{
+	for (auto a : mapMNConnection)
+	{
+		if (!a.second.first->fDisconnect)
+			connman.PushMessage(a.second.first, NetMsgType::DEXTRADEPAIR, tradePairs);
+	}
+	for (auto a : mapUserConnections)
+	{
+		for (auto b : a.second)
+		{
+			if (!b.first->fDisconnect)
+				connman.PushMessage(b.first, NetMsgType::DEXTRADEPAIR, tradePairs);
+		}
 	}
 }
 
@@ -47,11 +68,6 @@ bool CTradePair::VerifySignature()
 		return false;
 	}
 
-	return true;
-}
-
-bool RelayTo(CNode* node, CConnman& connman)
-{
 	return true;
 }
 
@@ -92,17 +108,14 @@ bool CTradePairManager::InputTradePair(CTradePair &tradePair)
 
 void CTradePairManager::SendCompleteTradePairs(CNode* node, CConnman& connman)
 {
-	std::map<int, CTradePair>::iterator it = mapCompleteTradePair.begin();
-	while (it != mapCompleteTradePair.end())
-	{
-		SendTradePair(it->second, node, connman);
-		++it;
-	}
+	connman.PushMessage(node, NetMsgType::DEXTRADEPAIR, completeTradePair);
 }
 
 void CTradePairManager::SendTradePair(CTradePair TradePair, CNode* node, CConnman& connman)
 {
-
+	std::vector<CTradePair> tradePairs;
+	tradePairs.push_back(TradePair);
+	connman.PushMessage(node, NetMsgType::DEXTRADEPAIR, tradePairs);
 }
 
 CTradePair CTradePairManager::GetTradePair(int TradePairID)

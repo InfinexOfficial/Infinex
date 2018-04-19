@@ -38,6 +38,26 @@ std::map<int, std::set<std::string>> mapActualTradeHash;
 CActualTradeManager actualTradeManager;
 CUserTradeManager userTradeManager;
 
+void CUserTradeManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
+{
+	if (strCommand == NetMsgType::DEXUSERTRADE)
+	{
+		std::vector<CUserTrade> incomingUserTrade;
+		vRecv >> incomingUserTrade;
+
+		for (auto userTrade : incomingUserTrade)
+		{
+			if (!userTrade.VerifyUserSignature()) {
+				LogPrintf("CUserTradeManager::ProcessMessage -- invalid signature\n");
+				Misbehaving(pfrom->GetId(), 100);
+				return;
+			}
+
+
+		}
+	}
+}
+
 void CUserTradeManager::InputTradeCancel(CCancelTrade& cancelTrade)
 {
 	if (!cancelTrade.VerifyUserSignature())

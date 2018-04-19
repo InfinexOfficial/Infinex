@@ -5,9 +5,9 @@
 #ifndef COININFO_H
 #define COININFO_H
 
-#include <vector>
 #include <map>
 #include <memory>
+#include <vector>
 #include "net.h"
 #include "utilstrencodings.h"
 
@@ -16,6 +16,7 @@ class CCoinInfoManager;
 
 extern std::map<int, std::shared_ptr<CCoinInfo>> mapCompleteCoinInfoWithID;
 extern std::map<std::string, std::shared_ptr<CCoinInfo>> mapCompleteCoinInfoWithSymbol;
+extern std::vector<CCoinInfo> completeCoinInfo;
 extern CCoinInfoManager coinInfoManager;
 
 class CCoinInfo
@@ -64,7 +65,8 @@ public:
 
 	ADD_SERIALIZE_METHODS;
 	template <typename Stream, typename Operation>
-	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) 
+	{
 		READWRITE(nCoinInfoID);
 		READWRITE(nName);
 		READWRITE(nSymbol);
@@ -88,12 +90,15 @@ class CCoinInfoManager
 public:
 	CCoinInfoManager() {}
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
-	bool AddCoinInfo(std::string coinID, std::string name, std::string symbol, std::string logoURL, std::string blockTime, std::string blockHeight, std::string walletVersion, std::string walletActive, std::string walletStatus);
-	void InputCoinInfo(const std::shared_ptr<CCoinInfo>& CoinInfo);
+	void BroadcastToConnectedNode(CConnman& connman, std::vector<CCoinInfo> coinInfo);
+	void PushCoinInfoToNode(std::string symbol, CNode* pnode, CConnman& connman);	
+	void InputCoinInfo(CCoinInfo CoinInfo);
 	bool IsCoinInCompleteListByCoinID(int CoinID);
 	bool IsCoinInCompleteListBySymbol(std::string Symbol);
 	bool GetCoinInfoByCoinID(int CoinID, CCoinInfo &CoinInfo);
 	bool GetCoinInfoBySymbol(std::string Symbol, CCoinInfo &CoinInfo);
+	//to remove on actual implementation
+	bool AddCoinInfo(std::string coinID, std::string name, std::string symbol, std::string logoURL, std::string blockTime, std::string blockHeight, std::string walletVersion, std::string walletActive, std::string walletStatus);
 	void Broadcast();
 };
 

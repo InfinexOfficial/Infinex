@@ -11,9 +11,8 @@
 #include "utilstrencodings.h"
 
 class CUserWithdraw;
-class CUserWithdrawSetting;
-class CUserWithdrawSync;
 class CUserWithdrawManager;
+class CUserWithdrawSetting;
 
 typedef std::map<int, CUserWithdraw> mapUserWithdrawByID;
 typedef std::pair<int, mapUserWithdrawByID> mapUserWithdrawWithID;
@@ -107,30 +106,6 @@ public:
 	{}
 };
 
-class CUserWithdrawSync
-{
-public:
-	mapCoinUserWithdraw data;
-
-	// ADD_SERIALIZE_METHODS;
-	// template <typename Stream, typename Operation>
-	// inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-	// 	READWRITE(data);
-	// }
-
-	void BroadcastTo(CNode* node, CConnman& connman);
-};
-
-class CUserWithdrawSyncRequest
-{
-public:
-	std::string UserPubKey;
-
-	CUserWithdrawSyncRequest(std::string UserPubKey) :
-		UserPubKey(UserPubKey)
-	{}
-};
-
 class CUserWithdrawManager
 {
 private:
@@ -145,7 +120,7 @@ public:
 	void AssignWithdrawProcessorRole(int CoinID);
 	void AssignWithdrawInfoRole(int CoinID);	
 	void ProcessUserWithdrawRequest(CUserWithdraw UserWithdrawRequest);
-	void SendUserWithdrawalRecords(std::string UserPubKey, int CoinID);
+	void SendUserWithdrawalRecords(CNode* node, CConnman& connman, std::string UserPubKey, int CoinID);
 	void SendUsersWithdrawalRecords(CNode* node, CConnman& connman, int CoinID);
 };
 

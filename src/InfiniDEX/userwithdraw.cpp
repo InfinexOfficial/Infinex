@@ -13,9 +13,8 @@
 #include <boost/lexical_cast.hpp>
 
 class CUserWithdraw;
-class CUserWithdrawSetting;
-class CUserWithdrawSync;
 class CUserWithdrawManager;
+class CUserWithdrawSetting;
 
 std::map<std::string, mapCoinUserWithdraw> mapUserWithdraw;
 CUserWithdrawManager userWithdrawManager;
@@ -66,6 +65,10 @@ void CUserWithdrawManager::ProcessMessage(CNode* pfrom, std::string& strCommand,
 	}
 	else if (strCommand == NetMsgType::DEXGETUSERWITHDRAW)
 	{
+		std::string UserPubKey;
+		int CoinID;
+		vRecv >> UserPubKey >> CoinID;
+
 	}
 }
 
@@ -239,17 +242,12 @@ void CUserWithdrawManager::ProcessUserWithdrawRequest(CUserWithdraw UserWithdraw
 
 }
 
-void CUserWithdrawManager::SendUserWithdrawalRecords(std::string UserPubKey, int CoinID)
+void CUserWithdrawManager::SendUserWithdrawalRecords(CNode* node, CConnman& connman, std::string UserPubKey, int CoinID)
 {
-
+	
 }
 
 void CUserWithdrawManager::SendUsersWithdrawalRecords(CNode* node, CConnman& connman, int CoinID)
-{
-
-}
-
-void CUserWithdrawSync::BroadcastTo(CNode* node, CConnman& connman)
 {
 
 }
