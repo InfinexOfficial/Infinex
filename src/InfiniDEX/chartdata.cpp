@@ -3,10 +3,10 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "activemasternode.h"
-#include "messagesigner.h"
-#include "timedata.h"
 #include "chartdata.h"
+#include "messagesigner.h"
 #include "noderole.h"
+#include "timedata.h"
 #include "tradepair.h"
 #include "userconnection.h"
 #include <boost/lexical_cast.hpp>
@@ -14,7 +14,6 @@
 class CChartData;
 class CChartDataManager;
 class CChartDataSetting;
-class CChartSyncData;
 
 std::map<int, mapPeriodTimeData> mapChartData;
 std::map<int, CChartDataSetting> mapChartDataSetting;
@@ -34,7 +33,11 @@ void CChartDataManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CD
 			temp.data = mapChartData[TradePairID];
 			temp.RelayTo(pfrom, connman);
 		}
-	}	
+	}
+	else if (strCommand == NetMsgType::DEXGETCHARTDATA)
+	{
+		
+	}
 }
 
 void CChartSyncData::RelayTo(CNode* node, CConnman& connman)

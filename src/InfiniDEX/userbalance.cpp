@@ -18,9 +18,156 @@ CGlobalUserBalanceHandler globalUserBalanceHandler;
 CUserBalanceManager userBalanceManager;
 std::map<char, CGlobalUserSetting> mapGlobalUserSetting;
 
-bool CUserBalance::VerifySignature()
+void CUserBalanceManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
+	if (strCommand == NetMsgType::DEXUSERBALANCES)
+	{
+		std::vector<CUserBalance> incomingUserBalances;
+		vRecv >> incomingUserBalances;
+
+		for (auto userBalance : incomingUserBalances)
+		{
+			if (userBalance.nMNPubKey == "")
+			{
+				if (!userBalance.VerifyFinalSignature()) {
+					LogPrintf("CUserBalanceManager::ProcessMessage -- invalid signature\n");
+					Misbehaving(pfrom->GetId(), 100);
+					return;
+				}
+
+
+			}
+			else
+			{
+				if (!userBalance.VerifyMNSignature()) {
+					LogPrintf("CUserBalanceManager::ProcessMessage -- invalid signature\n");
+					Misbehaving(pfrom->GetId(), 100);
+					return;
+				}
+			}
+			InputCoinInfo(coinInfo);
+		}
+		BroadcastToConnectedNode(connman, incomingCoinInfo);
+	}
+}
+
+void CUserBalanceManager::InputUserBalance(CUserBalance userBalance)
+{
+	if (!InChargeOfUserBalance(userBalance.nUserPubKey) && !InChargeOfBackup(userBalance.nUserPubKey))
+		return;
+
+	if (!mapUserBalanceByPubKey.count(userBalance.nUserPubKey))
+		mapUserBalanceByPubKey.insert(std::make_pair(userBalance.nUserPubKey, mapUserBalanceWithCoinID()));
+
+	auto& c = mapUserBalanceByPubKey[userBalance.nUserPubKey];
+	if (!c.count(userBalance.nCoinID))
+	{
+		std::shared_ptr<CUserBalance> temp = std::make_shared<CUserBalance>(userBalance);
+		c.insert(std::make_pair(userBalance.nCoinID, temp));
+	}
+	else
+	{
+		auto& b = a[userBalance.nCoinID];
+		if (b->nLastUpdateTime < userBalance.nLastUpdateTime)
+		{
+			std::shared_ptr<CUserBalance> temp = std::make_shared<CUserBalance>(userBalance);
+			*b = *temp;
+		}
+	}
+}
+
+void CUserBalanceManager::InputVerifiedUserBalance(CConnman& connman, CUserBalance userBalance)
+{
+	if (!InChargeOfUserBalance(userBalance.nUserPubKey) && !InChargeOfBackup(userBalance.nUserPubKey))
+		return;
+
+	if (!mapVerifiedUserBalanceByPubKey.count(userBalance.nUserPubKey))
+		mapVerifiedUserBalanceByPubKey.insert(std::make_pair(userBalance.nUserPubKey, mapUserBalanceWithCoinID()));
+
+	auto& a = mapVerifiedUserBalanceByPubKey[userBalance.nUserPubKey];
+	if (!a.count(userBalance.nCoinID))
+	{
+		std::shared_ptr<CUserBalance> temp = std::make_shared<CUserBalance>(userBalance);
+		a.insert(std::make_pair(userBalance.nCoinID, temp));
+		userBalance.RelayToUser(connman);
+	}
+	else
+	{
+		auto& b = a[userBalance.nCoinID];
+		if (b->nLastUpdateTime < userBalance.nLastUpdateTime)
+		{
+			std::shared_ptr<CUserBalance> temp = std::make_shared<CUserBalance>(userBalance);
+			*b = *temp;
+			userBalance.RelayToUser(connman);
+		}
+	}
+
+	InputUserBalance(userBalance);
+}
+
+bool CUserBalance::VerifyMNSignature()
+{
+	std::string strError = "";
+	std::string strMessage = nUserPubKey + boost::lexical_cast<std::string>(nCoinID) + boost::lexical_cast<std::string>(nAvailableBalance) + boost::lexical_cast<std::string>(nInExchangeBalance)
+		+ boost::lexical_cast<std::string>(nInDisputeBalance) + boost::lexical_cast<std::string>(nPendingDepositBalance) + boost::lexical_cast<std::string>(nPendingWithdrawalBalance)
+		+ boost::lexical_cast<std::string>(nTotalBalance) + boost::lexical_cast<std::string>(nLastDepositID) + boost::lexical_cast<std::string>(nLastWithdrawID)
+		+ boost::lexical_cast<std::string>(nLastActualTradeID) + boost::lexical_cast<std::string>(nLastUserTradeID) + MNPubKey + boost::lexical_cast<std::string>(nLastUpdateTime);
+	CPubKey pubkey(ParseHex(MNPubKey));
+	if (!CMessageSigner::VerifyMessage(pubkey, mnVchSig, strMessage, strError)) {
+		LogPrintf("CUserBalance::VerifyMNSignature -- VerifyMessage() failed, error: %s\n", strError);
+		return false;
+	}
 	return true;
+}
+
+bool CUserBalance::VerifyFinalSignature()
+{
+	std::string strError = "";
+	std::string strMessage = nUserPubKey + boost::lexical_cast<std::string>(nCoinID) + boost::lexical_cast<std::string>(nAvailableBalance) + boost::lexical_cast<std::string>(nInExchangeBalance)
+		+ boost::lexical_cast<std::string>(nInDisputeBalance) + boost::lexical_cast<std::string>(nPendingDepositBalance) + boost::lexical_cast<std::string>(nPendingWithdrawalBalance)
+		+ boost::lexical_cast<std::string>(nTotalBalance) + boost::lexical_cast<std::string>(nLastDepositID) + boost::lexical_cast<std::string>(nLastWithdrawID)
+		+ boost::lexical_cast<std::string>(nLastActualTradeID) + boost::lexical_cast<std::string>(nLastUserTradeID) + boost::lexical_cast<std::string>(nLastUpdateTime);
+	CPubKey pubkey(ParseHex(DEXKey));
+	if (!CMessageSigner::VerifyMessage(pubkey, finalVchSig, strMessage, strError)) {
+		LogPrintf("CUserBalance::VerifyFinalSignature -- VerifyMessage() failed, error: %s\n", strError);
+		return false;
+	}
+	return true;
+}
+
+bool CUserBalance::MNSign()
+{
+	std::string strError = "";
+	std::string strMessage = nUserPubKey + boost::lexical_cast<std::string>(nCoinID) + boost::lexical_cast<std::string>(nAvailableBalance) + boost::lexical_cast<std::string>(nInExchangeBalance)
+		+ boost::lexical_cast<std::string>(nInDisputeBalance) + boost::lexical_cast<std::string>(nPendingDepositBalance) + boost::lexical_cast<std::string>(nPendingWithdrawalBalance)
+		+ boost::lexical_cast<std::string>(nTotalBalance) + boost::lexical_cast<std::string>(nLastDepositID) + boost::lexical_cast<std::string>(nLastWithdrawID)
+		+ boost::lexical_cast<std::string>(nLastActualTradeID) + boost::lexical_cast<std::string>(nLastUserTradeID) + MNPubKey + boost::lexical_cast<std::string>(nLastUpdateTime);
+	if (!CMessageSigner::SignMessage(strMessage, mnVchSig, activeMasternode.keyMasternode))
+	{
+		LogPrintf("CUserBalance::MNSign -- SignMessage() failed\n");
+		return false;
+	}
+	if (!CMessageSigner::VerifyMessage(MNPubKey, mnVchSig, strMessage, strError))
+	{
+		LogPrintf("CUserBalance::MNSign -- VerifyMessage() failed, error: %s\n", strError);
+		return false;
+	}
+	return true;
+}
+
+void CUserBalance::RelayToNode(CNode* node, CConnman& connman)
+{
+	connman.PushMessage(node, NetMsgType::DEXUSERBALANCE, *this);
+}
+
+void CUserBalance::RelayToUser(CConnman& connman)
+{
+	if (!mapUserConnections.count(nUserPubKey))
+		return;
+	
+	auto& a = mapUserConnections[nUserPubKey];
+	for (auto b : a)
+		connman.PushMessage(b.first, NetMsgType::DEXUSERBALANCE, *this);
 }
 
 void CUserBalanceManager::InitCoin(int CoinID)

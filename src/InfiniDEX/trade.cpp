@@ -53,7 +53,21 @@ void CUserTradeManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CD
 				return;
 			}
 
+			if (userTrade.nMNBalancePubKey == "")
+			{
+				if (userBalanceManager.InChargeOfUserBalance(userTrade.nUserPubKey))
+				{
 
+				}
+			}
+			else if (userTrade.nMNTradePubKey == "")
+			{
+				
+			}
+			else
+			{
+
+			}
 		}
 	}
 }
@@ -157,9 +171,6 @@ void CUserTradeManager::ReturnTradeCancelBalance(CCancelTrade& cancelTrade)
 
 void CUserTradeManager::InputUserTrade(const std::shared_ptr<CUserTrade>& userTrade)
 {
-	if (!userTrade->VerifyUserSignature())
-		return;
-
 	CTradePair& tradePair = mapCompleteTradePair[userTrade->nTradePairID];
 	if (tradePair.nTradePairID != userTrade->nTradePairID)
 	{

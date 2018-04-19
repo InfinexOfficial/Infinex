@@ -21,6 +21,8 @@ typedef std::map<std::string, std::shared_ptr<CUserBalance>> mapUserBalanceWithP
 typedef std::map<int, std::shared_ptr<CUserBalance>> mapUserBalanceWithCoinID;
 extern std::map<std::string, mapUserBalanceWithCoinID> mapUserBalanceByPubKey;
 extern std::map<int, mapUserBalanceWithPubKey> mapUserBalanceByCoinID;
+extern std::map<std::string, mapUserBalanceWithCoinID> mapVerifiedUserBalanceByPubKey;
+extern std::map<int, mapUserBalanceWithPubKey> mapVerifiedUserBalanceByCoinID;
 extern std::map<int, CUserBalanceSetting> mapUserBalanceSetting;
 extern CGlobalUserBalanceHandler globalUserBalanceHandler;
 extern CUserBalanceManager userBalanceManager;
@@ -109,7 +111,8 @@ public:
 class CUserBalance
 {
 private:
-	std::vector<unsigned char> vchSig;
+	std::vector<unsigned char> mnVchSig;
+	std::vector<unsigned char> finalVchSig;
 
 public:
 	std::string nUserPubKey;
@@ -124,6 +127,7 @@ public:
 	int nLastWithdrawID;
 	int nLastActualTradeID;
 	int nLastUserTradeID;
+	std::string nMNPubKey;
 	uint64_t nLastUpdateTime;
 
 	CUserBalance(std::string nUserPubKey, int nCoinID) :
@@ -139,6 +143,7 @@ public:
 		nLastWithdrawID(0),
 		nLastActualTradeID(0),
 		nLastUserTradeID(0),
+		nMNPubKey(nMNPubKey),
 		nLastUpdateTime(0)
 	{}
 
@@ -155,10 +160,15 @@ public:
 		nLastWithdrawID(0),
 		nLastActualTradeID(0),
 		nLastUserTradeID(0),
+		nMNPubKey(""),
 		nLastUpdateTime(0)
 	{}
 
-	bool VerifySignature();
+	bool VerifyMNSignature();
+	bool VerifyFinalSignature();
+	bool MNSign();
+	void RelayToNode(CNode* node, CConnman& connman);
+	void RelayToUser(CConnman& connman);
 };
 
 class CUserBalanceManager
@@ -168,6 +178,9 @@ private:
 
 public:
 	CUserBalanceManager() {}
+	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	void InputUserBalance(CUserBalance userBalance);
+	void InputVerifiedUserBalance(CConnman& connman, CUserBalance userBalance);
 	void InitCoin(int CoinID);
 	void InitGlobalUserSetting(char Char);
 	bool AssignUserBalanceRole(char Char, bool toAssign = true);

@@ -5,8 +5,8 @@
 #ifndef NODEROLE_H
 #define NODEROLE_H
 
-#include <vector>
 #include <map>
+#include <vector>
 #include "net.h"
 #include "utilstrencodings.h"
 
@@ -32,7 +32,6 @@ enum infinidex_node_role_enum {
 };
 
 class CNodeRole;
-class CNodeRoles;
 class CNodeRoleManager;
 
 extern std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapGlobalNodeRolesByRole;
@@ -105,38 +104,14 @@ public:
 
 	bool VerifySignature();
 	bool DEXSign(std::string dexSignKey);
-};
-
-class CNodeRoles
-{
-public:
-	std::vector<CNodeRole> data;
-
-	CNodeRoles(std::vector<CNodeRole> data) :
-		data(data)
-	{}
-
-	CNodeRoles() :
-		data()
-	{}
-
-	// ADD_SERIALIZE_METHODS;
-	// template <typename Stream, typename Operation>
-	// inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-	// 	READWRITE(data);
-	// }
-
-	void RelayTo(CNode* node, CConnman& connman);
+	void Broadcast(CConnman& connman);
 };
 
 class CNodeRoleManager
 {
 public:
-	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
-	bool IsInCharge(int TradePairID, infinidex_node_role_enum RoleType);
-	bool UpdateRole(CNodeRole Role);
-	bool RemoveRole(int TradePairID, int NodeRoleID);
 	bool SetDEXPrivKey(std::string dexPrivKey);
+	bool IsInChargeOfUserBalance(std::string MNPubKey, uint64_t time, std::string UserPubKey);
 };
 
 #endif
