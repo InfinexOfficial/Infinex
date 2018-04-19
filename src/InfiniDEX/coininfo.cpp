@@ -24,21 +24,40 @@ CCoinInfoManager coinInfoManager;
 
 void CCoinInfoManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
-	if (strCommand == NetMsgType::DEXCOININFO)
+	if (strCommand == NetMsgType::DEXCOINSINFO)
 	{
-		std::vector<CCoinInfo> incomingCoinInfo;
-		vRecv >> incomingCoinInfo;
+		std::vector<CCoinInfo> incomings;
+		vRecv >> incomings;
 
-		for (auto coinInfo : incomingCoinInfo)
+		bool toBroadcast = false;
+		for (auto incoming : incomings)
 		{
-			if (!coinInfo.VerifySignature()) {
+			if (!incoming.VerifySignature()) {
 				LogPrintf("CCoinInfoManager::ProcessMessage -- invalid signature\n");
 				Misbehaving(pfrom->GetId(), 100);
 				return;
 			}
-			InputCoinInfo(coinInfo);
+
+			if (InputCoinInfo(incoming))
+				toBroadcast = true;
 		}
-		BroadcastToConnectedNode(connman, incomingCoinInfo);
+
+		if (toBroadcast)
+			BroadcastCoinsInfoToConnectedNode(connman, incomings);
+	}
+	else if (strCommand == NetMsgType::DEXCOININFO)
+	{
+		CCoinInfo incoming;
+		vRecv >> incoming;
+
+		if (!incoming.VerifySignature()) {
+			LogPrintf("CCoinInfoManager::ProcessMessage -- invalid signature\n");
+			Misbehaving(pfrom->GetId(), 100);
+			return;
+		}
+
+		if (InputCoinInfo(incoming))
+			BroadcastCoinInfoToConnectedNode(connman, incoming);
 	}
 	else if (strCommand == NetMsgType::DEXGETCOININFO)
 	{
@@ -49,7 +68,24 @@ void CCoinInfoManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDa
 	}
 }
 
-void CCoinInfoManager::BroadcastToConnectedNode(CConnman& connman, std::vector<CCoinInfo> coinInfo)
+void CCoinInfoManager::BroadcastCoinsInfoToConnectedNode(CConnman& connman, std::vector<CCoinInfo> coinInfo)
+{
+	for (auto a : mapMNConnection)
+	{
+		if (!a.second.first->fDisconnect)
+			connman.PushMessage(a.second.first, NetMsgType::DEXCOINSINFO, coinInfo);
+	}
+	for (auto a : mapUserConnections)
+	{
+		for (auto b : a.second)
+		{
+			if (!b.first->fDisconnect)
+				connman.PushMessage(b.first, NetMsgType::DEXCOINSINFO, coinInfo);
+		}
+	}
+}
+
+void CCoinInfoManager::BroadcastCoinInfoToConnectedNode(CConnman& connman, CCoinInfo coinInfo)
 {
 	for (auto a : mapMNConnection)
 	{
@@ -121,12 +157,15 @@ bool CCoinInfoManager::AddCoinInfo(std::string coinID, std::string name, std::st
 	}
 }
 
-void CCoinInfoManager::InputCoinInfo(CCoinInfo CoinInfo)
-{	
+bool CCoinInfoManager::InputCoinInfo(CCoinInfo CoinInfo)
+{
 	if (!mapCompleteCoinInfoWithID.count(CoinInfo.nCoinInfoID))
 	{
-		mapCompleteCoinInfoWithID.insert(std::make_pair(CoinInfo.nCoinInfoID, std::make_shared<CCoinInfo>(CoinInfo)));
+		std::shared_ptr<CCoinInfo> coinInfo = std::make_shared<CCoinInfo>(CoinInfo);
+		mapCompleteCoinInfoWithID.insert(std::make_pair(CoinInfo.nCoinInfoID, coinInfo));
+		mapCompleteCoinInfoWithSymbol.insert(std::make_pair(CoinInfo.nSymbol, coinInfo));
 		completeCoinInfo.push_back(CoinInfo);
+		return true;
 	}
 	else
 	{
@@ -135,20 +174,10 @@ void CCoinInfoManager::InputCoinInfo(CCoinInfo CoinInfo)
 		{
 			std::shared_ptr<CCoinInfo> temp = std::make_shared<CCoinInfo>(CoinInfo);
 			*a = *temp;
+			return true;
 		}
 	}
-
-	if (!mapCompleteCoinInfoWithSymbol.count(CoinInfo.nSymbol))
-		mapCompleteCoinInfoWithSymbol.insert(std::make_pair(CoinInfo.nSymbol, std::make_shared<CCoinInfo>(CoinInfo)));
-	else
-	{
-		auto& a = mapCompleteCoinInfoWithSymbol[CoinInfo.nSymbol];
-		if (a->nLastUpdate < CoinInfo.nLastUpdate)
-		{
-			std::shared_ptr<CCoinInfo> temp = std::make_shared<CCoinInfo>(CoinInfo);
-			*a = *temp;
-		}
-	}
+	return false;
 }
 
 bool CCoinInfo::VerifySignature()

@@ -5,8 +5,9 @@
 #ifndef CHARTDATA_H
 #define CHARTDATA_H
 
-#include <vector>
 #include <map>
+#include <memory>
+#include <vector>
 #include "net.h"
 #include "utilstrencodings.h"
 
@@ -25,9 +26,10 @@ static const int DEX_COMPLETECHARTDATA = 2;
 static const int DEX_GETCOMPLETECHARTDATA = 3;
 
 typedef std::pair<uint64_t, uint64_t> TimeRange;
-typedef std::map<TimeRange, CChartData> mapTimeData;
+typedef std::map<TimeRange, std::shared_ptr<CChartData>> mapTimeData;
 typedef std::map<chart_period_enum, mapTimeData> mapPeriodTimeData;
 extern std::map<int, mapPeriodTimeData> mapChartData;
+extern std::map<int, std::vector<std::shared_ptr<CChartData>>> completeChartData;
 extern std::map<int, CChartDataSetting> mapChartDataSetting;
 extern CChartDataManager ChartDataManager;
 
@@ -108,6 +110,8 @@ class CChartDataManager
 public:
 	CChartDataManager() {}
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	void ProcessChartDataRequest(int TradePairID, CNode* node, CConnman& connman);
+	bool InputChartData(CChartData chartData);
 	bool IsInChargeOfChartData(int TradePairID);
 	bool IsTradePairInList(int TradePairID);
 	bool InitTradePair(int TradePairID);
@@ -118,15 +122,18 @@ class CChartDataSetting
 {
 public:
 	int TradePairID;
+	bool SyncInProgress;
 	bool IsInChargeOfChartData;
 
 	CChartDataSetting(int TradePairID):
 		TradePairID(TradePairID),
+		SyncInProgress(true),
 		IsInChargeOfChartData(false)
 	{}
 
 	CChartDataSetting():
 		TradePairID(0),
+		SyncInProgress(true),
 		IsInChargeOfChartData(false)
 	{}
 };

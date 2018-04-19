@@ -16,33 +16,66 @@ class CChartDataManager;
 class CChartDataSetting;
 
 std::map<int, mapPeriodTimeData> mapChartData;
+std::map<int, std::vector<std::shared_ptr<CChartData>>> completeChartData;
 std::map<int, CChartDataSetting> mapChartDataSetting;
 CChartDataManager ChartDataManager;
 
 void CChartDataManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
-	if (strCommand == NetMsgType::DEXCHARTDATA)
+	if (strCommand == NetMsgType::DEXCHARTSDATA)
+	{
+		std::vector<CChartData> incomings;
+		vRecv >> incomings;
+		
+		for (auto incoming : incomings)
+		{
+			if (!incoming.VerifySignature()) {
+				LogPrintf("CChartDataManager::ProcessMessage -- invalid signature\n");
+				Misbehaving(pfrom->GetId(), 100);
+				return;
+			}
+
+			InputChartData(incoming);
+		}
+	}
+	else if (strCommand == NetMsgType::DEXCHARTDATA)
+	{
+		CChartData incoming;
+		vRecv >> incoming;
+
+		if (!incoming.VerifySignature()) {
+			LogPrintf("CChartDataManager::ProcessMessage -- invalid signature\n");
+			Misbehaving(pfrom->GetId(), 100);
+			return;
+		}
+
+		InputChartData(incoming);		
+	}
+	else if (strCommand == NetMsgType::DEXGETCHARTSDATA)
 	{
 		int TradePairID;
 		vRecv >> TradePairID;
-		//to add check whether this node requested within allowed time
-		//also to add check whether the data is complete (node not in sync mode)
-		if(IsInChargeOfChartData(TradePairID))
+		if (TradePairID < 1)
 		{
-			CChartSyncData temp;
-			temp.data = mapChartData[TradePairID];
-			temp.RelayTo(pfrom, connman);
+			//banning or reducing score here
+			return;
 		}
-	}
-	else if (strCommand == NetMsgType::DEXGETCHARTDATA)
-	{
-		
+		ProcessChartDataRequest(TradePairID, pfrom, connman);
 	}
 }
 
-void CChartSyncData::RelayTo(CNode* node, CConnman& connman)
+void CChartDataManager::ProcessChartDataRequest(int TradePairID, CNode* node, CConnman& connman)
 {
-	//connman.PushMessage(node, NetMsgType::DEXCOMPLETECHARTDATA, *this);
+	if (mapChartDataSetting.count(TradePairID))
+	{
+		auto& a = mapChartDataSetting[TradePairID];
+		if (a.IsInChargeOfChartData && !a.SyncInProgress && completeChartData.count(TradePairID))
+		{
+			auto& b = completeChartData[TradePairID];
+			if (b.size() > 0)
+				connman.PushMessage(node, NetMsgType::DEXCHARTSDATA, b);
+		}
+	}
 }
 
 bool CChartDataManager::IsInChargeOfChartData(int TradePairID)
@@ -86,13 +119,7 @@ bool CChartDataManager::InitTradePair(int TradePairID)
 
 void CChartDataManager::InputNewTrade(int TradePairID, uint64_t Price, uint64_t Qty, uint64_t TradeTime)
 {
-	if (!IsTradePairInList(TradePairID))
-	{
-		//check if current node is assigned to process
-		//if true
-		InitTradePair(TradePairID);
-	}
-
+	std::vector<CChartData> toBroadcast;
 	//process minute range
 	auto& a = mapChartData[TradePairID][MINUTE_CHART_DATA];
 	mapTimeData::reverse_iterator ri = a.rbegin();
@@ -102,31 +129,36 @@ void CChartDataManager::InputNewTrade(int TradePairID, uint64_t Price, uint64_t 
 		uint64_t newMinuteStart = TradeTime - TimeRoundDown;
 		uint64_t newMinuteEnd = newMinuteStart + 60000;
 		TimeRange tr = std::make_pair(newMinuteStart, newMinuteEnd);
-		CChartData cd(TradePairID, newMinuteStart, newMinuteEnd, Price, Price, Price, Price, Price * Qty, Qty, 1, GetAdjustedTime(), MNPubKey);
+		std::shared_ptr<CChartData> cd = std::make_shared<CChartData>(TradePairID, newMinuteStart, newMinuteEnd, Price, Price, Price, Price, Price * Qty, Qty, 1, GetAdjustedTime(), MNPubKey);
 		a.insert(std::make_pair(tr, cd));
+		completeChartData[TradePairID].push_back(cd);
+		toBroadcast.push_back(CChartData(TradePairID, newMinuteStart, newMinuteEnd, Price, Price, Price, Price, Price * Qty, Qty, 1, GetAdjustedTime(), MNPubKey));
 	}
 	else
 	{
 		uint64_t lastMinuteEnd = ri->first.second;
 		if (lastMinuteEnd >= TradeTime)
 		{
-			++ri->second.nNoOfTrades;
-			ri->second.nQty += Qty;
-			ri->second.nAmount += (Qty * Price);
-			ri->second.nClosePrice = Price;
-			if (Price > ri->second.nHighPrice)
-				ri->second.nHighPrice = Price;
-			else if (Price < ri->second.nLowPrice || ri->second.nLowPrice == 0)
-				ri->second.nLowPrice = Price;
-			ri->second.nLastUpdate = GetAdjustedTime();
+			++ri->second->nNoOfTrades;
+			ri->second->nQty += Qty;
+			ri->second->nAmount += (Qty * Price);
+			ri->second->nClosePrice = Price;
+			if (Price > ri->second->nHighPrice)
+				ri->second->nHighPrice = Price;
+			else if (Price < ri->second->nLowPrice || ri->second->nLowPrice == 0)
+				ri->second->nLowPrice = Price;
+			ri->second->nLastUpdate = GetAdjustedTime();
+			toBroadcast.push_back(*ri->second);
 		}
 		else
 		{
 			uint64_t newMinuteStart = lastMinuteEnd + 1;
 			uint64_t newMinuteEnd = lastMinuteEnd + 60000;
 			TimeRange tr = std::make_pair(newMinuteStart, newMinuteEnd);
-			CChartData cd(TradePairID, newMinuteStart, newMinuteEnd, Price, Price, Price, Price, Price * Qty, Qty, 1, GetAdjustedTime(), MNPubKey);
+			std::shared_ptr<CChartData> cd = std::make_shared<CChartData>(TradePairID, newMinuteStart, newMinuteEnd, Price, Price, Price, Price, Price * Qty, Qty, 1, GetAdjustedTime(), MNPubKey);
 			a.insert(std::make_pair(tr, cd));
+			completeChartData[TradePairID].push_back(cd);
+			toBroadcast.push_back(CChartData(TradePairID, newMinuteStart, newMinuteEnd, Price, Price, Price, Price, Price * Qty, Qty, 1, GetAdjustedTime(), MNPubKey));
 		}
 	}
 
@@ -139,31 +171,33 @@ void CChartDataManager::InputNewTrade(int TradePairID, uint64_t Price, uint64_t 
 		uint64_t newHourStart = TradeTime - TimeRoundDown;
 		uint64_t newHourEnd = newHourStart + 3600000;
 		TimeRange tr = std::make_pair(newHourStart, newHourEnd);
-		CChartData cd(TradePairID, newHourStart, newHourEnd, Price, Price, Price, Price, Price * Qty, Qty, 1, GetAdjustedTime(), MNPubKey);
+		std::shared_ptr<CChartData> cd = std::make_shared<CChartData>(TradePairID, newHourStart, newHourEnd, Price, Price, Price, Price, Price * Qty, Qty, 1, GetAdjustedTime(), MNPubKey);
 		b.insert(std::make_pair(tr, cd));
+		completeChartData[TradePairID].push_back(cd);
 	}
 	else
 	{
 		uint64_t lastHourEnd = ri2->first.second;
 		if (lastHourEnd >= TradeTime)
 		{
-			++ri2->second.nNoOfTrades;
-			ri2->second.nQty += Qty;
-			ri2->second.nAmount += (Qty * Price);
-			ri2->second.nClosePrice = Price;
-			if (Price > ri2->second.nHighPrice)
-				ri2->second.nHighPrice = Price;
-			else if (Price < ri2->second.nLowPrice || ri->second.nLowPrice == 0)
-				ri2->second.nLowPrice = Price;
-			ri->second.nLastUpdate = GetAdjustedTime();
+			++ri2->second->nNoOfTrades;
+			ri2->second->nQty += Qty;
+			ri2->second->nAmount += (Qty * Price);
+			ri2->second->nClosePrice = Price;
+			if (Price > ri2->second->nHighPrice)
+				ri2->second->nHighPrice = Price;
+			else if (Price < ri2->second->nLowPrice || ri->second->nLowPrice == 0)
+				ri2->second->nLowPrice = Price;
+			ri->second->nLastUpdate = GetAdjustedTime();
 		}
 		else
 		{
 			uint64_t newHourStart = lastHourEnd + 1;
 			uint64_t newHourEnd = newHourStart + 3600000;
 			TimeRange tr = std::make_pair(newHourStart, newHourEnd);
-			CChartData cd(TradePairID, newHourStart, newHourEnd, Price, Price, Price, Price, Price * Qty, Qty, 1, GetAdjustedTime(), MNPubKey);
+			std::shared_ptr<CChartData> cd = std::make_shared<CChartData>(TradePairID, newHourStart, newHourEnd, Price, Price, Price, Price, Price * Qty, Qty, 1, GetAdjustedTime(), MNPubKey);
 			b.insert(std::make_pair(tr, cd));
+			completeChartData[TradePairID].push_back(cd);
 		}
 	}
 
@@ -176,31 +210,33 @@ void CChartDataManager::InputNewTrade(int TradePairID, uint64_t Price, uint64_t 
 		uint64_t newDayStart = TradeTime - TimeRoundDown;
 		uint64_t newDayEnd = newDayStart + 86400000;
 		TimeRange tr = std::make_pair(newDayStart, newDayEnd);
-		CChartData cd(TradePairID, newDayStart, newDayEnd, Price, Price, Price, Price, Price * Qty, Qty, 1, GetAdjustedTime(), MNPubKey);
-		c.insert(std::make_pair(tr, cd));
+		std::shared_ptr<CChartData> cd = std::make_shared<CChartData>(TradePairID, newDayStart, newDayEnd, Price, Price, Price, Price, Price * Qty, Qty, 1, GetAdjustedTime(), MNPubKey);
+		b.insert(std::make_pair(tr, cd));
+		completeChartData[TradePairID].push_back(cd);
 	}
 	else
 	{
 		uint64_t lastDayEnd = ri3->first.second;
 		if (lastDayEnd >= TradeTime)
 		{
-			++ri3->second.nNoOfTrades;
-			ri3->second.nQty += Qty;
-			ri3->second.nAmount += (Qty * Price);
-			ri3->second.nClosePrice = Price;
-			if (Price > ri3->second.nHighPrice)
-				ri3->second.nHighPrice = Price;
-			else if (Price < ri3->second.nLowPrice || ri->second.nLowPrice == 0)
-				ri3->second.nLowPrice = Price;
-			ri->second.nLastUpdate = GetAdjustedTime();
+			++ri3->second->nNoOfTrades;
+			ri3->second->nQty += Qty;
+			ri3->second->nAmount += (Qty * Price);
+			ri3->second->nClosePrice = Price;
+			if (Price > ri3->second->nHighPrice)
+				ri3->second->nHighPrice = Price;
+			else if (Price < ri3->second->nLowPrice || ri->second->nLowPrice == 0)
+				ri3->second->nLowPrice = Price;
+			ri->second->nLastUpdate = GetAdjustedTime();
 		}
 		else
 		{
 			uint64_t newDayStart = lastDayEnd + 1;
 			uint64_t newDayEnd = newDayStart + 86400000;
 			TimeRange tr = std::make_pair(newDayStart, newDayEnd);
-			CChartData cd(TradePairID, newDayStart, newDayEnd, Price, Price, Price, Price, Price * Qty, Qty, 1, GetAdjustedTime(), MNPubKey);
-			c.insert(std::make_pair(tr, cd));
+			std::shared_ptr<CChartData> cd = std::make_shared<CChartData>(TradePairID, newDayStart, newDayEnd, Price, Price, Price, Price, Price * Qty, Qty, 1, GetAdjustedTime(), MNPubKey);
+			b.insert(std::make_pair(tr, cd));
+			completeChartData[TradePairID].push_back(cd);
 		}
 	}
 }

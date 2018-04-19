@@ -23,6 +23,7 @@ class CUserTradeManager;
 class CActualTrade;
 class CActualTradeManager;
 
+std::vector<CUserTrade> pendingProcessUserTrades;
 std::map<std::string, pULTIUTC> mapUserTrades;
 
 std::map<int, mUTPIUTV> mapBidUserTradeByPrice;
@@ -40,7 +41,7 @@ CUserTradeManager userTradeManager;
 
 void CUserTradeManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
-	if (strCommand == NetMsgType::DEXUSERTRADE)
+	if (strCommand == NetMsgType::DEXUSERTRADES)
 	{
 		std::vector<CUserTrade> incomingUserTrade;
 		vRecv >> incomingUserTrade;
@@ -53,21 +54,36 @@ void CUserTradeManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CD
 				return;
 			}
 
-			if (userTrade.nMNBalancePubKey == "")
-			{
-				if (userBalanceManager.InChargeOfUserBalance(userTrade.nUserPubKey))
-				{
+			std::shared_ptr<CUserTrade> UserTrade = std::make_shared<CUserTrade>(userTrade);
+			InputUserTrade(UserTrade);
+		}
+	}
+	else if (strCommand == NetMsgType::DEXUSERTRADE)
+	{
+		CUserTrade incomingUserTrade;
+		vRecv >> incomingUserTrade;
 
-				}
-			}
-			else if (userTrade.nMNTradePubKey == "")
-			{
-				
-			}
-			else
-			{
+		if (!incomingUserTrade.VerifyUserSignature()) {
+			LogPrintf("CUserTradeManager::ProcessMessage -- invalid signature\n");
+			Misbehaving(pfrom->GetId(), 100);
+			return;
 
-			}
+			std::shared_ptr<CUserTrade> UserTrade = std::make_shared<CUserTrade>(incomingUserTrade);
+			InputUserTrade(UserTrade);
+		}
+	}
+	else if (strCommand == NetMsgType::DEXCANCELTRADE)
+	{
+		CCancelTrade incomingTradeCancel;
+		vRecv >> incomingTradeCancel;
+
+		if (!incomingTradeCancel.VerifyUserSignature()) {
+			LogPrintf("CUserTradeManager::ProcessMessage -- invalid signature\n");
+			Misbehaving(pfrom->GetId(), 100);
+			return;
+
+			std::shared_ptr<CCancelTrade> UserTrade = std::make_shared<CCancelTrade>(incomingTradeCancel);
+			InputTradeCancel(incomingTradeCancel);
 		}
 	}
 }
@@ -171,10 +187,15 @@ void CUserTradeManager::ReturnTradeCancelBalance(CCancelTrade& cancelTrade)
 
 void CUserTradeManager::InputUserTrade(const std::shared_ptr<CUserTrade>& userTrade)
 {
-	CTradePair& tradePair = mapCompleteTradePair[userTrade->nTradePairID];
+	if (userTrade->nTradePairID < 1)
+		return;
+
+	CTradePair& tradePair = mapTradePair[userTrade->nTradePairID];
 	if (tradePair.nTradePairID != userTrade->nTradePairID)
 	{
-		//request node setup
+		tradePairManager.RequestTradePairInfoFromNode(userTrade->nTradePairID);
+		pendingProcessUserTrades.push_back(userTrade);
+		pendingProcessStatus.UserTrade = true;
 		return;
 	}
 
@@ -248,8 +269,7 @@ bool CUserTradeManager::ProcessUserTradeRequest(const std::shared_ptr<CUserTrade
 		return false;
 
 	if (tradePair.nMaximumTradeAmount < userTrade->nAmount || userTrade->nAmount < tradePair.nMinimumTradeAmount)
-	{
-		std::cout << "Invalid trade amount" << std::endl;
+	{		
 		return false;
 	}
 
@@ -265,7 +285,6 @@ bool CUserTradeManager::ProcessUserTradeRequest(const std::shared_ptr<CUserTrade
 	
 	if (userBalance->nAvailableBalance < userTrade->nAmount)
 	{
-		std::cout << "Not enough balance" << std::endl;
 		return false;
 	}
 
@@ -301,8 +320,7 @@ void CUserTradeManager::SaveProcessedUserTrade(const std::shared_ptr<CUserTrade>
 }
 
 void CUserTradeManager::InputMatchUserBuyRequest(const std::shared_ptr<CUserTrade>& userTrade, CTradePair& tradePair)
-{
-	std::cout << "Processing bid request: price: " << userTrade->nPrice << ", qty: " << userTrade->nQuantity << std::endl;
+{	
 	CUserTradeSetting& setting = mapUserTradeSetting[userTrade->nTradePairID];
 	if (setting.nTradePairID != userTrade->nTradePairID)
 		return;	
@@ -342,8 +360,7 @@ void CUserTradeManager::InputMatchUserBuyRequest(const std::shared_ptr<CUserTrad
 			int bidTradeFee = (userTrade->nTradeFee < tradePair.nAskTradeFee) ? userTrade->nTradeFee : tradePair.nAskTradeFee;
 			int askTradeFee = (ExistingTrade->nTradeFee < tradePair.nBidTradeFee) ? ExistingTrade->nTradeFee : tradePair.nBidTradeFee;
 			uint64_t bidAmount = GetBidRequiredAmount(ExistingTrade->nPrice, qty, bidTradeFee);
-			uint64_t askAmount = GetAskExpectedAmount(ExistingTrade->nPrice, qty, askTradeFee);
-			std::cout << "Found seller to match: price: " << ExistingTrade->nPrice << ", qty: " << qty << std::endl;
+			uint64_t askAmount = GetAskExpectedAmount(ExistingTrade->nPrice, qty, askTradeFee);			
 			std::shared_ptr<CActualTrade> actualTrade = std::make_shared<CActualTrade>(tradePair.nTradePairID, userTrade->nUserTradeID, ExistingTrade->nUserTradeID, ExistingTrade->nPrice, qty, bidAmount, askAmount, userTrade->nUserPubKey, ExistingTrade->nUserPubKey, bidTradeFee, askTradeFee, true, GetAdjustedTime());
 			if (!actualTradeManager.GenerateActualTrade(actualTrade, setting))
 				return;
@@ -357,15 +374,13 @@ void CUserTradeManager::InputMatchUserBuyRequest(const std::shared_ptr<CUserTrad
 				orderBookManager.AdjustAskQuantity(actualTrade->nTradePairID, actualTrade->nTradePrice, (0 - actualTrade->nTradeQty));
 			
 			if (ExistingTrade->nBalanceQty == 0)
-			{
-				std::cout << "Completed seller order, balance amount: " << ExistingTrade->nBalanceAmount << std::endl;
+			{				
 				mapAskUserTradeByPrice[userTrade->nTradePairID][Sellers->first].erase(Seller->first);
 			}
 			++Seller;
 
 			if (userTrade->nBalanceQty <= 0)
-			{
-				std::cout << "Completed buying request, balance amount: " << userTrade->nBalanceAmount << std::endl;
+			{				
 				if (userTrade->nBalanceAmount > 0)
 				{
 					if (userBalanceManager.InChargeOfUserBalance(userTrade->nUserPubKey))
@@ -392,8 +407,7 @@ void CUserTradeManager::InputMatchUserBuyRequest(const std::shared_ptr<CUserTrad
 }
 
 void CUserTradeManager::InputMatchUserSellRequest(const std::shared_ptr<CUserTrade>& userTrade, CTradePair& tradePair)
-{
-	std::cout << "Processing ask request: price: " << userTrade->nPrice << ", qty: " << userTrade->nQuantity << std::endl;
+{	
 	CUserTradeSetting& actualTradeSetting = mapUserTradeSetting[userTrade->nTradePairID];
 	if (actualTradeSetting.nTradePairID != userTrade->nTradePairID)
 		return;
@@ -433,8 +447,7 @@ void CUserTradeManager::InputMatchUserSellRequest(const std::shared_ptr<CUserTra
 			int bidTradeFee = (ExistingTrade->nTradeFee < tradePair.nBidTradeFee) ? ExistingTrade->nTradeFee : tradePair.nBidTradeFee;
 			int askTradeFee = (userTrade->nTradeFee < tradePair.nAskTradeFee) ? userTrade->nTradeFee : tradePair.nAskTradeFee;
 			uint64_t bidAmount = GetBidRequiredAmount(ExistingTrade->nPrice, qty, bidTradeFee);
-			uint64_t askAmount = GetAskExpectedAmount(ExistingTrade->nPrice, qty, askTradeFee);
-			std::cout << "Found buyer to match: price: " << ExistingTrade->nPrice << ", qty: " << qty << std::endl;
+			uint64_t askAmount = GetAskExpectedAmount(ExistingTrade->nPrice, qty, askTradeFee);			
 			std::shared_ptr<CActualTrade> actualTrade = std::make_shared<CActualTrade>(tradePair.nTradePairID, ExistingTrade->nUserTradeID, userTrade->nUserTradeID, ExistingTrade->nPrice, qty, bidAmount, askAmount, ExistingTrade->nUserPubKey, userTrade->nUserPubKey, bidTradeFee, askTradeFee, false, GetAdjustedTime());
 			if (!actualTradeManager.GenerateActualTrade(actualTrade, actualTradeSetting))
 				return;
@@ -449,14 +462,12 @@ void CUserTradeManager::InputMatchUserSellRequest(const std::shared_ptr<CUserTra
 
 			if (ExistingTrade->nBalanceQty == 0)
 			{
-				std::cout << "Completed buyer order, balance amount: " << ExistingTrade->nBalanceAmount << std::endl;
 				mapBidUserTradeByPrice[userTrade->nTradePairID][Buyers->first].erase(Buyer->first);
 			}
 			++Buyer;
 
 			if (userTrade->nBalanceQty <= 0)
 			{
-				std::cout << "Completed selling request, balance amount: " << userTrade->nBalanceAmount << std::endl;
 				return;
 			}
 		}

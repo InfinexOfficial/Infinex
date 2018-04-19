@@ -24,6 +24,7 @@ class CActualTradeManager;
 typedef std::map<int, std::shared_ptr<CUserTrade>> mINTUT; //int and trade details
 
 typedef std::pair<int, mINTUT> pULTIUTC;
+extern std::vector<CUserTrade> pendingProcessUserTrades;
 extern std::map<std::string, pULTIUTC> mapUserTrades;
 
 typedef std::map<uint64_t, mINTUT> mUTPIUTV; //price and user trade container
@@ -235,7 +236,8 @@ private:
 	std::vector<unsigned char> vchSig;
 
 public:
-	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);	
+	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	void BalanceMNProcessUserTrade(CUserTrade& userTrade, CNode* pfrom, CConnman& connman);
 	void InputTradeCancel(CCancelTrade& cancelTrade);
 	void ProcessTradeCancelRequest(CCancelTrade& cancelTrade);
 	void ReturnTradeCancelBalance(CCancelTrade& cancelTrade);

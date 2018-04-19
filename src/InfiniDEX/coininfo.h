@@ -90,9 +90,10 @@ class CCoinInfoManager
 public:
 	CCoinInfoManager() {}
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
-	void BroadcastToConnectedNode(CConnman& connman, std::vector<CCoinInfo> coinInfo);
+	void BroadcastCoinsInfoToConnectedNode(CConnman& connman, std::vector<CCoinInfo> coinInfo);
+	void BroadcastCoinInfoToConnectedNode(CConnman& connman, CCoinInfo coinInfo);
 	void PushCoinInfoToNode(std::string symbol, CNode* pnode, CConnman& connman);	
-	void InputCoinInfo(CCoinInfo CoinInfo);
+	bool InputCoinInfo(CCoinInfo CoinInfo);
 	bool IsCoinInCompleteListByCoinID(int CoinID);
 	bool IsCoinInCompleteListBySymbol(std::string Symbol);
 	bool GetCoinInfoByCoinID(int CoinID, CCoinInfo &CoinInfo);

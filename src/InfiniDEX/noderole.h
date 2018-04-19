@@ -33,6 +33,7 @@ enum infinidex_node_role_enum {
 
 class CNodeRole;
 class CNodeRoleManager;
+class CPendingProcess;
 
 extern std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapGlobalNodeRolesByRole;
 extern std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapNodeRoleByRole;
@@ -42,6 +43,17 @@ extern CNodeRoleManager nodeRoleManager;
 extern std::string DEXKey;
 extern std::string dexMasterPrivKey;
 extern std::string MNPubKey; //temp
+extern CPendingProcess pendingProcessStatus;
+
+class CPendingProcess
+{
+public:
+	bool UserTrade;
+	
+	CPendingProcess() :
+		UserTrade(false)
+	{}
+};
 
 class CNodeRole
 {

@@ -9,6 +9,8 @@
 #include <boost/lexical_cast.hpp>
 
 class CNodeRole;
+class CNodeRoleManager;
+class CPendingProcess;
 
 std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapGlobalNodeRolesByRole;
 std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapNodeRoleByRole;
@@ -18,6 +20,7 @@ CNodeRoleManager nodeRoleManager;
 std::string MNPubKey;
 std::string DEXKey = "028afd3503f2aaa0898b853e1b28cdcb5fd422b5dc6426c92cf2b14c4b4ebeb969";
 std::string dexMasterPrivKey;
+CPendingProcess pendingProcessStatus;
 
 void CNodeRole::Broadcast(CConnman& connman)
 {
