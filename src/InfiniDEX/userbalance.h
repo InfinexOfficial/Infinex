@@ -195,6 +195,7 @@ public:
 	bool PendingToAvailable(int CoinID, std::string UserPubKey, uint64_t PendingAmount, uint64_t AvailableAmount);
 	bool AvailableToPending(int CoinID, std::string UserPubKey, uint64_t AvailableAmount, uint64_t PendingAmount);
 	bool UpdateAfterTradeBalance(std::string UserPubKey, int ExchangeCoinID, int BalanceCoinID, int64_t ExchangeAdjDown, int64_t BalanceAdjUp);
+	void RequestUserBalance(std::string UserPubKey, int CoinID, CConnman& connman);
 };
 
 #endif

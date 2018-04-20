@@ -68,11 +68,13 @@ public:
 	int NodeRole;
 	std::string NodeIP;
 	std::string NodePubKey;
+	uint64_t StartTime;
+	uint64_t EndTime;
 	bool IsValid;
 	int ToReplaceNodeRoleID;
 	uint64_t LastUpdateTime;
 
-	CNodeRole(int NodeRoleID, int TradePairID, int CoinID, char Char, int NodeRole, std::string NodeIP, std::string NodePubKey, bool IsValid, int ToReplaceNodeRoleID, uint64_t LastUpdateTime):
+	CNodeRole(int NodeRoleID, int TradePairID, int CoinID, char Char, int NodeRole, std::string NodeIP, std::string NodePubKey, uint64_t StartTime, uint64_t EndTime, bool IsValid, int ToReplaceNodeRoleID, uint64_t LastUpdateTime):
 		NodeRoleID(NodeRoleID),
 		TradePairID(TradePairID),
 		CoinID(CoinID),
@@ -80,6 +82,8 @@ public:
 		NodeRole(NodeRole),
 		NodeIP(NodeIP),
 		NodePubKey(NodePubKey),
+		StartTime(StartTime),
+		EndTime(EndTime),
 		IsValid(IsValid),
 		ToReplaceNodeRoleID(ToReplaceNodeRoleID),
 		LastUpdateTime(LastUpdateTime)
@@ -93,6 +97,8 @@ public:
 		NodeRole(INFINIDEX_NOTHING),
 		NodeIP(""),
 		NodePubKey(""),
+		StartTime(0),
+		EndTime(0),
 		IsValid(false),
 		ToReplaceNodeRoleID(0),
 		LastUpdateTime(0)
@@ -123,7 +129,8 @@ class CNodeRoleManager
 {
 public:
 	bool SetDEXPrivKey(std::string dexPrivKey);
-	bool IsInChargeOfUserBalance(std::string MNPubKey, uint64_t time, std::string UserPubKey);
+	bool IsValidInChargeOfUserTrade(std::string MNPubkey, uint64_t time, int TradePairID);
+	bool IsValidInChargeOfUserBalance(std::string MNPubKey, uint64_t time, std::string UserPubKey);
 };
 
 #endif

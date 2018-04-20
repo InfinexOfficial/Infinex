@@ -144,6 +144,7 @@ void CUserTradeManager::InputUserTrade(CUserTrade& UserTrade, CNode* node, CConn
 		return;
 	}
 
+	bool basicVerification = false;
 	std::shared_ptr<CUserTrade> userTrade = std::make_shared<CUserTrade>(UserTrade);
 	if (userBalanceManager.InChargeOfUserBalance(userTrade->nUserPubKey))
 	{
@@ -168,14 +169,45 @@ void CUserTradeManager::InputUserTrade(CUserTrade& UserTrade, CNode* node, CConn
 			Misbehaving(pfrom->GetId(), 100);
 			return;
 		}
-		else if (!userTradesHash.count(userTrade->nMNBalanceHash))
+		else if (mnBalanceTradesHash > 0 && !mnBalanceTradesHash.count(userTrade->nMNBalanceHash))
 		{
+			if (!nodeRoleManager.IsValidInChargeOfUserBalance(userTrade->nMNBalancePubKey, userTrade->nMNBalanceProcessTime, userTrade->nUserPubKey))
+			{
+				LogPrintf("CUserTradeManager::InputUserTrade -- invalid MN balance handler\n");
+				Misbehaving(pfrom->GetId(), 100);
+				return;
+			}
 			if (!mapUserTrades.count(userTrade->nUserPubKey))
 				mapUserTrades.insert(std::make_pair(userTrade->nUserPubKey, pULTIUTC()));
 			auto& a = mapUserTrades[userTrade->nUserPubKey];
+			int coinID = (userTrade->nIsBid) ? tradePair.nCoinID2 : tradePair.nCoinID1;
+			if (!mapUserBalanceByPubKey.count(userTrade->nUserPubKey))
+			{
+				userBalanceManager.RequestUserBalance(userTrade->nUserPubKey, coinID, connman);
+				pendingProcessUserTrades.push_back(UserTrade);
+				pendingProcessStatus.UserTrade = true;
+				return;
+			}
+			mnBalanceTradesHash.insert(userTrade->nMNBalanceHash);
+			
+			auto& b = mapUserBalanceByPubKey[userTrade->nUserPubKey][coinID];
 			if (!a.second.count(userTrade->nUserTradeID))
 			{
-				//check if the node processing the trade at that time is valid
+				int diff = b->nLastUserTradeID - userTrade->nUserTradeID;
+				if (diff = -1)
+				{
+					b->nAvailableBalance -= userTrade->nAmount;
+					b->nInExchangeBalance += userTrade->nAmount;
+				}
+				else if (diff < 0)
+				{
+					RequestUserTradeData(userTrade->nUserPubKey, userTrade->nTradePairID, connman);
+					pendingProcessUserTrades.push_back(UserTrade);
+					pendingProcessStatus.UserTrade = true;
+					return;
+				}
+				else
+					return;
 				a.second.insert(std::make_pair(userTrade->nUserTradeID, userTrade));
 			}
 			else
@@ -185,19 +217,30 @@ void CUserTradeManager::InputUserTrade(CUserTrade& UserTrade, CNode* node, CConn
 					*b = *userTrade;
 			}
 		}
+		basicVerification = true;
 	}
 
-	if (userTrade->nMNBalancePubKey == "")
-	{		
-		userTrade->RelayToBalanceMN(connman);
-		return;
-	}
-
-	if (!userTrade->VerifyMNBalanceSignature())
+	if (!basicVerification)
 	{
-		LogPrintf("CUserTradeManager::InputUserTrade -- invalid MN balance signature\n");
-		Misbehaving(pfrom->GetId(), 100);
-		return;
+		if (userTrade->nMNBalancePubKey == "")
+		{
+			userTrade->RelayToBalanceMN(connman);
+			return;
+		}
+
+		if (!userTrade->VerifyMNBalanceSignature())
+		{
+			LogPrintf("CUserTradeManager::InputUserTrade -- invalid MN balance signature\n");
+			Misbehaving(pfrom->GetId(), 100);
+			return;
+		}
+
+		if (!nodeRoleManager.IsValidInChargeOfUserBalance(userTrade->nMNBalancePubKey, userTrade->nMNBalanceProcessTime, userTrade->nUserPubKey))
+		{
+			LogPrintf("CUserTradeManager::InputUserTrade -- invalid MN balance handler\n");
+			Misbehaving(pfrom->GetId(), 100);
+			return;
+		}
 	}
 
 	if (userBalanceManager.InChargeOfBackup(userTrade->nUserPubKey))
@@ -216,9 +259,24 @@ void CUserTradeManager::InputUserTrade(CUserTrade& UserTrade, CNode* node, CConn
 			else
 				InputMatchUserSellRequest(userTrade, tradePair);
 		}
+		else
+			userTrade->RelayToTradeMN(connman);
 	}
-	else if (userTrade->nBalanceQty > 0 && userTrade->VerifyMNTradeSignature())
+	else if (userTrade->nBalanceQty > 0)
 	{
+		if (!userTrade->VerifyMNTradeSignature())
+		{
+			LogPrintf("CUserTradeManager::InputUserTrade -- invalid MN trade signature\n");
+			Misbehaving(pfrom->GetId(), 100);
+			return;
+		}
+		if (!nodeRoleManager.IsValidInChargeOfUserTrade(userTrade->nMNTradePubKey, userTrade->nMNTradeProcessTime, userTrade->nTradePairID))
+		{
+			LogPrintf("CUserTradeManager::InputUserTrade -- invalid MN trade signature\n");
+			Misbehaving(pfrom->GetId(), 100);
+			return;
+		}
+
 		if (userTrade->nIsBid)
 		{
 			if (setting.nInChargeOfBidBroadcast)
