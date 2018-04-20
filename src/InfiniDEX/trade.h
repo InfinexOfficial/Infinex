@@ -27,6 +27,7 @@ typedef std::pair<int, mINTUT> pULTIUTC;
 extern std::set<uint256> userTradesHash;
 extern std::set<uint256> mnBalanceTradesHash;
 extern std::vector<CUserTrade> pendingProcessUserTrades;
+extern std::vector<CCancelTrade> pendingProcessCancelTrades;
 extern std::map<std::string, pULTIUTC> mapUserTrades;
 
 typedef std::map<uint64_t, mINTUT> mUTPIUTV; //price and user trade container
@@ -51,7 +52,8 @@ class CCancelTrade
 {
 private:
 	std::vector<unsigned char> userVchSig;
-	std::vector<unsigned char> mnVchSig;
+	std::vector<unsigned char> mnTradeVchSig;
+	std::vector<unsigned char> mnBalanceVchSig;
 
 public:
 	int nUserTradeID;
@@ -64,7 +66,10 @@ public:
 	uint64_t nBalanceQty;
 	uint64_t nBalanceAmount;
 	std::string nMNTradePubKey;
-	uint64_t nMNProcessTime;
+	uint64_t nMNTradeProcessTime;
+	std::string nMNBalancePubKey;
+	uint64_t nMNBalanceProcessTime;
+	uint64_t nLastUpdateTime;
 
 	CCancelTrade() :
 		nUserTradeID(0),
@@ -77,13 +82,16 @@ public:
 		nBalanceQty(0),
 		nBalanceAmount(0),
 		nMNTradePubKey(""),
-		nMNProcessTime(0)
+		nMNTradeProcessTime(0),
+		nMNBalancePubKey(""),
+		nMNBalanceProcessTime(0),
+		nLastUpdateTime(0)
 	{}
 
 	ADD_SERIALIZE_METHODS;
-
 	template <typename Stream, typename Operation>
-	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) 
+	{
 		READWRITE(nUserTradeID);
 		READWRITE(nPairTradeID);
 		READWRITE(nTradePairID);
@@ -94,14 +102,23 @@ public:
 		READWRITE(nBalanceQty);
 		READWRITE(nBalanceAmount);
 		READWRITE(nMNTradePubKey);
-		READWRITE(nMNProcessTime);
+		READWRITE(nMNTradeProcessTime);
+		READWRITE(nMNBalancePubKey);
+		READWRITE(nMNBalanceProcessTime);
+		READWRITE(nLastUpdateTime);
 		READWRITE(userVchSig);
-		READWRITE(mnVchSig);
+		READWRITE(mnTradeVchSig);
+		READWRITE(mnBalanceVchSig);
 	}
 
 	bool VerifyUserSignature();
-	bool VerifyMNSignature();
-	bool MNSign();
+	bool VerifyTradeMNSignature();
+	bool VerifyBalanceMNSignature();
+	bool TradeMNSign();
+	bool BalanceMNSign();
+	void RelayTo(CNode* node, CConnman& connman);
+	void RelayToTradeMN(CConnman& connman);
+	void RelayToBalanceMN(CConnman& connman);
 };
 
 class CUserTradeSetting
@@ -252,8 +269,8 @@ private:
 public:
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void InputUserTrade(CUserTrade& userTrade, CNode* pfrom, CConnman& connman);
-	void InputTradeCancel(CCancelTrade& cancelTrade);
-	void ProcessTradeCancelRequest(CCancelTrade& cancelTrade);
+	void InputTradeCancel(CCancelTrade& cancelTrade, CNode* pfrom, CConnman& connman);
+	bool ProcessTradeCancelRequest(CCancelTrade& cancelTrade);
 	void ReturnTradeCancelBalance(CCancelTrade& cancelTrade);
 	void InitTradePair(int TradePairID);
 	void AssignBidBroadcastRole(int TradePairID, bool toAssign = true);

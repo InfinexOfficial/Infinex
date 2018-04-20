@@ -49,9 +49,11 @@ class CPendingProcess
 {
 public:
 	bool UserTrade;
+	bool CancelTrade;
 	
 	CPendingProcess() :
-		UserTrade(false)
+		UserTrade(false),
+		CancelTrade(false)
 	{}
 };
 

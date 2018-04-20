@@ -25,6 +25,7 @@ class CActualTradeManager;
 
 std::set<uint256> userTradesHash;
 std::vector<CUserTrade> pendingProcessUserTrades;
+std::vector<CCancelTrade> pendingProcessCancelTrades;
 std::map<std::string, pULTIUTC> mapUserTrades;
 
 std::map<int, mUTPIUTV> mapBidUserTradeByPrice;
@@ -287,26 +288,56 @@ void CUserTradeManager::InputUserTrade(CUserTrade& UserTrade, CNode* node, CConn
 	}
 }
 
-void CUserTradeManager::InputTradeCancel(CCancelTrade& cancelTrade)
+void CUserTradeManager::InputTradeCancel(CCancelTrade& cancelTrade, CNode* pfrom, CConnman& connman)
 {
 	if (!cancelTrade.VerifyUserSignature())
+	{
+		LogPrintf("CUserTradeManager::InputTradeCancel -- invalid user signature\n");
+		Misbehaving(pfrom->GetId(), 100);
 		return;
+	}
 
 	CUserTradeSetting& setting = mapUserTradeSetting[cancelTrade.nTradePairID];
 	if (setting.nTradePairID != cancelTrade.nTradePairID)
 		return;
 
-	if (cancelTrade.nMNTradePubKey != "")
+	if (cancelTrade.nMNTradePubKey == "")
 	{
-		if (!cancelTrade.VerifyMNSignature())
+		if (!setting.nInChargeOfMatchUserTrade)
+		{
+			cancelTrade.RelayToTradeMN(connman);
+			return;
+		}
+
+		if (!ProcessTradeCancelRequest(cancelTrade))
 			return;
 
+		if (!userBalanceManager.InChargeOfUserBalance(cancelTrade.nUserPubKey))
+		{
+			cancelTrade.RelayTo(pfrom, connman);
+			cancelTrade.RelayToBalanceMN(connman);
+			return;
+		}
+	}
+
+	if (cancelTrade.nMNTradePubKey != "")
+	{
+		if (!cancelTrade.VerifyTradeMNSignature())
+		{
+			LogPrintf("CUserTradeManager::InputTradeCancel -- invalid trade MN signature\n");
+			Misbehaving(pfrom->GetId(), 100);
+			return;
+		}
+
 		if (userBalanceManager.InChargeOfUserBalance(cancelTrade.nUserPubKey))
+		{
 			ReturnTradeCancelBalance(cancelTrade);
+			cancelTrade.RelayTo(pfrom, connman);
+		}
 
 		if (setting.nInChargeOfBidBroadcast && cancelTrade.isBid)
 		{
-			orderBookManager.AdjustBidQuantity(cancelTrade.nTradePairID, cancelTrade.nPrice, (0 - cancelTrade.nBalanceQty));			
+			orderBookManager.AdjustBidQuantity(cancelTrade.nTradePairID, cancelTrade.nPrice, (0 - cancelTrade.nBalanceQty));
 		}
 
 		if (setting.nInChargeOfAskBroadcast && !cancelTrade.isBid)
@@ -314,27 +345,34 @@ void CUserTradeManager::InputTradeCancel(CCancelTrade& cancelTrade)
 			orderBookManager.AdjustAskQuantity(cancelTrade.nTradePairID, cancelTrade.nPrice, (0 - cancelTrade.nBalanceQty));
 		}
 	}
-	else if (setting.nInChargeOfMatchUserTrade)
-		ProcessTradeCancelRequest(cancelTrade);
 }
 
-void CUserTradeManager::ProcessTradeCancelRequest(CCancelTrade& cancelTrade)
+bool CUserTradeManager::ProcessTradeCancelRequest(CCancelTrade& cancelTrade)
 {
 	std::shared_ptr<CUserTrade> existingUserTrade;
 	if (cancelTrade.isBid)
 	{
-		if (mapBidUserTradeByPrice.count(cancelTrade.nTradePairID))
+		//to check whether the trade actually exist & ban if none
+		if (!mapBidUserTradeByPrice.count(cancelTrade.nTradePairID))
 		{
-			auto& a = mapBidUserTradeByPrice[cancelTrade.nTradePairID];
-			if (a.count(cancelTrade.nPrice))
-			{
-				auto& b = a[cancelTrade.nPrice];
-				if (b.count(cancelTrade.nPairTradeID))
-				{
-					existingUserTrade = b[cancelTrade.nPairTradeID];
-					b.erase(cancelTrade.nPairTradeID);
-				}
-			}
+			//to add code
+			pendingProcessCancelTrades.push_back(cancelTrade);
+			pendingProcessStatus.CancelTrade = true;
+			return;
+		}
+		auto& a = mapBidUserTradeByPrice[cancelTrade.nTradePairID];
+		if (!a.count(cancelTrade.nPrice))
+		{
+			//to add code
+			pendingProcessCancelTrades.push_back(cancelTrade);
+			pendingProcessStatus.CancelTrade = true;
+			return;
+		}
+		auto& b = a[cancelTrade.nPrice];
+		if (b.count(cancelTrade.nPairTradeID))
+		{
+			existingUserTrade = b[cancelTrade.nPairTradeID];
+			b.erase(cancelTrade.nPairTradeID);
 		}
 	}
 	else if (mapAskUserTradeByPrice.count(cancelTrade.nTradePairID))
@@ -355,9 +393,9 @@ void CUserTradeManager::ProcessTradeCancelRequest(CCancelTrade& cancelTrade)
 	cancelTrade.nBalanceAmount = existingUserTrade->nBalanceAmount;
 	cancelTrade.nMNProcessTime = GetAdjustedTime();
 	if (!cancelTrade.MNSign())
-		return;
+		return false;
 
-	//broadcast to other node
+	return true;
 }
 
 void CUserTradeManager::ReturnTradeCancelBalance(CCancelTrade& cancelTrade)
