@@ -14,7 +14,6 @@
 class CUserBalance;
 class CUserBalanceSetting;
 class CUserBalanceManager;
-class CGlobalUserBalanceHandler;
 class CGlobalUserSetting;
 
 typedef std::map<std::string, std::shared_ptr<CUserBalance>> mapUserBalanceWithPubKey;
@@ -24,7 +23,6 @@ extern std::map<int, mapUserBalanceWithPubKey> mapUserBalanceByCoinID;
 extern std::map<std::string, mapUserBalanceWithCoinID> mapVerifiedUserBalanceByPubKey;
 extern std::map<int, mapUserBalanceWithPubKey> mapVerifiedUserBalanceByCoinID;
 extern std::map<int, CUserBalanceSetting> mapUserBalanceSetting;
-extern CGlobalUserBalanceHandler globalUserBalanceHandler;
 extern CUserBalanceManager userBalanceManager;
 extern std::map<char, CGlobalUserSetting> mapGlobalUserSetting;
 
@@ -42,43 +40,29 @@ enum exchange_to_userbalance_enum_t {
 	EXCHANGE_INVALID_NODE = 2
 };
 
-class CGlobalUserBalanceHandler
-{
-public:
-	char Char1;
-	char Char2;
-	bool nIsInChargeOfGlobalUserBalance;
-
-	CGlobalUserBalanceHandler(char Char1, char Char2, bool nIsInChargeOfGlobalUserBalance):
-		Char1(Char1),
-		Char2(Char2),
-		nIsInChargeOfGlobalUserBalance(nIsInChargeOfGlobalUserBalance)
-	{}
-
-	CGlobalUserBalanceHandler():
-		Char1(),
-		Char2(),
-		nIsInChargeOfGlobalUserBalance(false)
-	{}
-};
-
 class CGlobalUserSetting
 {
 public:
 	char nChar;
 	bool nInChargeUserBalance;
 	bool nInChargeBackup;
+	uint64_t nStartTime;
+	uint64_t nEndTime;
 
 	CGlobalUserSetting(char nChar) :
 		nChar(nChar),
 		nInChargeUserBalance(false),
-		nInChargeBackup(false)
+		nInChargeBackup(false),
+		nStartTime(0),
+		nEndTime(0)
 	{}
 
 	CGlobalUserSetting() :
 		nChar(),
 		nInChargeUserBalance(false),
-		nInChargeBackup(false)
+		nInChargeBackup(false),
+		nStartTime(0),
+		nEndTime(0)
 	{}
 };
 

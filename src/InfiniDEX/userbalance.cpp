@@ -14,7 +14,6 @@ class CGlobalUserSetting;
 std::map<std::string, mapUserBalanceWithCoinID> mapUserBalanceByPubKey;
 std::map<int, mapUserBalanceWithPubKey> mapUserBalanceByCoinID;
 std::map<int, CUserBalanceSetting> mapUserBalanceSetting;
-CGlobalUserBalanceHandler globalUserBalanceHandler;
 CUserBalanceManager userBalanceManager;
 std::map<char, CGlobalUserSetting> mapGlobalUserSetting;
 
