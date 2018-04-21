@@ -132,7 +132,7 @@ class CNodeRoleManager
 public:
 	bool SetDEXPrivKey(std::string dexPrivKey);
 	bool IsValidInChargeOfUserTrade(std::string MNPubkey, uint64_t time, int TradePairID);
-	bool IsValidInChargeOfUserBalance(std::string MNPubKey, uint64_t time, std::string UserPubKey);
+	bool IsValidInChargeOfUserBalance(std::string MNPubKey, uint64_t time, std::string UserPubKey);	
 };
 
 #endif
