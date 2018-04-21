@@ -95,8 +95,7 @@ public:
 class CUserBalance
 {
 private:
-	std::vector<unsigned char> mnVchSig;
-	std::vector<unsigned char> finalVchSig;
+	std::vector<unsigned char> vchSig;
 
 public:
 	std::string nUserPubKey;
@@ -127,7 +126,7 @@ public:
 		nLastWithdrawID(0),
 		nLastActualTradeID(0),
 		nLastUserTradeID(0),
-		nMNPubKey(nMNPubKey),
+		nMNPubKey(MNPubKey),
 		nLastUpdateTime(0)
 	{}
 
@@ -148,9 +147,27 @@ public:
 		nLastUpdateTime(0)
 	{}
 
-	bool VerifyMNSignature();
-	bool VerifyFinalSignature();
-	bool MNSign();
+	ADD_SERIALIZE_METHODS;
+	template <typename Stream, typename Operation>
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+	{
+		READWRITE(nUserPubKey);
+		READWRITE(nCoinID);
+		READWRITE(nAvailableBalance);
+		READWRITE(nInExchangeBalance);
+		READWRITE(nInDisputeBalance);
+		READWRITE(nPendingDepositBalance);
+		READWRITE(nPendingWithdrawalBalance);
+		READWRITE(nTotalBalance);
+		READWRITE(nLastDepositID);
+		READWRITE(nLastWithdrawID);
+		READWRITE(nLastActualTradeID);
+		READWRITE(nMNPubKey);
+		READWRITE(nLastUpdateTime);
+		READWRITE(vchSig);
+	}
+
+	bool VerifySignature();
 	void RelayToNode(CNode* node, CConnman& connman);
 	void RelayToUser(CConnman& connman);
 };

@@ -16,6 +16,7 @@
 class CUserTrade;
 class CUserTradeSetting;
 class CActualTrade;
+class CCancelTrade;
 
 typedef std::map<int, std::shared_ptr<CUserTrade>> mINTUT; //int and trade details
 
@@ -86,7 +87,7 @@ public:
 		nUserTradeID(0),
 		nMNBalancePubKey(""),
 		nMNBalanceProcessTime(0),
-		nMNBalanceHash(0),
+		nMNBalanceHash(),
 		nPairTradeID(0),
 		nMNTradePubKey(""),
 		nMNTradeProcessTime(0),
@@ -104,11 +105,11 @@ public:
 		nTradeFee(0),
 		nUserPubKey(""),
 		nTimeSubmit(0),
-		nUserHash(0),
+		nUserHash(),
 		nUserTradeID(0),
 		nMNBalancePubKey(""),
 		nMNBalanceProcessTime(0),
-		nMNBalanceHash(0),
+		nMNBalanceHash(),
 		nPairTradeID(0),
 		nMNTradePubKey(""),
 		nMNTradeProcessTime(0),
@@ -116,6 +117,34 @@ public:
 		nBalanceAmount(nAmount),
 		nLastUpdate(0)
 	{}
+
+	ADD_SERIALIZE_METHODS;
+	template <typename Stream, typename Operation>
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+	{
+		READWRITE(nTradePairID);
+		READWRITE(nPrice);
+		READWRITE(nQuantity);
+		READWRITE(nAmount);
+		READWRITE(nIsBid);
+		READWRITE(nTradeFee);
+		READWRITE(nUserPubKey);
+		READWRITE(nTimeSubmit);
+		READWRITE(nUserHash);
+		READWRITE(nUserTradeID);
+		READWRITE(nMNBalancePubKey);
+		READWRITE(nMNBalanceProcessTime);
+		READWRITE(nMNBalanceHash);
+		READWRITE(nPairTradeID);
+		READWRITE(nMNTradePubKey);
+		READWRITE(nMNTradeProcessTime);
+		READWRITE(nBalanceQty);
+		READWRITE(nBalanceAmount);
+		READWRITE(nLastUpdate);
+		READWRITE(userVchSig);
+		READWRITE(mnBalanceVchSig);
+		READWRITE(mnTradeVchSig);
+	}
 
 	void MNBalanceHash();
 	bool VerifyUserSignature();

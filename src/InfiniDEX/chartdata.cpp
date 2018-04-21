@@ -5,6 +5,7 @@
 #include "activemasternode.h"
 #include "chartdata.h"
 #include "messagesigner.h"
+#include "net_processing.h"
 #include "noderole.h"
 #include "timedata.h"
 #include "tradepair.h"
@@ -73,7 +74,8 @@ void CChartDataManager::ProcessChartDataRequest(int TradePairID, CNode* node, CC
 		{
 			auto& b = completeChartData[TradePairID];
 			if (b.size() > 0)
-				connman.PushMessage(node, NetMsgType::DEXCHARTSDATA, b);
+				for (auto& c : b)
+					connman.PushMessage(node, NetMsgType::DEXCHARTDATA, *c.get());
 		}
 	}
 }

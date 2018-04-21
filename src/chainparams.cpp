@@ -114,6 +114,17 @@ public:
 		vSeeds.push_back(CDNSSeedData("infinex.info", "india.infinex.info"));
 		vSeeds.push_back(CDNSSeedData("infinex.info", "juliet.infinex.info"));
 
+		InfiniDEXSeeds.push_back(CDNSSeedData("InfiniDEX1", "InfiniDEX1.infinex.info"));
+		InfiniDEXSeeds.push_back(CDNSSeedData("InfiniDEX2", "InfiniDEX2.infinex.info"));
+		InfiniDEXSeeds.push_back(CDNSSeedData("InfiniDEX3", "InfiniDEX3.infinex.info"));
+		InfiniDEXSeeds.push_back(CDNSSeedData("InfiniDEX4", "InfiniDEX4.infinex.info"));
+		InfiniDEXSeeds.push_back(CDNSSeedData("InfiniDEX5", "InfiniDEX5.infinex.info"));
+		InfiniDEXSeeds.push_back(CDNSSeedData("InfiniDEX6", "InfiniDEX6.infinex.info"));
+		InfiniDEXSeeds.push_back(CDNSSeedData("InfiniDEX7", "InfiniDEX7.infinex.info"));
+		InfiniDEXSeeds.push_back(CDNSSeedData("InfiniDEX8", "InfiniDEX8.infinex.info"));
+		InfiniDEXSeeds.push_back(CDNSSeedData("InfiniDEX9", "InfiniDEX9.infinex.info"));
+		InfiniDEXSeeds.push_back(CDNSSeedData("InfiniDEX10", "InfiniDEX10.infinex.info"));
+
 		// Infinex addresses start with 'i'
 		base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 102);
 		// Infinex script addresses start with '7'

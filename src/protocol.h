@@ -246,7 +246,9 @@ extern const char *MNGOVERNANCEOBJECTVOTE;
 extern const char *MNVERIFY;
 //InfiniDEX message types
 extern const char *DEXNODEROLE;
+extern const char *DEXNODEROLES;
 extern const char *DEXCOININFO;
+extern const char *DEXCOINSINFO;
 extern const char *DEXTRADEPAIR;
 extern const char *DEXORDERBIDBOOK;
 extern const char *DEXORDERASKBOOK;
@@ -254,11 +256,17 @@ extern const char *DEXMARKETOVERVIEW;
 extern const char *DEXUSERCONNECTION;
 extern const char *DEXMNCONNECTION;
 extern const char *DEXUSERBALANCE;
+extern const char *DEXUSERBALANCES;
 extern const char *DEXUSERDEPOSIT;
 extern const char *DEXCHARTDATA;
+extern const char *DEXCHARTSDATA;
+extern const char *DEXGETCHARTSDATA;
 extern const char *DEXUSERTRADE;
+extern const char *DEXUSERTRADES;
+extern const char *DEXINVALIDUSERTRADE;
 extern const char *DEXUSERTRADECANCEL;
 extern const char *DEXACTUALTRADE;
+extern const char *DEXACTUALTRADES;
 extern const char *DEXUSERTRADEHISTORY;
 extern const char *DEXMARKETTRADEHISTORY;
 extern const char *DEXUSERWALLETADDRESS;
@@ -288,6 +296,8 @@ enum ServiceFlags : uint64_t {
     // NODE_BLOOM means the node is capable and willing to handle bloom-filtered connections.
     // Infinex Core does not support this
     NODE_BLOOM = (1 << 2),
+    //InfiniDEX only user
+    NODE_INFINIDEX = (1 << 3),
 
     // Bits 24-31 are reserved for temporary experiments. Just pick a bit that
     // isn't getting used, or one not being used much, and notify the

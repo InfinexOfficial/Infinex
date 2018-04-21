@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "chartdata.h"
+#include "net_processing.h"
 #include "noderole.h"
 #include "orderbook.h"
 #include "timedata.h"
@@ -31,10 +32,8 @@ void CTradeManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataS
 				LogPrintf("CTradeManager::ProcessMessage -- invalid signature\n");
 				Misbehaving(pfrom->GetId(), 100);
 				return;
-			}
-
-			std::shared_ptr<CUserTrade> UserTrade = std::make_shared<CUserTrade>(incoming);
-			InputUserTrade(UserTrade);
+			}			
+			InputUserTrade(incoming, pfrom, connman);
 		}
 	}
 	else if (strCommand == NetMsgType::DEXUSERTRADE)
@@ -47,8 +46,7 @@ void CTradeManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataS
 			Misbehaving(pfrom->GetId(), 100);
 			return;
 
-			std::shared_ptr<CUserTrade> UserTrade = std::make_shared<CUserTrade>(incoming);
-			InputUserTrade(UserTrade);
+			InputUserTrade(incoming, pfrom, connman);
 		}
 	}
 	else if (strCommand == NetMsgType::DEXACTUALTRADES)
@@ -58,7 +56,7 @@ void CTradeManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataS
 
 		for (auto incoming : incomings)
 		{
-			if (!incoming.VerifyUserSignature()) {
+			if (!incoming.VerifyTradeMNSignature()) {
 				LogPrintf("CTradeManager::ProcessMessage -- invalid signature\n");
 				Misbehaving(pfrom->GetId(), 100);
 				return;
@@ -73,7 +71,7 @@ void CTradeManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataS
 		CActualTrade incoming;
 		vRecv >> incoming;
 
-		if (!incoming.VerifyUserSignature()) {
+		if (!incoming.VerifyTradeMNSignature()) {
 			LogPrintf("CTradeManager::ProcessMessage -- invalid signature\n");
 			Misbehaving(pfrom->GetId(), 100);
 			return;
@@ -82,7 +80,7 @@ void CTradeManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataS
 
 		}
 	}
-	else if (strCommand == NetMsgType::DEXCANCELTRADE)
+	else if (strCommand == NetMsgType::DEXUSERTRADECANCEL)
 	{
 		CCancelTrade incoming;
 		vRecv >> incoming;
@@ -93,7 +91,7 @@ void CTradeManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataS
 			return;
 
 			std::shared_ptr<CCancelTrade> UserTrade = std::make_shared<CCancelTrade>(incoming);
-			InputTradeCancel(incoming);
+			InputTradeCancel(incoming, pfrom, connman);
 		}
 	}
 }
@@ -103,7 +101,7 @@ void CTradeManager::InputUserTrade(CUserTrade& UserTrade, CNode* node, CConnman&
 	if (UserTrade.nTradePairID < 1)
 	{
 		LogPrintf("CTradeManager::InputUserTrade -- invalid trade pair\n");
-		Misbehaving(pfrom->GetId(), 100);
+		Misbehaving(node->GetId(), 100);
 		return;
 	}
 
@@ -138,15 +136,15 @@ void CTradeManager::InputUserTrade(CUserTrade& UserTrade, CNode* node, CConnman&
 		else if (!userTrade->VerifyMNBalanceSignature())
 		{
 			LogPrintf("CTradeManager::InputUserTrade -- invalid MN balance signature\n");
-			Misbehaving(pfrom->GetId(), 100);
+			Misbehaving(node->GetId(), 100);
 			return;
 		}
-		else if (mnBalanceTradesHash > 0 && !mnBalanceTradesHash.count(userTrade->nMNBalanceHash))
+		else if (!mnBalanceTradesHash.count(userTrade->nMNBalanceHash))
 		{
 			if (!nodeRoleManager.IsValidInChargeOfUserBalance(userTrade->nMNBalancePubKey, userTrade->nMNBalanceProcessTime, userTrade->nUserPubKey))
 			{
 				LogPrintf("CTradeManager::InputUserTrade -- invalid MN balance handler\n");
-				Misbehaving(pfrom->GetId(), 100);
+				Misbehaving(node->GetId(), 100);
 				return;
 			}
 			if (!mapUserTrades.count(userTrade->nUserPubKey))
@@ -203,14 +201,14 @@ void CTradeManager::InputUserTrade(CUserTrade& UserTrade, CNode* node, CConnman&
 		if (!userTrade->VerifyMNBalanceSignature())
 		{
 			LogPrintf("CTradeManager::InputUserTrade -- invalid MN balance signature\n");
-			Misbehaving(pfrom->GetId(), 100);
+			Misbehaving(node->GetId(), 100);
 			return;
 		}
 
 		if (!nodeRoleManager.IsValidInChargeOfUserBalance(userTrade->nMNBalancePubKey, userTrade->nMNBalanceProcessTime, userTrade->nUserPubKey))
 		{
 			LogPrintf("CTradeManager::InputUserTrade -- invalid MN balance handler\n");
-			Misbehaving(pfrom->GetId(), 100);
+			Misbehaving(node->GetId(), 100);
 			return;
 		}
 	}
@@ -239,13 +237,13 @@ void CTradeManager::InputUserTrade(CUserTrade& UserTrade, CNode* node, CConnman&
 		if (!userTrade->VerifyMNTradeSignature())
 		{
 			LogPrintf("CTradeManager::InputUserTrade -- invalid MN trade signature\n");
-			Misbehaving(pfrom->GetId(), 100);
+			Misbehaving(node->GetId(), 100);
 			return;
 		}
 		if (!nodeRoleManager.IsValidInChargeOfUserTrade(userTrade->nMNTradePubKey, userTrade->nMNTradeProcessTime, userTrade->nTradePairID))
 		{
 			LogPrintf("CTradeManager::InputUserTrade -- invalid MN trade signature\n");
-			Misbehaving(pfrom->GetId(), 100);
+			Misbehaving(node->GetId(), 100);
 			return;
 		}
 
@@ -593,25 +591,6 @@ bool CTradeManager::InputActualTradeFromNetwork(const std::shared_ptr<CActualTra
 				auto& e = d[actualTrade->nActualTradeID];
 				if (actualTrade->nBalance2MNPubKey != "")
 				{
-					if (actualTrade->nBalance2MNProcessTime < actualTrade->nTradeMNProcessTime)
-					{
-						LogPrintf("CTradeManager::InputActualTradeFromNetwork -- invalid balance processing time\n");
-						Misbehaving(pfrom->GetId(), 100);
-						return;
-					}
-					if (!nodeRoleManager.IsValidInChargeOfUserBalance(actualTrade->nBalance2MNPubKey, actualTrade->nBalance2MNProcessTime, actualTrade->nUserPubKey2))
-					{
-						LogPrintf("CTradeManager::InputActualTradeFromNetwork -- invalid MN 2 balance handler\n");
-						Misbehaving(pfrom->GetId(), 100);
-						return;
-					}
-					if (!actualTrade->VerifyBalance2MNSignature())
-					{
-						LogPrintf("CTradeManager::InputActualTradeFromNetwork -- invalid MN 2 balance signature\n");
-						Misbehaving(pfrom->GetId(), 100);
-						return;
-					}
-
 					if (actualTrade->nBalance2MNApproved)
 					{
 						e->nBalance2MNPubKey = actualTrade->nBalance2MNPubKey;
@@ -639,7 +618,7 @@ bool CTradeManager::InputActualTradeFromNetwork(const std::shared_ptr<CActualTra
 			}
 			userBalanceManager.UpdateAfterTradeBalance(actualTrade->nUserPubKey1, tradePair.nCoinID2, tradePair.nCoinID1, actualTrade->nBidAmount, actualTrade->nTradeQty);
 			mapCompletedActualTradeID[actualTrade->nTradePairID].insert(actualTrade->nActualTradeID);
-			e->RelayToBalance2MN(connman);
+			//e->RelayToBalance2MN(connman);
 		}
 	}
 
@@ -678,15 +657,15 @@ bool CTradeManager::InputActualTradeFromNetwork(const std::shared_ptr<CActualTra
 		}
 	}
 	if (setting.nInChargeOfChartData)
-		ChartDataManager.InputNewTrade(actualTrade->nTradePairID, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeTime);
+		ChartDataManager.InputNewTrade(actualTrade->nTradePairID, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeMNProcessTime);
 	if (setting.nInChargeOfMarketTradeHistory)
 	{
-		std::shared_ptr<CUserTradeHistory> tradeHistory = std::make_shared<CUserTradeHistory>(actualTrade->nTradePairID, actualTrade->nUserPubKey1, actualTrade->nUserPubKey2, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeAmount, false, actualTrade->nTradeTime);
+		std::shared_ptr<CUserTradeHistory> tradeHistory = std::make_shared<CUserTradeHistory>(actualTrade->nTradePairID, actualTrade->nUserPubKey1, actualTrade->nUserPubKey2, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeAmount, false, actualTrade->nTradeMNProcessTime);
 		userTradeHistoryManager.InputMarketTradeHistory(tradeHistory);
 	}
 	if (setting.nInChargeOfUserTradeHistory)
 	{
-		std::shared_ptr<CUserTradeHistory> tradeHistory = std::make_shared<CUserTradeHistory>(actualTrade->nTradePairID, actualTrade->nUserPubKey1, actualTrade->nUserPubKey2, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeAmount, false, actualTrade->nTradeTime);
+		std::shared_ptr<CUserTradeHistory> tradeHistory = std::make_shared<CUserTradeHistory>(actualTrade->nTradePairID, actualTrade->nUserPubKey1, actualTrade->nUserPubKey2, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeAmount, false, actualTrade->nTradeMNProcessTime);
 		userTradeHistoryManager.InputUserTradeHistory(tradeHistory);
 	}
 	if (setting.nInChargeOfBidBroadcast)
@@ -739,30 +718,31 @@ bool CTradeManager::InputActualTrade(const std::shared_ptr<CActualTrade>& actual
 	if (userBalanceManager.InChargeOfUserBalance(actualTrade->nUserPubKey2))
 		userBalanceManager.UpdateAfterTradeBalance(actualTrade->nUserPubKey2, tradePair.nCoinID1, tradePair.nCoinID2, actualTrade->nTradeQty, actualTrade->nAskAmount);
 	if (setting.nInChargeOfChartData)
-		ChartDataManager.InputNewTrade(actualTrade->nTradePairID, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeTime);
+		ChartDataManager.InputNewTrade(actualTrade->nTradePairID, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeMNProcessTime);
 	if (setting.nInChargeOfMarketTradeHistory || setting.nInChargeOfUserTradeHistory)
 	{
-		std::shared_ptr<CUserTradeHistory> tradeHistory = std::make_shared<CUserTradeHistory>(actualTrade->nTradePairID, actualTrade->nUserPubKey1, actualTrade->nUserPubKey2, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeAmount, false, actualTrade->nTradeTime);
+		std::shared_ptr<CUserTradeHistory> tradeHistory = std::make_shared<CUserTradeHistory>(actualTrade->nTradePairID, actualTrade->nUserPubKey1, actualTrade->nUserPubKey2, actualTrade->nTradePrice, actualTrade->nTradeQty, actualTrade->nTradeAmount, false, actualTrade->nTradeMNProcessTime);
 		if (setting.nInChargeOfMarketTradeHistory)
 			userTradeHistoryManager.InputMarketTradeHistory(tradeHistory);
 		if (setting.nInChargeOfUserTradeHistory)
 			userTradeHistoryManager.InputUserTradeHistory(tradeHistory);
 	}
 
-	actualTrade->Relay();
+	//actualTrade->RelayToBalance1MN(g_connman);
+
 	return true;
 }
 
 bool CTradeManager::GenerateActualTrade(std::shared_ptr<CActualTrade> actualTrade, CUserTradeSetting& setting)
 {
 	actualTrade->nActualTradeID = (setting.nLastActualTradeID + 1);
-	actualTrade->nMasternodeInspector = MNPubKey;
-	setting.nLastActualTradeTime = actualTrade->nTradeTime;
+	actualTrade->nTradeMNPubKey = MNPubKey;
+	setting.nLastActualTradeTime = actualTrade->nTradeMNProcessTime;
 	actualTrade->nCurrentHash = actualTrade->GetHash();
 	//to enable on actual implementation, testing phase disable
 	//if (mapActualTradeHash[actualTrade->nTradePairID].count(actualTrade->nCurrentHash))
 	//return false;
-	if (!actualTrade->Sign())
+	if (!actualTrade->TradeMNSign())
 		return false;
 	++setting.nLastActualTradeID;
 	return true;
@@ -792,7 +772,7 @@ void CTradeManager::InputTradeCancel(CCancelTrade& cancelTrade, CNode* pfrom, CC
 			return;
 		}
 
-		if (!ProcessTradeCancelRequest(cancelTrade))
+		if (!ProcessTradeCancelRequest(cancelTrade, setting))
 			return;
 
 		if (!userBalanceManager.InChargeOfUserBalance(cancelTrade.nUserPubKey))

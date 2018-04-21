@@ -10,6 +10,10 @@
 #include "trade.h"
 #include "tradepair.h"
 
+class CTradeManager;
+
+extern CTradeManager userTradeManager;
+
 class CTradeManager
 {
 public:

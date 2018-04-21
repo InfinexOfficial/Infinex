@@ -5,8 +5,8 @@
 #ifndef USERCONNECTION_H
 #define USERCONNECTION_H
 
-#include <vector>
 #include <map>
+#include <vector>
 #include "net.h"
 #include "utilstrencodings.h"
 
@@ -18,6 +18,7 @@ extern std::map<int, std::vector<pairConnectionInfo>> mapTradePairConnections;
 extern std::map<std::string, std::vector<pairConnectionInfo>> mapUserConnections; //user public key & connection info
 extern std::map<std::string, pairConnectionInfo> mapMNConnection; //MN IP address & connection info
 extern CUserConnectionManager userConnectionManager;
+extern std::vector<std::string> InfiniDEXSeed;
 
 class CUserConnection
 {
@@ -71,7 +72,10 @@ private:
 	bool IsUserInList(std::string PubKey);
 
 public:
-    CUserConnectionManager() {}
+    CUserConnectionManager() 
+	{
+		InfiniDEXSeed.push_back("InfiniDEX1.infinex.info");
+	}
     void ProcessUserConnection(CNode* node, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	bool IsTargetedIPLocal(std::string TargetIP);
 	void InputUserConnection(CNode* node, std::string PubKey);

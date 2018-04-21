@@ -15,6 +15,7 @@ std::map<int, std::vector<pairConnectionInfo>> mapTradePairConnections;
 std::map<std::string, std::vector<pairConnectionInfo>> mapUserConnections; //user public key & connection info
 std::map<std::string, pairConnectionInfo> mapMNConnection; //MN IP address & connection info
 CUserConnectionManager userConnectionManager;
+std::vector<std::string> InfiniDEXSeed;
 
 void CUserConnectionManager::ProcessUserConnection(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
@@ -34,6 +35,11 @@ void CUserConnectionManager::ProcessUserConnection(CNode* pfrom, std::string& st
 			
 		}
 	}
+}
+
+bool CUserConnection::VerifySignature()
+{
+	return true;
 }
 
 bool CUserConnectionManager::IsTargetedIPLocal(std::string TargetIP)

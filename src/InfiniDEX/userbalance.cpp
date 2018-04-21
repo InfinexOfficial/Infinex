@@ -2,6 +2,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "messagesigner.h"
+#include "net_processing.h"
 #include "noderole.h"
 #include "userbalance.h"
 #include "userconnection.h"
@@ -28,7 +30,7 @@ void CUserBalanceManager::ProcessMessage(CNode* pfrom, std::string& strCommand, 
 		{
 			if (userBalance.nMNPubKey == "")
 			{
-				if (!userBalance.VerifyFinalSignature()) {
+				if (!userBalance.VerifySignature()) {
 					LogPrintf("CUserBalanceManager::ProcessMessage -- invalid signature\n");
 					Misbehaving(pfrom->GetId(), 100);
 					return;
@@ -38,15 +40,13 @@ void CUserBalanceManager::ProcessMessage(CNode* pfrom, std::string& strCommand, 
 			}
 			else
 			{
-				if (!userBalance.VerifyMNSignature()) {
+				if (!userBalance.VerifySignature()) {
 					LogPrintf("CUserBalanceManager::ProcessMessage -- invalid signature\n");
 					Misbehaving(pfrom->GetId(), 100);
 					return;
 				}
 			}
-			InputCoinInfo(coinInfo);
 		}
-		BroadcastToConnectedNode(connman, incomingCoinInfo);
 	}
 }
 
@@ -58,11 +58,11 @@ void CUserBalanceManager::InputUserBalance(CUserBalance userBalance)
 	if (!mapUserBalanceByPubKey.count(userBalance.nUserPubKey))
 		mapUserBalanceByPubKey.insert(std::make_pair(userBalance.nUserPubKey, mapUserBalanceWithCoinID()));
 
-	auto& c = mapUserBalanceByPubKey[userBalance.nUserPubKey];
-	if (!c.count(userBalance.nCoinID))
+	auto& a = mapUserBalanceByPubKey[userBalance.nUserPubKey];
+	if (!a.count(userBalance.nCoinID))
 	{
 		std::shared_ptr<CUserBalance> temp = std::make_shared<CUserBalance>(userBalance);
-		c.insert(std::make_pair(userBalance.nCoinID, temp));
+		a.insert(std::make_pair(userBalance.nCoinID, temp));
 	}
 	else
 	{
@@ -104,22 +104,7 @@ void CUserBalanceManager::InputVerifiedUserBalance(CConnman& connman, CUserBalan
 	InputUserBalance(userBalance);
 }
 
-bool CUserBalance::VerifyMNSignature()
-{
-	std::string strError = "";
-	std::string strMessage = nUserPubKey + boost::lexical_cast<std::string>(nCoinID) + boost::lexical_cast<std::string>(nAvailableBalance) + boost::lexical_cast<std::string>(nInExchangeBalance)
-		+ boost::lexical_cast<std::string>(nInDisputeBalance) + boost::lexical_cast<std::string>(nPendingDepositBalance) + boost::lexical_cast<std::string>(nPendingWithdrawalBalance)
-		+ boost::lexical_cast<std::string>(nTotalBalance) + boost::lexical_cast<std::string>(nLastDepositID) + boost::lexical_cast<std::string>(nLastWithdrawID)
-		+ boost::lexical_cast<std::string>(nLastActualTradeID) + boost::lexical_cast<std::string>(nLastUserTradeID) + MNPubKey + boost::lexical_cast<std::string>(nLastUpdateTime);
-	CPubKey pubkey(ParseHex(MNPubKey));
-	if (!CMessageSigner::VerifyMessage(pubkey, mnVchSig, strMessage, strError)) {
-		LogPrintf("CUserBalance::VerifyMNSignature -- VerifyMessage() failed, error: %s\n", strError);
-		return false;
-	}
-	return true;
-}
-
-bool CUserBalance::VerifyFinalSignature()
+bool CUserBalance::VerifySignature()
 {
 	std::string strError = "";
 	std::string strMessage = nUserPubKey + boost::lexical_cast<std::string>(nCoinID) + boost::lexical_cast<std::string>(nAvailableBalance) + boost::lexical_cast<std::string>(nInExchangeBalance)
@@ -127,28 +112,8 @@ bool CUserBalance::VerifyFinalSignature()
 		+ boost::lexical_cast<std::string>(nTotalBalance) + boost::lexical_cast<std::string>(nLastDepositID) + boost::lexical_cast<std::string>(nLastWithdrawID)
 		+ boost::lexical_cast<std::string>(nLastActualTradeID) + boost::lexical_cast<std::string>(nLastUserTradeID) + boost::lexical_cast<std::string>(nLastUpdateTime);
 	CPubKey pubkey(ParseHex(DEXKey));
-	if (!CMessageSigner::VerifyMessage(pubkey, finalVchSig, strMessage, strError)) {
+	if (!CMessageSigner::VerifyMessage(pubkey, vchSig, strMessage, strError)) {
 		LogPrintf("CUserBalance::VerifyFinalSignature -- VerifyMessage() failed, error: %s\n", strError);
-		return false;
-	}
-	return true;
-}
-
-bool CUserBalance::MNSign()
-{
-	std::string strError = "";
-	std::string strMessage = nUserPubKey + boost::lexical_cast<std::string>(nCoinID) + boost::lexical_cast<std::string>(nAvailableBalance) + boost::lexical_cast<std::string>(nInExchangeBalance)
-		+ boost::lexical_cast<std::string>(nInDisputeBalance) + boost::lexical_cast<std::string>(nPendingDepositBalance) + boost::lexical_cast<std::string>(nPendingWithdrawalBalance)
-		+ boost::lexical_cast<std::string>(nTotalBalance) + boost::lexical_cast<std::string>(nLastDepositID) + boost::lexical_cast<std::string>(nLastWithdrawID)
-		+ boost::lexical_cast<std::string>(nLastActualTradeID) + boost::lexical_cast<std::string>(nLastUserTradeID) + MNPubKey + boost::lexical_cast<std::string>(nLastUpdateTime);
-	if (!CMessageSigner::SignMessage(strMessage, mnVchSig, activeMasternode.keyMasternode))
-	{
-		LogPrintf("CUserBalance::MNSign -- SignMessage() failed\n");
-		return false;
-	}
-	if (!CMessageSigner::VerifyMessage(MNPubKey, mnVchSig, strMessage, strError))
-	{
-		LogPrintf("CUserBalance::MNSign -- VerifyMessage() failed, error: %s\n", strError);
 		return false;
 	}
 	return true;

@@ -4,6 +4,7 @@
 
 #include "activemasternode.h"
 #include "messagesigner.h"
+#include "noderole.h"
 #include "trade.h"
 #include "userconnection.h"
 #include <boost/lexical_cast.hpp>
@@ -11,6 +12,7 @@
 class CUserTrade;
 class CUserTradeSetting;
 class CActualTrade;
+class CCancelTrade;
 
 std::set<uint256> userTradesHash;
 std::vector<CUserTrade> pendingProcessUserTrades;
@@ -45,12 +47,17 @@ std::string CActualTrade::GetHash()
 	return "";
 }
 
+void CUserTrade::MNBalanceHash()
+{
+
+}
+
 bool CUserTrade::VerifyUserSignature()
 {
 	std::string strError = "";
 	std::string strMessage = boost::lexical_cast<std::string>(nTradePairID) + boost::lexical_cast<std::string>(nPrice) + boost::lexical_cast<std::string>(nQuantity)
 		+ boost::lexical_cast<std::string>(nAmount) + boost::lexical_cast<std::string>(nIsBid)+ boost::lexical_cast<std::string>(nTradeFee) + nUserPubKey
-		+ boost::lexical_cast<std::string>(nTimeSubmit) + nUserHash;
+		+ boost::lexical_cast<std::string>(nTimeSubmit);
 	CPubKey pubkey(ParseHex(nUserPubKey));
 
 	if (!CMessageSigner::VerifyMessage(pubkey, userVchSig, strMessage, strError)) {
@@ -66,7 +73,7 @@ bool CUserTrade::VerifyMNBalanceSignature()
 	std::string strError = "";
 	std::string strMessage = boost::lexical_cast<std::string>(nTradePairID) + boost::lexical_cast<std::string>(nPrice) + boost::lexical_cast<std::string>(nQuantity)
 		+ boost::lexical_cast<std::string>(nAmount) + boost::lexical_cast<std::string>(nIsBid)+ boost::lexical_cast<std::string>(nTradeFee) + nUserPubKey
-		+ boost::lexical_cast<std::string>(nTimeSubmit) + nUserHash + boost::lexical_cast<std::string>(nUserTradeID) + nMNBalancePubKey
+		+ boost::lexical_cast<std::string>(nTimeSubmit) + boost::lexical_cast<std::string>(nUserTradeID) + nMNBalancePubKey
 		+ boost::lexical_cast<std::string>(nBalanceQty) + boost::lexical_cast<std::string>(nBalanceAmount) + boost::lexical_cast<std::string>(nLastUpdate);
 	CPubKey pubkey(ParseHex(nMNBalancePubKey));
 
@@ -83,7 +90,7 @@ bool CUserTrade::VerifyMNTradeSignature()
 	std::string strError = "";
 	std::string strMessage = boost::lexical_cast<std::string>(nTradePairID) + boost::lexical_cast<std::string>(nPrice) + boost::lexical_cast<std::string>(nQuantity)
 		+ boost::lexical_cast<std::string>(nAmount) + boost::lexical_cast<std::string>(nIsBid)+ boost::lexical_cast<std::string>(nTradeFee) + nUserPubKey
-		+ boost::lexical_cast<std::string>(nTimeSubmit) + nUserHash + boost::lexical_cast<std::string>(nUserTradeID) + boost::lexical_cast<std::string>(nPairTradeID)
+		+ boost::lexical_cast<std::string>(nTimeSubmit) + boost::lexical_cast<std::string>(nUserTradeID) + boost::lexical_cast<std::string>(nPairTradeID)
 		+ nMNBalancePubKey + nMNTradePubKey	+ boost::lexical_cast<std::string>(nBalanceQty) + boost::lexical_cast<std::string>(nBalanceAmount) 
 		+ boost::lexical_cast<std::string>(nLastUpdate);
 	CPubKey pubkey(ParseHex(nMNTradePubKey));
@@ -101,7 +108,7 @@ bool CUserTrade::MNBalanceSign()
 	std::string strError = "";
 	std::string strMessage = boost::lexical_cast<std::string>(nTradePairID) + boost::lexical_cast<std::string>(nPrice) + boost::lexical_cast<std::string>(nQuantity)
 		+ boost::lexical_cast<std::string>(nAmount) + boost::lexical_cast<std::string>(nIsBid) + boost::lexical_cast<std::string>(nTradeFee) + nUserPubKey
-		+ boost::lexical_cast<std::string>(nTimeSubmit) + nUserHash + boost::lexical_cast<std::string>(nUserTradeID) + nMNBalancePubKey
+		+ boost::lexical_cast<std::string>(nTimeSubmit) + boost::lexical_cast<std::string>(nUserTradeID) + nMNBalancePubKey
 		+ boost::lexical_cast<std::string>(nBalanceQty) + boost::lexical_cast<std::string>(nBalanceAmount) + boost::lexical_cast<std::string>(nLastUpdate);
 
 	if (!CMessageSigner::SignMessage(strMessage, mnBalanceVchSig, activeMasternode.keyMasternode))
@@ -124,7 +131,7 @@ bool CUserTrade::MNTradeSign()
 	std::string strError = "";
 	std::string strMessage = boost::lexical_cast<std::string>(nTradePairID) + boost::lexical_cast<std::string>(nPrice) + boost::lexical_cast<std::string>(nQuantity)
 		+ boost::lexical_cast<std::string>(nAmount) + boost::lexical_cast<std::string>(nIsBid)+ boost::lexical_cast<std::string>(nTradeFee) + nUserPubKey
-		+ boost::lexical_cast<std::string>(nTimeSubmit) + nUserHash + boost::lexical_cast<std::string>(nUserTradeID) + boost::lexical_cast<std::string>(nPairTradeID)
+		+ boost::lexical_cast<std::string>(nTimeSubmit) + boost::lexical_cast<std::string>(nUserTradeID) + boost::lexical_cast<std::string>(nPairTradeID)
 		+ nMNBalancePubKey + nMNTradePubKey	+ boost::lexical_cast<std::string>(nBalanceQty) + boost::lexical_cast<std::string>(nBalanceAmount) 
 		+ boost::lexical_cast<std::string>(nLastUpdate);
 
@@ -137,59 +144,6 @@ bool CUserTrade::MNTradeSign()
 	if (!CMessageSigner::VerifyMessage(activeMasternode.pubKeyMasternode, mnTradeVchSig, strMessage, strError)) 
 	{
 		LogPrintf("CUserTrade::MNTradeSign -- VerifyMessage() failed, error: %s\n", strError);
-		return false;
-	}
-
-	return true;
-}
-
-bool CCancelTrade::MNSign()
-{
-	std::string strError = "";
-	std::string strMessage = boost::lexical_cast<std::string>(nUserTradeID) + boost::lexical_cast<std::string>(nPairTradeID) + nUserPubKey + boost::lexical_cast<std::string>(isBid)
-		+ boost::lexical_cast<std::string>(nUserSubmitTime) + boost::lexical_cast<std::string>(nPrice) + boost::lexical_cast<std::string>(nBalanceQty)
-		+ boost::lexical_cast<std::string>(nBalanceAmount) + nMNTradePubKey + boost::lexical_cast<std::string>(nMNProcessTime);
-
-	if (!CMessageSigner::SignMessage(strMessage, mnVchSig, activeMasternode.keyMasternode))
-	{
-		LogPrintf("CCancelTrade::MNSign -- SignMessage() failed\n");
-		return false;
-	}
-
-	if (!CMessageSigner::VerifyMessage(activeMasternode.pubKeyMasternode, mnVchSig, strMessage, strError))
-	{
-		LogPrintf("CCancelTrade::MNSign -- VerifyMessage() failed, error: %s\n", strError);
-		return false;
-	}
-
-	return true;
-}
-
-bool CCancelTrade::VerifyUserSignature()
-{
-	std::string strError = "";
-	std::string strMessage = boost::lexical_cast<std::string>(nUserTradeID) + boost::lexical_cast<std::string>(nPairTradeID) + nUserPubKey + boost::lexical_cast<std::string>(isBid)
-		+ boost::lexical_cast<std::string>(nUserSubmitTime) + boost::lexical_cast<std::string>(nPrice);
-	CPubKey pubkey(ParseHex(nUserPubKey));
-
-	if (!CMessageSigner::VerifyMessage(pubkey, userVchSig, strMessage, strError)) {
-		LogPrintf("CCancelTrade::VerifyUserSignature -- VerifyMessage() failed, error: %s\n", strError);
-		return false;
-	}
-
-	return true;
-}
-
-bool CCancelTrade::VerifyMNSignature()
-{
-	std::string strError = "";
-	std::string strMessage = boost::lexical_cast<std::string>(nUserTradeID) + boost::lexical_cast<std::string>(nPairTradeID) + nUserPubKey + boost::lexical_cast<std::string>(isBid)
-		+ boost::lexical_cast<std::string>(nUserSubmitTime) + boost::lexical_cast<std::string>(nPrice)+ boost::lexical_cast<std::string>(nBalanceQty) 
-		+ boost::lexical_cast<std::string>(nBalanceAmount) + nMNTradePubKey + boost::lexical_cast<std::string>(nMNProcessTime);
-	CPubKey pubkey(ParseHex(MNPubKey));
-
-	if (!CMessageSigner::VerifyMessage(pubkey, mnVchSig, strMessage, strError)) {
-		LogPrintf("CCancelTrade::VerifyMNSignature -- VerifyMessage() failed, error: %s\n", strError);
 		return false;
 	}
 
@@ -223,7 +177,7 @@ bool CActualTrade::TradeMNSign()
 		+ boost::lexical_cast<std::string>(nUserTrade2) + boost::lexical_cast<std::string>(nTradePrice) + boost::lexical_cast<std::string>(nTradeQty)
 		+ boost::lexical_cast<std::string>(nTradeAmount) + boost::lexical_cast<std::string>(nBidAmount) + boost::lexical_cast<std::string>(nAskAmount) + nUserPubKey1
 		+ nUserPubKey2 + boost::lexical_cast<std::string>(nFee1) + boost::lexical_cast<std::string>(nFee2) + boost::lexical_cast<std::string>(nFromBid) + nTradeMNPubKey
-		+ nCurrentHash + boost::lexical_cast<std::string>(nTradeTime);
+		+ nCurrentHash + boost::lexical_cast<std::string>(nTradeMNProcessTime);
 
 	if (!CMessageSigner::SignMessage(strMessage, mnTradeVchSig, activeMasternode.keyMasternode))
 	{
@@ -247,7 +201,7 @@ bool CActualTrade::Balance1MNSign()
 		+ boost::lexical_cast<std::string>(nUserTrade2) + boost::lexical_cast<std::string>(nTradePrice) + boost::lexical_cast<std::string>(nTradeQty)
 		+ boost::lexical_cast<std::string>(nTradeAmount) + boost::lexical_cast<std::string>(nBidAmount) + boost::lexical_cast<std::string>(nAskAmount) + nUserPubKey1
 		+ nUserPubKey2 + boost::lexical_cast<std::string>(nFee1) + boost::lexical_cast<std::string>(nFee2) + boost::lexical_cast<std::string>(nFromBid) + nTradeMNPubKey
-		+ nBalance1MNPubKey + nCurrentHash + boost::lexical_cast<std::string>(nTradeTime);
+		+ nBalance1MNPubKey + nCurrentHash + boost::lexical_cast<std::string>(nTradeMNProcessTime);
 
 	if (!CMessageSigner::SignMessage(strMessage, mnBalance1VchSig, activeMasternode.keyMasternode))
 	{
@@ -271,7 +225,7 @@ bool CActualTrade::Balance2MNSign()
 		+ boost::lexical_cast<std::string>(nUserTrade2) + boost::lexical_cast<std::string>(nTradePrice) + boost::lexical_cast<std::string>(nTradeQty)
 		+ boost::lexical_cast<std::string>(nTradeAmount) + boost::lexical_cast<std::string>(nBidAmount) + boost::lexical_cast<std::string>(nAskAmount) + nUserPubKey1
 		+ nUserPubKey2 + boost::lexical_cast<std::string>(nFee1) + boost::lexical_cast<std::string>(nFee2) + boost::lexical_cast<std::string>(nFromBid) + nTradeMNPubKey
-		+ nBalance2MNPubKey + nCurrentHash + boost::lexical_cast<std::string>(nTradeTime);
+		+ nBalance2MNPubKey + nCurrentHash + boost::lexical_cast<std::string>(nTradeMNProcessTime);
 
 	if (!CMessageSigner::SignMessage(strMessage, mnBalance2VchSig, activeMasternode.keyMasternode))
 	{
@@ -295,7 +249,7 @@ bool CActualTrade::VerifyTradeMNSignature()
 		+ boost::lexical_cast<std::string>(nUserTrade2) + boost::lexical_cast<std::string>(nTradePrice) + boost::lexical_cast<std::string>(nTradeQty)
 		+ boost::lexical_cast<std::string>(nTradeAmount) + boost::lexical_cast<std::string>(nBidAmount) + boost::lexical_cast<std::string>(nAskAmount) + nUserPubKey1
 		+ nUserPubKey2 + boost::lexical_cast<std::string>(nFee1) + boost::lexical_cast<std::string>(nFee2) + boost::lexical_cast<std::string>(nFromBid) + nTradeMNPubKey
-		+ nCurrentHash + boost::lexical_cast<std::string>(nTradeTime);
+		+ nCurrentHash + boost::lexical_cast<std::string>(nTradeMNProcessTime);
 	CPubKey pubkey(ParseHex(nTradeMNPubKey));
 
 	if (!CMessageSigner::VerifyMessage(pubkey, mnTradeVchSig, strMessage, strError)) {
@@ -313,7 +267,7 @@ bool CActualTrade::VerifyBalance1MNSignature()
 		+ boost::lexical_cast<std::string>(nUserTrade2) + boost::lexical_cast<std::string>(nTradePrice) + boost::lexical_cast<std::string>(nTradeQty)
 		+ boost::lexical_cast<std::string>(nTradeAmount) + boost::lexical_cast<std::string>(nBidAmount) + boost::lexical_cast<std::string>(nAskAmount) + nUserPubKey1
 		+ nUserPubKey2 + boost::lexical_cast<std::string>(nFee1) + boost::lexical_cast<std::string>(nFee2) + boost::lexical_cast<std::string>(nFromBid) + nTradeMNPubKey
-		+ nBalance1MNPubKey + nCurrentHash + boost::lexical_cast<std::string>(nTradeTime);
+		+ nBalance1MNPubKey + nCurrentHash + boost::lexical_cast<std::string>(nTradeMNProcessTime);
 	CPubKey pubkey(ParseHex(nBalance1MNPubKey));
 
 	if (!CMessageSigner::VerifyMessage(pubkey, mnBalance1VchSig, strMessage, strError)) {
@@ -331,7 +285,7 @@ bool CActualTrade::VerifyBalance2MNSignature()
 		+ boost::lexical_cast<std::string>(nUserTrade2) + boost::lexical_cast<std::string>(nTradePrice) + boost::lexical_cast<std::string>(nTradeQty)
 		+ boost::lexical_cast<std::string>(nTradeAmount) + boost::lexical_cast<std::string>(nBidAmount) + boost::lexical_cast<std::string>(nAskAmount) + nUserPubKey1
 		+ nUserPubKey2 + boost::lexical_cast<std::string>(nFee1) + boost::lexical_cast<std::string>(nFee2) + boost::lexical_cast<std::string>(nFromBid) + nTradeMNPubKey
-		+ nBalance2MNPubKey + nCurrentHash + boost::lexical_cast<std::string>(nTradeTime);
+		+ nBalance2MNPubKey + nCurrentHash + boost::lexical_cast<std::string>(nTradeMNProcessTime);
 	CPubKey pubkey(ParseHex(nBalance2MNPubKey));
 
 	if (!CMessageSigner::VerifyMessage(pubkey, mnBalance1VchSig, strMessage, strError)) {
@@ -340,4 +294,117 @@ bool CActualTrade::VerifyBalance2MNSignature()
 	}
 
 	return true;
+}
+
+void CActualTrade::RelayTo(CNode* node, CConnman& connman)
+{
+
+}
+
+void CActualTrade::RelayToUser1(CConnman& connman)
+{
+
+}
+
+void CActualTrade::RelayToUser2(CConnman& connman)
+{
+
+}
+
+void CActualTrade::RelayToTradeMN(CConnman& connman)
+{
+
+}
+
+void CActualTrade::RelayToBalance1MN(CConnman& connman)
+{
+
+}
+
+void CActualTrade::RelayToBalance2MN(CConnman& connman)
+{
+
+}
+
+bool CCancelTrade::TradeMNSign()
+{
+	std::string strError = "";
+	std::string strMessage = boost::lexical_cast<std::string>(nUserTradeID) + boost::lexical_cast<std::string>(nPairTradeID) + nUserPubKey + boost::lexical_cast<std::string>(isBid)
+		+ boost::lexical_cast<std::string>(nUserSubmitTime) + boost::lexical_cast<std::string>(nPrice) + boost::lexical_cast<std::string>(nBalanceQty)
+		+ boost::lexical_cast<std::string>(nBalanceAmount) + nMNTradePubKey + boost::lexical_cast<std::string>(nMNTradeProcessTime);
+
+	if (!CMessageSigner::SignMessage(strMessage, mnTradeVchSig, activeMasternode.keyMasternode))
+	{
+		LogPrintf("CCancelTrade::MNSign -- SignMessage() failed\n");
+		return false;
+	}
+
+	if (!CMessageSigner::VerifyMessage(activeMasternode.pubKeyMasternode, mnTradeVchSig, strMessage, strError))
+	{
+		LogPrintf("CCancelTrade::MNSign -- VerifyMessage() failed, error: %s\n", strError);
+		return false;
+	}
+
+	return true;
+}
+
+bool CCancelTrade::BalanceMNSign()
+{
+	return true;
+}
+
+bool CCancelTrade::VerifyUserSignature()
+{
+	std::string strError = "";
+	std::string strMessage = boost::lexical_cast<std::string>(nUserTradeID) + boost::lexical_cast<std::string>(nPairTradeID) + nUserPubKey + boost::lexical_cast<std::string>(isBid)
+		+ boost::lexical_cast<std::string>(nUserSubmitTime) + boost::lexical_cast<std::string>(nPrice);
+	CPubKey pubkey(ParseHex(nUserPubKey));
+
+	if (!CMessageSigner::VerifyMessage(pubkey, userVchSig, strMessage, strError)) {
+		LogPrintf("CCancelTrade::VerifyUserSignature -- VerifyMessage() failed, error: %s\n", strError);
+		return false;
+	}
+
+	return true;
+}
+
+bool CCancelTrade::VerifyTradeMNSignature()
+{
+	std::string strError = "";
+	std::string strMessage = boost::lexical_cast<std::string>(nUserTradeID) + boost::lexical_cast<std::string>(nPairTradeID) + nUserPubKey + boost::lexical_cast<std::string>(isBid)
+		+ boost::lexical_cast<std::string>(nUserSubmitTime) + boost::lexical_cast<std::string>(nPrice) + boost::lexical_cast<std::string>(nBalanceQty)
+		+ boost::lexical_cast<std::string>(nBalanceAmount) + nMNTradePubKey + boost::lexical_cast<std::string>(nMNTradeProcessTime);
+	CPubKey pubkey(ParseHex(MNPubKey));
+
+	if (!CMessageSigner::VerifyMessage(pubkey, mnTradeVchSig, strMessage, strError)) {
+		LogPrintf("CCancelTrade::VerifyMNSignature -- VerifyMessage() failed, error: %s\n", strError);
+		return false;
+	}
+
+	return true;
+}
+
+bool CCancelTrade::VerifyBalanceMNSignature()
+{
+	return true;
+}
+
+void CCancelTrade::RelayTo(CNode* node, CConnman& connman)
+{
+
+}
+
+void CCancelTrade::RelayToUser(CConnman& connman)
+{
+
+}
+
+void CCancelTrade::RelayToTradeMN(CConnman& connman)
+{
+
+}
+
+void CCancelTrade::RelayToBalanceMN(CConnman& connman)
+{
+
 }

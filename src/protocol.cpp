@@ -62,7 +62,9 @@ const char *MNGOVERNANCEOBJECTVOTE="govobjvote";
 const char *MNVERIFY="mnv";
 // InfiniDEX message types
 const char *DEXNODEROLE="dexnoderole";
+const char *DEXNODEROLES="dexnoderoles";
 const char *DEXCOININFO="dexcoininfo";
+const char *DEXCOINSINFO="dexcoinsinfo";
 const char *DEXTRADEPAIR="dextradepair";
 const char *DEXORDERBIDBOOK="dexorderbidbook";
 const char *DEXORDERASKBOOK="dexorderaskbook";
@@ -70,9 +72,14 @@ const char *DEXMARKETOVERVIEW="dexmarketoverview";
 const char *DEXUSERCONNECTION="dexuserconnection";
 const char *DEXMNCONNECTION="dexmnconnection";
 const char *DEXUSERBALANCE="dexuserbalance";
+const char *DEXUSERBALANCES="dexuserbalances";
 const char *DEXUSERDEPOSIT="dexuserdeposit";
 const char *DEXCHARTDATA="dexchartdata";
+const char *DEXCHARTSDATA="dexchartsdata";
+const char *DEXGETCHARTSDATA="dexgetchartsdata";
 const char *DEXUSERTRADE="dexusertrade";
+const char *DEXUSERTRADES="dexusertrades";
+const char *DEXINVALIDUSERTRADE="dexinvalidusertrade";
 const char *DEXUSERTRADECANCEL="dexusertradecancel";
 const char *DEXACTUALTRADE="dexactualtrade";
 const char *DEXUSERTRADEHISTORY="dexusertradehistory";
@@ -161,17 +168,24 @@ const static std::string allNetMessageTypes[] = {
     NetMsgType::MNVERIFY,
     // InfiniDEX message types
     NetMsgType::DEXNODEROLE,
+    NetMsgType::DEXNODEROLES,
     NetMsgType::DEXUSERCONNECTION,
     NetMsgType::DEXMNCONNECTION,
     NetMsgType::DEXUSERBALANCE,
+    NetMsgType::DEXUSERBALANCES,
     NetMsgType::DEXCOININFO,
+    NetMsgType::DEXCOINSINFO,
     NetMsgType::DEXTRADEPAIR,
     NetMsgType::DEXORDERBIDBOOK,
     NetMsgType::DEXORDERASKBOOK,
     NetMsgType::DEXMARKETOVERVIEW,
     NetMsgType::DEXUSERDEPOSIT,
     NetMsgType::DEXCHARTDATA,
+    NetMsgType::DEXCHARTSDATA,
+    NetMsgType::DEXGETCHARTSDATA,
     NetMsgType::DEXUSERTRADE,
+    NetMsgType::DEXUSERTRADES,
+    NetMsgType::DEXINVALIDUSERTRADE,
     NetMsgType::DEXUSERTRADECANCEL,
     NetMsgType::DEXACTUALTRADE,
     NetMsgType::DEXUSERTRADEHISTORY,

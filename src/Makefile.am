@@ -207,6 +207,7 @@ BITCOIN_CORE_H = \
   InfiniDEX/nodesetup.h \
   InfiniDEX/orderbook.h \
   InfiniDEX/trade.h \
+  InfiniDEX/trademanager.h \
   InfiniDEX/tradepair.h \
   InfiniDEX/userbalance.h \
   InfiniDEX/userconnection.h \
@@ -382,6 +383,7 @@ libbitcoin_common_a_SOURCES = \
   InfiniDEX/nodesetup.cpp \
   InfiniDEX/orderbook.cpp \
   InfiniDEX/trade.cpp \
+  InfiniDEX/trademanager.cpp \
   InfiniDEX/tradepair.cpp \
   InfiniDEX/userbalance.cpp \
   InfiniDEX/userconnection.cpp \

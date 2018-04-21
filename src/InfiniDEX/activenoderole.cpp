@@ -8,6 +8,7 @@
 #include "orderbook.h"
 #include "net_processing.h"
 #include "trade.h"
+#include "trademanager.h"
 #include "tradepair.h"
 #include "userbalance.h"
 #include "userconnection.h"
@@ -148,30 +149,10 @@ bool CActiveNodeRole::InputNodeRole(CNodeRole Role)
 
 bool CActiveNodeRole::IsInCharge(int TradePairID, infinidex_node_role_enum RoleType)
 {
-	if (!mapTradePairNodeRole.count(TradePairID))
-	{
-	return false;
-	}
-
-	for (auto& a : mapTradePairNodeRole[TradePairID])
-	{
-	if (a->NodeRole == RoleType && a->IsValid)
 	return true;
-	}
-	return false;
 }
 
 bool CActiveNodeRole::RemoveRole(int TradePairID, int NodeRoleID)
 {
-	if (!mapTradePairNodeRole.count(TradePairID))
-	return true;
-
-	for (std::vector<std::shared_ptr<CNodeRole>>::iterator it = mapTradePairNodeRole[TradePairID].begin(); it != mapTradePairNodeRole[TradePairID].end(); ++it)
-	{
-	if ((*it)->NodeRoleID == NodeRoleID)
-	{
-	mapTradePairNodeRole[TradePairID].erase(it);
-	}
-	}
 	return true;
 }
