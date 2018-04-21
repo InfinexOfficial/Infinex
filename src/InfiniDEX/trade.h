@@ -24,6 +24,7 @@ extern std::set<uint256> userTradesHash;
 extern std::set<uint256> mnBalanceTradesHash;
 extern std::vector<CUserTrade> pendingProcessUserTrades;
 extern std::vector<CCancelTrade> pendingProcessCancelTrades;
+
 extern std::map<int, std::set<int>> mapCompletedUserTrade;
 extern std::map<std::string, pULTIUTC> mapUserTrades;
 
@@ -32,145 +33,16 @@ extern std::map<int, mUTPIUTV> mapBidUserTradeByPrice;
 extern std::map<int, mUTPIUTV> mapAskUserTradeByPrice;
 
 extern std::map<int, CUserTradeSetting> mapUserTradeSetting;
-extern CUserTradeManager userTradeManager;
 
 typedef std::map<int, std::shared_ptr<CActualTrade>> mATIAT;
 typedef std::map<int, mATIAT> mUTImAT;
 
 extern std::map<std::string, mUTImAT> mapUserActualTrades;
-
+extern std::map<int, std::set<int>> mapCompletedActualTradeID;
+extern std::map<int, std::set<int>> mapApprovedActualTradeID;
 extern std::map<int, mATIAT> mapActualTradeByActualTradeID;
 extern std::map<int, mUTImAT> mapActualTradeByUserTradeID;
-extern std::map<int, std::vector<CActualTrade>> mapConflictTrade;
 extern std::map<int, std::set<std::string>> mapActualTradeHash;
-
-class CCancelTrade
-{
-private:
-	std::vector<unsigned char> userVchSig;
-	std::vector<unsigned char> mnTradeVchSig;
-	std::vector<unsigned char> mnBalanceVchSig;
-
-public:
-	int nUserTradeID;
-	int nPairTradeID;
-	int nTradePairID;
-	std::string nUserPubKey;
-	bool isBid;
-	uint64_t nUserSubmitTime;
-	uint64_t nPrice;
-	uint64_t nBalanceQty;
-	uint64_t nBalanceAmount;
-	std::string nMNTradePubKey;
-	uint64_t nMNTradeProcessTime;
-	std::string nMNBalancePubKey;
-	uint64_t nMNBalanceProcessTime;
-	uint64_t nLastUpdateTime;
-
-	CCancelTrade() :
-		nUserTradeID(0),
-		nPairTradeID(0),
-		nTradePairID(0),
-		nUserPubKey(""),
-		isBid(true),
-		nUserSubmitTime(0),
-		nPrice(0),
-		nBalanceQty(0),
-		nBalanceAmount(0),
-		nMNTradePubKey(""),
-		nMNTradeProcessTime(0),
-		nMNBalancePubKey(""),
-		nMNBalanceProcessTime(0),
-		nLastUpdateTime(0)
-	{}
-
-	ADD_SERIALIZE_METHODS;
-	template <typename Stream, typename Operation>
-	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) 
-	{
-		READWRITE(nUserTradeID);
-		READWRITE(nPairTradeID);
-		READWRITE(nTradePairID);
-		READWRITE(nUserPubKey);
-		READWRITE(isBid);
-		READWRITE(nUserSubmitTime);
-		READWRITE(nPrice);
-		READWRITE(nBalanceQty);
-		READWRITE(nBalanceAmount);
-		READWRITE(nMNTradePubKey);
-		READWRITE(nMNTradeProcessTime);
-		READWRITE(nMNBalancePubKey);
-		READWRITE(nMNBalanceProcessTime);
-		READWRITE(nLastUpdateTime);
-		READWRITE(userVchSig);
-		READWRITE(mnTradeVchSig);
-		READWRITE(mnBalanceVchSig);
-	}
-
-	bool VerifyUserSignature();
-	bool VerifyTradeMNSignature();
-	bool VerifyBalanceMNSignature();
-	bool TradeMNSign();
-	bool BalanceMNSign();
-	void RelayTo(CNode* node, CConnman& connman);
-	void RelayToTradeMN(CConnman& connman);
-	void RelayToBalanceMN(CConnman& connman);
-};
-
-class CUserTradeSetting
-{
-public:
-	int nTradePairID;
-	int nLastPairTradeID;
-	int nLastActualTradeID;
-	uint32_t nMaxSubmissionTimeDiff;
-	uint16_t nToStoreLowerLimit;
-	uint16_t nToStoreUpperLimit;
-	uint64_t nLastPairTradeTime;
-	uint64_t nLastActualTradeTime;
-	bool nInChargeOfBidBroadcast;
-	bool nInChargeOfAskBroadcast;
-	bool nInChargeOfMatchUserTrade;
-	bool nInChargeOfChartData;
-	bool nInChargeOfMarketTradeHistory;
-	bool nInChargeOfUserTradeHistory;
-
-	CUserTradeSetting(int nTradePairID) :
-		nTradePairID(nTradePairID),
-		nLastPairTradeID(0),
-		nLastActualTradeID(0),
-		nMaxSubmissionTimeDiff(3000),
-		nToStoreLowerLimit(50),
-		nToStoreUpperLimit(100),
-		nLastPairTradeTime(0),
-		nLastActualTradeTime(0),
-		nInChargeOfBidBroadcast(false),
-		nInChargeOfAskBroadcast(false),
-		nInChargeOfMatchUserTrade(false),
-		nInChargeOfChartData(false),
-		nInChargeOfMarketTradeHistory(false),
-		nInChargeOfUserTradeHistory(false)
-	{}
-
-	CUserTradeSetting() :
-		nTradePairID(0),
-		nLastPairTradeID(0),
-		nLastActualTradeID(0),
-		nMaxSubmissionTimeDiff(3000),
-		nToStoreLowerLimit(50),
-		nToStoreUpperLimit(100),
-		nLastPairTradeTime(0),
-		nLastActualTradeTime(0),		
-		nInChargeOfBidBroadcast(false),
-		nInChargeOfAskBroadcast(false),
-		nInChargeOfMatchUserTrade(false),
-		nInChargeOfChartData(false),
-		nInChargeOfMarketTradeHistory(false),
-		nInChargeOfUserTradeHistory(false)
-	{}
-
-	bool IsValidSubmissionTimeAndUpdate(uint64_t time);
-};
 
 class CUserTrade
 {
@@ -259,12 +131,10 @@ public:
 
 class CActualTrade
 {
-private:
+public:
 	std::vector<unsigned char> mnTradeVchSig;
 	std::vector<unsigned char> mnBalance1VchSig;
 	std::vector<unsigned char> mnBalance2VchSig;
-
-public:
 	int nActualTradeID;
 	int nTradePairID;
 	int nUserTrade1;
@@ -280,13 +150,18 @@ public:
 	int64_t nFee2; //during promo period, we can provide rebate instead of trade fee to user
 	bool nFromBid;
 	std::string nTradeMNPubKey;
+	uint64_t nTradeMNProcessTime;
+	bool nBalance1MNApproved;
 	std::string nBalance1MNPubKey;
+	uint64_t nBalance1MNProcessTime;
+	bool nBalance2MNApproved;
 	std::string nBalance2MNPubKey;
+	uint64_t nBalance2MNProcessTime;
 	std::string nCurrentHash;
-	uint64_t nTradeTime;
+	uint64_t nLastUpdateTime;
 
 	CActualTrade(int nTradePairID, int nUserTrade1, int nUserTrade2, uint64_t nTradePrice, uint64_t nTradeQty, uint64_t nBidAmount, uint64_t nAskAmount, std::string nUserPubKey1,
-		std::string nUserPubKey2, int64_t nFee1, int64_t nFee2, bool nFromBid, uint64_t nTradeTime) :
+		std::string nUserPubKey2, int64_t nFee1, int64_t nFee2, bool nFromBid, uint64_t nTradeMNProcessTime) :
 		nActualTradeID(0),
 		nTradePairID(nTradePairID),
 		nUserTrade1(nUserTrade1),
@@ -302,10 +177,15 @@ public:
 		nFee2(nFee2),
 		nFromBid(nFromBid),
 		nTradeMNPubKey(""),
+		nTradeMNProcessTime(nTradeMNProcessTime),
+		nBalance1MNApproved(false),
 		nBalance1MNPubKey(""),
+		nBalance1MNProcessTime(0),
+		nBalance2MNApproved(false),
 		nBalance2MNPubKey(""),
-		nCurrentHash(""),		
-		nTradeTime(nTradeTime)
+		nBalance2MNProcessTime(0),
+		nCurrentHash(""),
+		nLastUpdateTime(nTradeMNProcessTime)
 	{}
 
 	CActualTrade() :
@@ -324,11 +204,49 @@ public:
 		nFee2(0),
 		nFromBid(true),
 		nTradeMNPubKey(""),
+		nTradeMNProcessTime(0),
+		nBalance1MNApproved(false),
 		nBalance1MNPubKey(""),
+		nBalance1MNProcessTime(0),
+		nBalance2MNApproved(false),
 		nBalance2MNPubKey(""),
+		nBalance2MNProcessTime(0),
 		nCurrentHash(""),
-		nTradeTime(0)
+		nLastUpdateTime(0)
 	{}
+
+	ADD_SERIALIZE_METHODS;
+	template <typename Stream, typename Operation>
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+	{
+		READWRITE(nActualTradeID);
+		READWRITE(nTradePairID);
+		READWRITE(nUserTrade1);
+		READWRITE(nUserTrade2);
+		READWRITE(nTradePrice);
+		READWRITE(nTradeQty);
+		READWRITE(nTradeAmount);
+		READWRITE(nBidAmount);
+		READWRITE(nAskAmount);
+		READWRITE(nUserPubKey1);
+		READWRITE(nUserPubKey2);
+		READWRITE(nFee1);
+		READWRITE(nFee2);
+		READWRITE(nFromBid);
+		READWRITE(nTradeMNPubKey);
+		READWRITE(nTradeMNProcessTime);
+		READWRITE(nBalance1MNApproved);
+		READWRITE(nBalance1MNPubKey);
+		READWRITE(nBalance1MNProcessTime);
+		READWRITE(nBalance2MNApproved);
+		READWRITE(nBalance2MNPubKey);
+		READWRITE(nBalance2MNProcessTime);
+		READWRITE(nCurrentHash);
+		READWRITE(nLastUpdateTime);
+		READWRITE(mnTradeVchSig);
+		READWRITE(mnBalance1VchSig);
+		READWRITE(mnBalance2VchSig);
+	}
 
 	std::string GetHash();
 	bool VerifyTradeMNSignature();
@@ -336,7 +254,142 @@ public:
 	bool VerifyBalance2MNSignature();
 	bool TradeMNSign();
 	bool Balance1MNSign();
-	bool Balance2MNSign();	
+	bool Balance2MNSign();
+	void RelayTo(CNode* node, CConnman& connman);
+	void RelayToUser1(CConnman& connman);
+	void RelayToUser2(CConnman& connman);
+	void RelayToTradeMN(CConnman& connman);
+	void RelayToBalance1MN(CConnman& connman);
+	void RelayToBalance2MN(CConnman& connman);
+};
+
+class CCancelTrade
+{
+private:
+	std::vector<unsigned char> userVchSig;
+	std::vector<unsigned char> mnTradeVchSig;
+	std::vector<unsigned char> mnBalanceVchSig;
+
+public:
+	int nUserTradeID;
+	int nPairTradeID;
+	int nTradePairID;
+	std::string nUserPubKey;
+	bool isBid;
+	uint64_t nUserSubmitTime;
+	uint64_t nPrice;
+	uint64_t nBalanceQty;
+	uint64_t nBalanceAmount;
+	std::string nMNTradePubKey;
+	uint64_t nMNTradeProcessTime;
+	std::string nMNBalancePubKey;
+	uint64_t nMNBalanceProcessTime;
+	uint64_t nLastUpdateTime;
+
+	CCancelTrade() :
+		nUserTradeID(0),
+		nPairTradeID(0),
+		nTradePairID(0),
+		nUserPubKey(""),
+		isBid(true),
+		nUserSubmitTime(0),
+		nPrice(0),
+		nBalanceQty(0),
+		nBalanceAmount(0),
+		nMNTradePubKey(""),
+		nMNTradeProcessTime(0),
+		nMNBalancePubKey(""),
+		nMNBalanceProcessTime(0),
+		nLastUpdateTime(0)
+	{}
+
+	ADD_SERIALIZE_METHODS;
+	template <typename Stream, typename Operation>
+	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) 
+	{
+		READWRITE(nUserTradeID);
+		READWRITE(nPairTradeID);
+		READWRITE(nTradePairID);
+		READWRITE(nUserPubKey);
+		READWRITE(isBid);
+		READWRITE(nUserSubmitTime);
+		READWRITE(nPrice);
+		READWRITE(nBalanceQty);
+		READWRITE(nBalanceAmount);
+		READWRITE(nMNTradePubKey);
+		READWRITE(nMNTradeProcessTime);
+		READWRITE(nMNBalancePubKey);
+		READWRITE(nMNBalanceProcessTime);
+		READWRITE(nLastUpdateTime);
+		READWRITE(userVchSig);
+		READWRITE(mnTradeVchSig);
+		READWRITE(mnBalanceVchSig);
+	}
+
+	bool VerifyUserSignature();
+	bool VerifyTradeMNSignature();
+	bool VerifyBalanceMNSignature();
+	bool TradeMNSign();
+	bool BalanceMNSign();
+	void RelayTo(CNode* node, CConnman& connman);
+	void RelayToUser(CConnman& connman);
+	void RelayToTradeMN(CConnman& connman);
+	void RelayToBalanceMN(CConnman& connman);
+};
+
+class CUserTradeSetting
+{
+public:
+	int nTradePairID;
+	int nLastPairTradeID;
+	int nLastActualTradeID;
+	uint32_t nMaxSubmissionTimeDiff;
+	uint16_t nToStoreLowerLimit;
+	uint16_t nToStoreUpperLimit;
+	uint64_t nLastPairTradeTime;
+	uint64_t nLastActualTradeTime;
+	bool nInChargeOfBidBroadcast;
+	bool nInChargeOfAskBroadcast;
+	bool nInChargeOfMatchUserTrade;
+	bool nInChargeOfChartData;
+	bool nInChargeOfMarketTradeHistory;
+	bool nInChargeOfUserTradeHistory;
+
+	CUserTradeSetting(int nTradePairID) :
+		nTradePairID(nTradePairID),
+		nLastPairTradeID(0),
+		nLastActualTradeID(0),
+		nMaxSubmissionTimeDiff(3000),
+		nToStoreLowerLimit(50),
+		nToStoreUpperLimit(100),
+		nLastPairTradeTime(0),
+		nLastActualTradeTime(0),
+		nInChargeOfBidBroadcast(false),
+		nInChargeOfAskBroadcast(false),
+		nInChargeOfMatchUserTrade(false),
+		nInChargeOfChartData(false),
+		nInChargeOfMarketTradeHistory(false),
+		nInChargeOfUserTradeHistory(false)
+	{}
+
+	CUserTradeSetting() :
+		nTradePairID(0),
+		nLastPairTradeID(0),
+		nLastActualTradeID(0),
+		nMaxSubmissionTimeDiff(3000),
+		nToStoreLowerLimit(50),
+		nToStoreUpperLimit(100),
+		nLastPairTradeTime(0),
+		nLastActualTradeTime(0),		
+		nInChargeOfBidBroadcast(false),
+		nInChargeOfAskBroadcast(false),
+		nInChargeOfMatchUserTrade(false),
+		nInChargeOfChartData(false),
+		nInChargeOfMarketTradeHistory(false),
+		nInChargeOfUserTradeHistory(false)
+	{}
+
+	bool IsValidSubmissionTimeAndUpdate(uint64_t time);
 };
 
 #endif

@@ -24,9 +24,10 @@ std::map<int, mUTPIUTV> mapAskUserTradeByPrice;
 std::map<int, CUserTradeSetting> mapUserTradeSetting;
 
 std::map<std::string, mUTImAT> mapUserActualTrades;
+std::map<int, std::set<int>> mapCompletedActualTradeID;
+std::map<int, std::set<int>> mapApprovedActualTradeID;
 std::map<int, mATIAT> mapActualTradeByActualTradeID;
 std::map<int, mUTImAT> mapActualTradeByUserTradeID;
-std::map<int, std::vector<CActualTrade>> mapConflictTrade;
 std::map<int, std::set<std::string>> mapActualTradeHash;
 
 bool CUserTradeSetting::IsValidSubmissionTimeAndUpdate(uint64_t time)
