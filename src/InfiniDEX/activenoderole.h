@@ -18,7 +18,8 @@ class CActiveNodeRole
 {
 public:
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
-	bool InputNodeRole(CNodeRole Role);
+	bool InputNodeRole(CNodeRole &Role);
+	bool ProcessNewRole(CNodeRole &Role);
 	void BroadcastToConnectedNode(CConnman& connman, std::vector<CNodeRole> nodeRoles);
 	bool IsInCharge(int TradePairID, infinidex_node_role_enum RoleType);
 	bool RemoveRole(int TradePairID, int NodeRoleID);

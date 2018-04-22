@@ -127,31 +127,6 @@ bool CTradePair::VerifySignature()
 
 bool CTradePairManager::InputTradePair(CTradePair &tradePair)
 {
-	if (!tradePair.VerifySignature())
-		return false;
-
-	CCoinInfo coinInfo1;
-	if (!coinInfoManager.GetCoinInfoByCoinID(tradePair.nCoinID1, coinInfo1))
-	{
-		return false;
-	}
-
-	CCoinInfo coinInfo2;
-	if (!coinInfoManager.GetCoinInfoByCoinID(tradePair.nCoinID2, coinInfo2))
-	{
-		return false;
-	}
-
-	if (coinInfo1.nSymbol != tradePair.nSymbol1)
-	{
-		return false;
-	}
-
-	if (coinInfo2.nSymbol != tradePair.nSymbol2)
-	{
-		return false;
-	}
-
 	if (!mapTradePair.count(tradePair.nTradePairID))
 		mapTradePair.insert(std::make_pair(tradePair.nTradePairID, tradePair));
 	else if (tradePair.nLastUpdate > mapTradePair[tradePair.nTradePairID].nLastUpdate)

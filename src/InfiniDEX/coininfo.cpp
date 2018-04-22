@@ -60,7 +60,9 @@ void CCoinInfoManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDa
 				stillSync = true;
 
 			if (!stillSync)
+			{
 				nodeSetup.CoinSyncInProgress = false;
+			}
 		}
 	}
 	else if (strCommand == NetMsgType::DEXCOININFO)
@@ -192,6 +194,16 @@ bool CCoinInfoManager::InputCoinInfo(CCoinInfo CoinInfo)
 		{
 			std::shared_ptr<CCoinInfo> temp = std::make_shared<CCoinInfo>(CoinInfo);
 			*a = *temp;
+			std::vector<CCoinInfo>::reverse_iterator it = completeCoinInfo.rbegin();
+			while (it != completeCoinInfo.rend())
+			{
+				if (it->nCoinInfoID == CoinInfo.nCoinInfoID)
+				{
+					*it = CoinInfo;
+					return true;
+				}
+			}
+			completeCoinInfo.push_back(CoinInfo);
 			return true;
 		}
 	}

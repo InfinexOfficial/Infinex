@@ -53,8 +53,8 @@ void CActiveNodeRole::ProcessMessage(CNode* pfrom, std::string& strCommand, CDat
 			if (completeNodeRoles.size() < nodeSetup.TotalNodeRoleCount)
 				stillSync = true;
 
-			std::map<int, CNodeRole>::reverse_iterator it = mapGlobalNodeRolesByID.rbegin();
-			if (it == mapGlobalNodeRolesByID.rend())
+			NodeRoleWithID::reverse_iterator it = mapGlobalNodeRoles.rbegin();
+			if (it == mapGlobalNodeRoles.rend())
 				stillSync = true;
 			else if (it->first < nodeSetup.LastNodeRoleID)
 				stillSync = true;
@@ -102,41 +102,84 @@ void CActiveNodeRole::BroadcastToConnectedNode(CConnman& connman, std::vector<CN
 	}
 }
 
-bool CActiveNodeRole::InputNodeRole(CNodeRole Role)
+bool CActiveNodeRole::InputNodeRole(CNodeRole &Role)
 {
-	if (mapNodeRoleByID.count(Role.NodeRoleID))
+	std::shared_ptr<CNodeRole> nodeRole = std::make_shared<CNodeRole>(Role);
+	if (!mapGlobalNodeRoles.count(Role.NodeRoleID))
 	{
-		
+		completeNodeRoles.push_back(Role);
+		std::pair<int, std::shared_ptr<CNodeRole>> temp = std::make_pair(Role.NodeRoleID, nodeRole);
+		mapGlobalNodeRoles.insert(temp);
+		mapGlobalNodeRolesByRole[Role.NodeRole].insert(temp);
+		if (Role.TradePairID > 0)
+			mapGlobalNodeRolesByTradePairID[Role.TradePairID].insert(temp);
+		if (Role.Char != NULL)
+			mapGlobalNodeRolesByChar[Role.Char].insert(temp);
+		if (Role.NodePubKey == MNPubKey)
+		{
+			mapLocalNodeRoles[Role.NodeRole].insert(temp);
+			ProcessNewRole(Role);
+		}
+	}
+	else
+	{
+		auto& a = mapGlobalNodeRoles[Role.NodeRoleID];
+		if (a->LastUpdateTime < Role.LastUpdateTime)
+		{
+			*a = *nodeRole;
+			std::vector<CNodeRole>::reverse_iterator it = completeNodeRoles.rbegin();
+			while (it != completeNodeRoles.rend())
+			{
+				if (it->NodeRoleID == Role.NodeRoleID)
+				{
+					*it = Role;
+					break;
+				}
+			}
+		}
 	}
 
-	if (Role.NodePubKey == MNPubKey)
+	return true;
+}
+
+bool CActiveNodeRole::ProcessNewRole(CNodeRole &Role)
+{
+	if (Role.TradePairID > 0)
 	{
-		CTradePair tp = tradePairManager.GetTradePair(Role.TradePairID);
-		if (Role.NodeRole == INFINIDEX_BALANCE_INFO)
-			userBalanceManager.AssignUserBalanceRole(Role.Char);
-		else if (Role.NodeRole == INFINIDEX_BID_BOOK_BROADCAST)
+		if (Role.NodeRole == INFINIDEX_BID_BOOK_BROADCAST)
 		{
-			orderBookManager.InitTradePair(tp.nTradePairID);
-			userTradeManager.AssignBidBroadcastRole(tp.nTradePairID);
-			//request complete data from other node		
+			orderBookManager.InitTradePair(Role.TradePairID);
+			userTradeManager.AssignBidBroadcastRole(Role.TradePairID);
 		}
 		else if (Role.NodeRole == INFINIDEX_ASK_BOOK_BROADCAST)
 		{
-			orderBookManager.InitTradePair(tp.nTradePairID);
-			userTradeManager.AssignAskBroadcastRole(tp.nTradePairID);
-			//request complete data from other node		
+			orderBookManager.InitTradePair(Role.TradePairID);
+			userTradeManager.AssignAskBroadcastRole(Role.TradePairID);
 		}
 		else if (Role.NodeRole == INFINIDEX_USER_HISTORY_PROVIDER)
-			userTradeManager.AssignUserHistoryProviderRole(tp.nTradePairID);
+			userTradeManager.AssignUserHistoryProviderRole(Role.TradePairID);
 		else if (Role.NodeRole == INFINIDEX_MARKET_HISTORY_PROVIDER)
 		{
-			userTradeManager.AssignMarketHistoryProviderRole(tp.nTradePairID);
-			userTradeHistoryManager.AssignMarketTradeHistoryBroadcastRole(tp.nTradePairID);
+			userTradeManager.AssignMarketHistoryProviderRole(Role.TradePairID);
+			userTradeHistoryManager.AssignMarketTradeHistoryBroadcastRole(Role.TradePairID);
 		}
 		else if (Role.NodeRole == INFINIDEX_CHART_DATA_PROVIDER)
-			userTradeManager.AssignChartDataProviderRole(tp.nTradePairID);
+			userTradeManager.AssignChartDataProviderRole(Role.TradePairID);
 		else if (Role.NodeRole == INFINIDEX_TRADE_PROCESSOR)
-			userTradeManager.AssignMatchUserTradeRole(tp.nTradePairID);
+			userTradeManager.AssignMatchUserTradeRole(Role.TradePairID);
+	}
+	if (Role.Char != NULL)
+	{
+		if (Role.NodeRole == INFINIDEX_BALANCE_INFO)
+			userBalanceManager.AssignUserBalanceRole(Role.Char);
+		else if (Role.NodeRole == INFINIDEX_MARKET_OVERVIEW_PROCESSOR)
+		{
+
+		}
+		else if (Role.NodeRole == INFINIDEX_MARKET_OVERVIEW_PROVIDER)
+		{
+
+		}
 		else if (Role.NodeRole == INFINIDEX_WALLET_ADDRESS)
 			userWalletAddressManager.AssignDepositInfoRole(Role.CoinID);
 		else if (Role.NodeRole == INFINIDEX_WITHDRAW_INFO)
@@ -146,29 +189,8 @@ bool CActiveNodeRole::InputNodeRole(CNodeRole Role)
 			userWithdrawManager.AssignWithdrawProcessorRole(Role.CoinID);
 		}
 		else if (Role.NodeRole == INFINIDEX_DEPOSIT_INFO)
-			userDepositManager.AssignDepositInfoRole(tp.nTradePairID);
-		else if (Role.NodeRole == INFINIDEX_TRUSTED_NODE)
-		{
-
-		}
-		else if (Role.NodeRole == INFINIDEX_VERIFICATOR)
-		{
-
-		}
-		else if (Role.NodeRole == INFINIDEX_BACKUP_NODE)
-		{
-
-		}
-		else if (Role.NodeRole == INFINIDEX_MARKET_OVERVIEW_PROCESSOR)
-		{
-
-		}
-		else if (Role.NodeRole == INFINIDEX_MARKET_OVERVIEW_PROVIDER)
-		{
-
-		}
-	}
-
+			userDepositManager.AssignDepositInfoRole(Role.CoinID);
+	}	
 	return true;
 }
 

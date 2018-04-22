@@ -35,11 +35,13 @@ class CNodeRole;
 class CNodeRoleManager;
 class CPendingProcess;
 
-extern std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapGlobalNodeRolesByRole;
-extern std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapNodeRoleByRole;
-extern std::map<int, CNodeRole> mapGlobalNodeRolesByID;
-extern std::map<int, std::vector<CNodeRole>> mapNodeRoleByID;
+typedef std::map<int, std::shared_ptr<CNodeRole>> NodeRoleWithID;
+extern std::map<int, NodeRoleWithID> mapGlobalNodeRolesByRole;
+extern std::map<int, NodeRoleWithID> mapGlobalNodeRolesByTradePairID;
+extern std::map<char, NodeRoleWithID> mapGlobalNodeRolesByChar;
+extern NodeRoleWithID mapGlobalNodeRoles;
 extern std::vector<CNodeRole> completeNodeRoles;
+extern std::map<int, NodeRoleWithID> mapLocalNodeRoles;
 extern CNodeRoleManager nodeRoleManager;
 extern std::string DEXKey;
 extern std::string dexMasterPrivKey;

@@ -68,8 +68,8 @@ void CNodeSetupManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CD
 				else if (it2->first < nodeSetup.LastTradePairID)
 					nodeSetup.TradePairSyncInProgress = true;
 
-				std::map<int, CNodeRole>::reverse_iterator it3 = mapGlobalNodeRolesByID.rbegin();
-				if (it3 == mapGlobalNodeRolesByID.rend())
+				NodeRoleWithID::reverse_iterator it3 = mapGlobalNodeRoles.rbegin();
+				if (it3 == mapGlobalNodeRoles.rend())
 					nodeSetup.NodeRoleSyncInProgress = true;
 				else if (it3->first < nodeSetup.LastNodeRoleID)
 					nodeSetup.NodeRoleSyncInProgress = true;

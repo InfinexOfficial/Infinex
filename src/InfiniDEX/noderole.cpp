@@ -13,10 +13,11 @@ class CNodeRole;
 class CNodeRoleManager;
 class CPendingProcess;
 
-std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapGlobalNodeRolesByRole;
-std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapNodeRoleByRole;
-std::map<int, CNodeRole> mapGlobalNodeRolesByID;
-std::map<int, std::vector<CNodeRole>> mapNodeRoleByID;
+std::map<int, NodeRoleWithID> mapGlobalNodeRolesByRole;
+std::map<int, NodeRoleWithID> mapGlobalNodeRolesByTradePairID;
+std::map<char, NodeRoleWithID> mapGlobalNodeRolesByChar;
+NodeRoleWithID mapGlobalNodeRoles;
+std::map<int, NodeRoleWithID> mapLocalNodeRoles;
 std::vector<CNodeRole> completeNodeRoles;
 CNodeRoleManager nodeRoleManager;
 std::string MNPubKey;
