@@ -20,15 +20,12 @@ enum infinidex_node_role_enum {
 	INFINIDEX_CHART_DATA_PROVIDER = 6,
 	INFINIDEX_TRADE_PROCESSOR = 7,
 	INFINIDEX_WALLET_ADDRESS = 8,
-	INFINIDEX_BALANCE_INFO = 9,
-	INFINIDEX_WITHDRAW_INFO = 10,
-	INFINIDEX_WITHDRAW_PROCESSOR = 11,
-	INFINIDEX_DEPOSIT_INFO = 12,
-	INFINIDEX_TRUSTED_NODE = 13,
-	INFINIDEX_VERIFICATOR = 14,
-	INFINIDEX_BACKUP_NODE = 15,
-	INFINIDEX_MARKET_OVERVIEW_PROCESSOR = 16,
-	INFINIDEX_MARKET_OVERVIEW_PROVIDER = 17
+	INFINIDEX_BALANCE_HANDLER = 9,
+	INFINIDEX_WITHDRAW_INFO = 10,	
+	INFINIDEX_DEPOSIT_INFO = 11,
+	INFINIDEX_TRUSTED_NODE = 12,
+	INFINIDEX_MARKET_OVERVIEW_PROCESSOR = 13,
+	INFINIDEX_MARKET_OVERVIEW_PROVIDER = 14
 };
 
 class CNodeRole;
@@ -36,9 +33,9 @@ class CNodeRoleManager;
 class CPendingProcess;
 
 typedef std::map<int, std::shared_ptr<CNodeRole>> NodeRoleWithID;
-extern std::map<int, NodeRoleWithID> mapGlobalNodeRolesByRole;
-extern std::map<int, NodeRoleWithID> mapGlobalNodeRolesByTradePairID;
-extern std::map<char, NodeRoleWithID> mapGlobalNodeRolesByChar;
+typedef std::map<int, NodeRoleWithID> mapGlobalNodeRolesByRole;
+extern std::map<int, mapGlobalNodeRolesByRole> mapGlobalNodeRolesByTradePairID;
+extern std::map<char, mapGlobalNodeRolesByRole> mapGlobalNodeRolesByChar;
 extern NodeRoleWithID mapGlobalNodeRoles;
 extern std::vector<CNodeRole> completeNodeRoles;
 extern std::map<int, NodeRoleWithID> mapLocalNodeRoles;
@@ -75,24 +72,10 @@ public:
 	std::string NodePubKey;
 	uint64_t StartTime;
 	uint64_t EndTime;
-	bool IsValid;
+	bool IsActive;
+	bool IsBackup;
 	int ToReplaceNodeRoleID;
 	uint64_t LastUpdateTime;
-
-	CNodeRole(int NodeRoleID, int TradePairID, int CoinID, char Char, int NodeRole, std::string NodeIP, std::string NodePubKey, uint64_t StartTime, uint64_t EndTime, bool IsValid, int ToReplaceNodeRoleID, uint64_t LastUpdateTime):
-		NodeRoleID(NodeRoleID),
-		TradePairID(TradePairID),
-		CoinID(CoinID),
-		Char(Char),
-		NodeRole(NodeRole),
-		NodeIP(NodeIP),
-		NodePubKey(NodePubKey),
-		StartTime(StartTime),
-		EndTime(EndTime),
-		IsValid(IsValid),
-		ToReplaceNodeRoleID(ToReplaceNodeRoleID),
-		LastUpdateTime(LastUpdateTime)
-	{}
 
 	CNodeRole() :
 		NodeRoleID(0),
@@ -104,7 +87,8 @@ public:
 		NodePubKey(""),
 		StartTime(0),
 		EndTime(0),
-		IsValid(false),
+		IsActive(false),
+		IsBackup(false),
 		ToReplaceNodeRoleID(0),
 		LastUpdateTime(0)
 	{}
@@ -119,7 +103,10 @@ public:
 		READWRITE(NodeRole);
 		READWRITE(NodeIP);
 		READWRITE(NodePubKey);
-		READWRITE(IsValid);
+		READWRITE(StartTime);
+		READWRITE(EndTime);
+		READWRITE(IsActive);
+		READWRITE(IsBackup);
 		READWRITE(ToReplaceNodeRoleID);
 		READWRITE(LastUpdateTime);
 		READWRITE(vchSig);

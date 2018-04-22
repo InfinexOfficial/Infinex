@@ -300,6 +300,7 @@ private:
 	std::vector<unsigned char> mnBalanceVchSig;
 
 public:
+	int nCancelTradeID;
 	int nUserTradeID;
 	int nPairTradeID;
 	int nTradePairID;
@@ -316,6 +317,7 @@ public:
 	uint64_t nLastUpdateTime;
 
 	CCancelTrade() :
+		nCancelTradeID(0),
 		nUserTradeID(0),
 		nPairTradeID(0),
 		nTradePairID(0),
@@ -336,6 +338,7 @@ public:
 	template <typename Stream, typename Operation>
 	inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) 
 	{
+		READWRITE(nCancelTradeID);
 		READWRITE(nUserTradeID);
 		READWRITE(nPairTradeID);
 		READWRITE(nTradePairID);

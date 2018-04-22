@@ -12,9 +12,9 @@
 #include "utilstrencodings.h"
 
 class CUserBalance;
-class CUserBalanceSetting;
 class CUserBalanceManager;
-class CGlobalUserSetting;
+class CUserBalanceSettingByChar;
+class CUserBalanceSettingByCoin;
 
 typedef std::map<std::string, std::shared_ptr<CUserBalance>> mapUserBalanceWithPubKey;
 typedef std::map<int, std::shared_ptr<CUserBalance>> mapUserBalanceWithCoinID;
@@ -22,9 +22,10 @@ extern std::map<std::string, mapUserBalanceWithCoinID> mapUserBalanceByPubKey;
 extern std::map<int, mapUserBalanceWithPubKey> mapUserBalanceByCoinID;
 extern std::map<std::string, mapUserBalanceWithCoinID> mapVerifiedUserBalanceByPubKey;
 extern std::map<int, mapUserBalanceWithPubKey> mapVerifiedUserBalanceByCoinID;
-extern std::map<int, CUserBalanceSetting> mapUserBalanceSetting;
+extern std::map<int, CUserBalanceSettingByCoin> mapUserBalanceSettingByCoinID;
+extern std::map<char, CUserBalanceSettingByChar> mapUserBalanceSettingByChar;
 extern CUserBalanceManager userBalanceManager;
-extern std::map<char, CGlobalUserSetting> mapGlobalUserSetting;
+
 
 enum userbalance_to_exchange_enum_t {
 	USER_ACCOUNT_NOT_FOUND = -1,
@@ -40,7 +41,7 @@ enum exchange_to_userbalance_enum_t {
 	EXCHANGE_INVALID_NODE = 2
 };
 
-class CGlobalUserSetting
+class CUserBalanceSettingByChar
 {
 public:
 	char nChar;
@@ -49,7 +50,7 @@ public:
 	uint64_t nStartTime;
 	uint64_t nEndTime;
 
-	CGlobalUserSetting(char nChar) :
+	CUserBalanceSettingByChar(char nChar) :
 		nChar(nChar),
 		nInChargeUserBalance(false),
 		nInChargeBackup(false),
@@ -57,7 +58,7 @@ public:
 		nEndTime(0)
 	{}
 
-	CGlobalUserSetting() :
+	CUserBalanceSettingByChar() :
 		nChar(),
 		nInChargeUserBalance(false),
 		nInChargeBackup(false),
@@ -66,26 +67,26 @@ public:
 	{}
 };
 
-class CUserBalanceSetting
+class CUserBalanceSettingByCoin
 {
 public:
 	int nCoinID;
 	bool nIsInChargeOfUserBalance;
 	bool nVerifyUserBalance;
 
-	CUserBalanceSetting(int nCoinID, bool nIsInChargeOfUserBalance, bool nVerifyUserBalance) :
+	CUserBalanceSettingByCoin(int nCoinID, bool nIsInChargeOfUserBalance, bool nVerifyUserBalance) :
 		nCoinID(nCoinID),
 		nIsInChargeOfUserBalance(nIsInChargeOfUserBalance),
 		nVerifyUserBalance(nVerifyUserBalance)
 	{}
 
-	CUserBalanceSetting(int nCoinID) :
+	CUserBalanceSettingByCoin(int nCoinID) :
 		nCoinID(nCoinID),
 		nIsInChargeOfUserBalance(false),
 		nVerifyUserBalance(false)
 	{}
 
-	CUserBalanceSetting() :
+	CUserBalanceSettingByCoin() :
 		nCoinID(0),
 		nIsInChargeOfUserBalance(false),
 		nVerifyUserBalance(false)
@@ -108,9 +109,9 @@ public:
 	int64_t nTotalBalance;
 	int nLastDepositID;
 	int nLastWithdrawID;
-	int nLastActualTradeID;
 	int nLastUserTradeID;
-	std::string nMNPubKey;
+	int nLastActualTradeID;
+	int nLastCancelTradeID;
 	uint64_t nLastUpdateTime;
 
 	CUserBalance(std::string nUserPubKey, int nCoinID) :
@@ -124,9 +125,9 @@ public:
 		nTotalBalance(0),
 		nLastDepositID(0),
 		nLastWithdrawID(0),
-		nLastActualTradeID(0),
 		nLastUserTradeID(0),
-		nMNPubKey(MNPubKey),
+		nLastActualTradeID(0),
+		nLastCancelTradeID(0),
 		nLastUpdateTime(0)
 	{}
 
@@ -141,9 +142,9 @@ public:
 		nTotalBalance(0),
 		nLastDepositID(0),
 		nLastWithdrawID(0),
-		nLastActualTradeID(0),
 		nLastUserTradeID(0),
-		nMNPubKey(""),
+		nLastActualTradeID(0),
+		nLastCancelTradeID(0),
 		nLastUpdateTime(0)
 	{}
 
@@ -161,8 +162,9 @@ public:
 		READWRITE(nTotalBalance);
 		READWRITE(nLastDepositID);
 		READWRITE(nLastWithdrawID);
+		READWRITE(nLastUserTradeID);
 		READWRITE(nLastActualTradeID);
-		READWRITE(nMNPubKey);
+		READWRITE(nLastCancelTradeID);
 		READWRITE(nLastUpdateTime);
 		READWRITE(vchSig);
 	}
@@ -180,13 +182,12 @@ private:
 public:
 	CUserBalanceManager() {}
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
-	void InputUserBalance(CUserBalance userBalance);
-	void InputVerifiedUserBalance(CConnman& connman, CUserBalance userBalance);
+	void InputUserBalance(CUserBalance& userBalance);
+	void InputVerifiedUserBalance(CUserBalance& userBalance, CConnman& connman);
 	void InitCoin(int CoinID);
-	void InitGlobalUserSetting(char Char);
-	bool AssignUserBalanceRole(char Char, bool toAssign = true);
-	bool AssignBackupRole(char Char, bool toAssign = true);
-	bool UpdateUserBalance(CUserBalance UserBalance);
+	void InitChar(char Char);
+	bool AssignUserBalanceRole(char Char, uint64_t startTime, bool toAssign = true);
+	bool AssignBackupRole(char Char, uint64_t startTime, bool toAssign = true);
 	void InitUserBalance(int CoinID, std::string UserPubKey, std::shared_ptr<CUserBalance>& UserBalance);
 	int GetLastDepositID(int CoinID, std::string UserPubKey);
 	bool InChargeOfUserBalance(std::string pubKey);

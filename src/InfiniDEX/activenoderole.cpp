@@ -170,8 +170,13 @@ bool CActiveNodeRole::ProcessNewRole(CNodeRole &Role)
 	}
 	if (Role.Char != NULL)
 	{
-		if (Role.NodeRole == INFINIDEX_BALANCE_INFO)
-			userBalanceManager.AssignUserBalanceRole(Role.Char);
+		if (Role.NodeRole == INFINIDEX_BALANCE_HANDLER)
+		{
+			if (!Role.IsBackup)
+				userBalanceManager.AssignUserBalanceRole(Role.Char);
+			else
+				userBalanceManager.AssignBackupRole(Role.Char);
+		}
 		else if (Role.NodeRole == INFINIDEX_MARKET_OVERVIEW_PROCESSOR)
 		{
 
@@ -184,13 +189,9 @@ bool CActiveNodeRole::ProcessNewRole(CNodeRole &Role)
 			userWalletAddressManager.AssignDepositInfoRole(Role.CoinID);
 		else if (Role.NodeRole == INFINIDEX_WITHDRAW_INFO)
 			userWithdrawManager.AssignWithdrawInfoRole(Role.CoinID);
-		else if (Role.NodeRole == INFINIDEX_WITHDRAW_PROCESSOR)
-		{
-			userWithdrawManager.AssignWithdrawProcessorRole(Role.CoinID);
-		}
 		else if (Role.NodeRole == INFINIDEX_DEPOSIT_INFO)
 			userDepositManager.AssignDepositInfoRole(Role.CoinID);
-	}	
+	}
 	return true;
 }
 
