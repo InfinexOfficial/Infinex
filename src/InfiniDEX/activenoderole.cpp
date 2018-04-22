@@ -58,6 +58,12 @@ void CActiveNodeRole::ProcessMessage(CNode* pfrom, std::string& strCommand, CDat
 		if (InputNodeRole(incomingNodeRole))
 			incomingNodeRole.Broadcast(connman);
 	}
+	else if (strCommand == NetMsgType::DEXINITIALSYNC)
+	{
+		connman.PushMessage(pfrom, NetMsgType::DEXCOINSINFO, completeCoinInfo);
+		connman.PushMessage(pfrom, NetMsgType::DEXTRADEPAIRS, completeTradePair);
+		connman.PushMessage(pfrom, NetMsgType::DEXNODEROLES, completeNodeRoles);
+	}
 }
 
 void CActiveNodeRole::BroadcastToConnectedNode(CConnman& connman, std::vector<CNodeRole> nodeRoles)

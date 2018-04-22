@@ -39,6 +39,7 @@ extern std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapGlobalNodeR
 extern std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapNodeRoleByRole;
 extern std::map<int, std::vector<CNodeRole>> mapGlobalNodeRolesByID;
 extern std::map<int, std::vector<CNodeRole>> mapNodeRoleByID;
+extern std::vector<CNodeRole> completeNodeRoles;
 extern CNodeRoleManager nodeRoleManager;
 extern std::string DEXKey;
 extern std::string dexMasterPrivKey;
@@ -130,9 +131,10 @@ public:
 class CNodeRoleManager
 {
 public:
+	void InitialInit();
 	bool SetDEXPrivKey(std::string dexPrivKey);
 	bool IsValidInChargeOfUserTrade(std::string MNPubkey, uint64_t time, int TradePairID);
-	bool IsValidInChargeOfUserBalance(std::string MNPubKey, uint64_t time, std::string UserPubKey);	
+	bool IsValidInChargeOfUserBalance(std::string MNPubKey, uint64_t time, std::string UserPubKey);
 };
 
 #endif

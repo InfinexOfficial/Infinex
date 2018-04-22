@@ -2136,7 +2136,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         }
     }
 
-    else if (strCommand == NetMsgType::DEXCOMPLETECOININFO)
+    else if (strCommand == NetMsgType::DEXCOINSINFO)
     {
         coinInfoManager.ProcessMessage(pfrom, strCommand, vRecv, connman);
     }

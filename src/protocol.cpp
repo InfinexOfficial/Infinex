@@ -61,6 +61,7 @@ const char *MNGOVERNANCEOBJECT="govobj";
 const char *MNGOVERNANCEOBJECTVOTE="govobjvote";
 const char *MNVERIFY="mnv";
 // InfiniDEX message types
+const char *DEXINITIALSYNC="dexinitialsync";
 const char *DEXNODEROLE="dexnoderole";
 const char *DEXNODEROLES="dexnoderoles";
 const char *DEXCOININFO="dexcoininfo";
@@ -87,10 +88,8 @@ const char *DEXMARKETTRADEHISTORY="dexmarkettradehistory";
 const char *DEXUSERWALLETADDRESS="dexuserwalletaddress";
 const char *DEXUSERWITHDRAW="dexuserwithdraw";
 const char *DEXGETCOININFO="dexgetcoininfo";
-const char *DEXCOMPLETECOININFO="dexcompletecoininfo";
 const char *DEXGETUSERWITHDRAW="dexgetuserwithdraw";
 const char *DEXGETCHARTDATA="dexgetchartdata";
-const char *DEXCOMPLETECHARTDATA="dexcompletechartdata";
 };
 
 static const char* ppszTypeName[] =
@@ -167,6 +166,7 @@ const static std::string allNetMessageTypes[] = {
     NetMsgType::MNGOVERNANCEOBJECTVOTE,
     NetMsgType::MNVERIFY,
     // InfiniDEX message types
+    NetMsgType::DEXINITIALSYNC,
     NetMsgType::DEXNODEROLE,
     NetMsgType::DEXNODEROLES,
     NetMsgType::DEXUSERCONNECTION,
@@ -193,10 +193,8 @@ const static std::string allNetMessageTypes[] = {
     NetMsgType::DEXUSERWALLETADDRESS,
     NetMsgType::DEXUSERWITHDRAW,
     NetMsgType::DEXGETCOININFO,
-    NetMsgType::DEXCOMPLETECOININFO,
     NetMsgType::DEXGETUSERWITHDRAW,
     NetMsgType::DEXGETCHARTDATA,
-    NetMsgType::DEXCOMPLETECHARTDATA,
 };
 const static std::vector<std::string> allNetMessageTypesVec(allNetMessageTypes, allNetMessageTypes+ARRAYLEN(allNetMessageTypes));
 

@@ -2,6 +2,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "masternodeman.h"
 #include "noderole.h"
 #include "messagesigner.h"
 #include "net_processing.h"
@@ -16,11 +17,29 @@ std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapGlobalNodeRolesByR
 std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapNodeRoleByRole;
 std::map<int, std::vector<CNodeRole>> mapGlobalNodeRolesByID;
 std::map<int, std::vector<CNodeRole>> mapNodeRoleByID;
+std::vector<CNodeRole> completeNodeRoles;
 CNodeRoleManager nodeRoleManager;
 std::string MNPubKey;
 std::string DEXKey = "028afd3503f2aaa0898b853e1b28cdcb5fd422b5dc6426c92cf2b14c4b4ebeb969";
 std::string dexMasterPrivKey;
 CPendingProcess pendingProcessStatus;
+
+void CNodeRoleManager::InitialInit()
+{
+	//to update
+	auto a = mnodeman.GetFullMasternodeMap();
+	int counter = 0;
+	for (auto b : a)
+	{
+		if (b.second.nProtocolVersion >= INFINIDEX_MIN_VERSION)
+		{
+			if (++counter == 5)
+				return;
+			CNode* pnode = g_connman->ConnectNode(CAddress(b.second.addr, NODE_NETWORK), NULL);
+			g_connman->PushMessage(pnode, NetMsgType::DEXINITIALSYNC);
+		}
+	}
+}
 
 void CNodeRole::Broadcast(CConnman& connman)
 {

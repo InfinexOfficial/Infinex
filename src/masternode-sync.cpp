@@ -12,6 +12,7 @@
 #include "masternode-sync.h"
 #include "masternodeman.h"
 #include "netfulfilledman.h"
+#include "InfiniDEX/noderole.h"
 #include "spork.h"
 #include "util.h"
 
@@ -49,8 +50,9 @@ std::string CMasternodeSync::GetAssetName()
         case(MASTERNODE_SYNC_LIST):         return "MASTERNODE_SYNC_LIST";
         case(MASTERNODE_SYNC_MNW):          return "MASTERNODE_SYNC_MNW";
         case(MASTERNODE_SYNC_GOVERNANCE):   return "MASTERNODE_SYNC_GOVERNANCE";
+        case(MASTERNODE_SYNC_INFINIDEX):    return "MASTERNODE_SYNC_INFINIDEX";
         case(MASTERNODE_SYNC_FAILED):       return "MASTERNODE_SYNC_FAILED";
-        case MASTERNODE_SYNC_FINISHED:      return "MASTERNODE_SYNC_FINISHED";
+        case(MASTERNODE_SYNC_FINISHED):     return "MASTERNODE_SYNC_FINISHED";
         default:                            return "UNKNOWN";
     }
 }
@@ -85,7 +87,7 @@ void CMasternodeSync::SwitchToNextAsset(CConnman& connman)
             break;
         case(MASTERNODE_SYNC_GOVERNANCE):
             LogPrintf("CMasternodeSync::SwitchToNextAsset -- Completed %s in %llds\n", GetAssetName(), GetTime() - nTimeAssetSyncStarted);
-            nRequestedMasternodeAssets = MASTERNODE_SYNC_FINISHED;
+            nRequestedMasternodeAssets = MASTERNODE_SYNC_INFINIDEX;
             uiInterface.NotifyAdditionalDataSyncProgressChanged(1);
             //try to activate our masternode if possible
             activeMasternode.ManageState(connman);
@@ -97,8 +99,13 @@ void CMasternodeSync::SwitchToNextAsset(CConnman& connman)
             connman.ForEachNode(CConnman::AllNodes, [](CNode* pnode) {
                 netfulfilledman.AddFulfilledRequest(pnode->addr, "full-sync");
             });
-            LogPrintf("CMasternodeSync::SwitchToNextAsset -- Sync has finished\n");
+            LogPrintf("CMasternodeSync::SwitchToNextAsset -- Starting %s\n", GetAssetName());
 
+            break;
+        case(MASTERNODE_SYNC_INFINIDEX):
+            LogPrintf("CMasternodeSync::SwitchToNextAsset -- Completed %s in %llds\n", GetAssetName(), GetTime() - nTimeAssetSyncStarted);
+            nRequestedMasternodeAssets = MASTERNODE_SYNC_FINISHED;
+            LogPrintf("CMasternodeSync::SwitchToNextAsset -- Sync has finished\n");
             break;
     }
     nRequestedMasternodeAttempt = 0;
@@ -114,6 +121,7 @@ std::string CMasternodeSync::GetSyncStatus()
         case MASTERNODE_SYNC_LIST:          return _("Synchronizing masternodes...");
         case MASTERNODE_SYNC_MNW:           return _("Synchronizing masternode payments...");
         case MASTERNODE_SYNC_GOVERNANCE:    return _("Synchronizing governance objects...");
+        case MASTERNODE_SYNC_INFINIDEX:     return _("Synchronizing InfiniDEX objects...");
         case MASTERNODE_SYNC_FAILED:        return _("Synchronization failed");
         case MASTERNODE_SYNC_FINISHED:      return _("Synchronization finished");
         default:                            return "";
@@ -250,6 +258,12 @@ void CMasternodeSync::ProcessTick(CConnman& connman)
             }
 
             // INITIAL TIMEOUT
+
+            //to update
+            if(nRequestedMasternodeAssets == MASTERNODE_SYNC_INFINIDEX) {
+                nodeRoleManager.InitialInit();
+                SwitchToNextAsset(connman);
+            }
 
             if(nRequestedMasternodeAssets == MASTERNODE_SYNC_WAITING) {
                 if(GetTime() - nTimeLastBumped > MASTERNODE_SYNC_TIMEOUT_SECONDS) {
