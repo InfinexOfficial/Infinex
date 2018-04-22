@@ -11,6 +11,7 @@
 #include "messagesigner.h"
 #include "net_processing.h"
 #include "noderole.h"
+#include "nodesetup.h"
 #include "userconnection.h"
 #include <boost/lexical_cast.hpp>
 
@@ -29,7 +30,7 @@ void CCoinInfoManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDa
 		std::vector<CCoinInfo> incomings;
 		vRecv >> incomings;
 
-		bool toBroadcast = false;
+		std::vector<CCoinInfo> toBroadcast;
 		for (auto incoming : incomings)
 		{
 			if (!incoming.VerifySignature()) {
@@ -38,12 +39,29 @@ void CCoinInfoManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDa
 				return;
 			}
 
-			if (InputCoinInfo(incoming))
-				toBroadcast = true;
+			if (InputCoinInfo(incoming) && !nodeSetup.CoinSyncInProgress)
+				toBroadcast.push_back(incoming);
 		}
 
-		if (toBroadcast)
-			BroadcastCoinsInfoToConnectedNode(connman, incomings);
+		if (toBroadcast.size() > 0)
+			BroadcastCoinsInfoToConnectedNode(connman, toBroadcast);
+
+		if (nodeSetup.CoinSyncInProgress)
+		{
+			bool stillSync = false;
+
+			if (completeCoinInfo.size() < nodeSetup.TotalCoinCount)
+				stillSync = true;
+
+			std::map<int, std::shared_ptr<CCoinInfo>>::reverse_iterator it = mapCompleteCoinInfoWithID.rbegin();
+			if (it == mapCompleteCoinInfoWithID.rend())
+				stillSync = true;
+			else if (it->first < nodeSetup.LastCoinID)
+				stillSync = true;
+
+			if (!stillSync)
+				nodeSetup.CoinSyncInProgress = false;
+		}
 	}
 	else if (strCommand == NetMsgType::DEXCOININFO)
 	{

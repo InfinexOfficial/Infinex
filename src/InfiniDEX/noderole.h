@@ -37,13 +37,13 @@ class CPendingProcess;
 
 extern std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapGlobalNodeRolesByRole;
 extern std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapNodeRoleByRole;
-extern std::map<int, std::vector<CNodeRole>> mapGlobalNodeRolesByID;
+extern std::map<int, CNodeRole> mapGlobalNodeRolesByID;
 extern std::map<int, std::vector<CNodeRole>> mapNodeRoleByID;
 extern std::vector<CNodeRole> completeNodeRoles;
 extern CNodeRoleManager nodeRoleManager;
 extern std::string DEXKey;
 extern std::string dexMasterPrivKey;
-extern std::string MNPubKey; //temp
+extern std::string MNPubKey;
 extern CPendingProcess pendingProcessStatus;
 
 class CPendingProcess

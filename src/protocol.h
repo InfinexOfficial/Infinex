@@ -246,6 +246,7 @@ extern const char *MNGOVERNANCEOBJECTVOTE;
 extern const char *MNVERIFY;
 //InfiniDEX message types
 extern const char *DEXINITIALSYNC;
+extern const char *DEXNODESETUP;
 extern const char *DEXNODEROLE;
 extern const char *DEXNODEROLES;
 extern const char *DEXGETNODEROLES;

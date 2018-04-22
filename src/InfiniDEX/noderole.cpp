@@ -15,7 +15,7 @@ class CPendingProcess;
 
 std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapGlobalNodeRolesByRole;
 std::map<infinidex_node_role_enum, std::vector<CNodeRole>> mapNodeRoleByRole;
-std::map<int, std::vector<CNodeRole>> mapGlobalNodeRolesByID;
+std::map<int, CNodeRole> mapGlobalNodeRolesByID;
 std::map<int, std::vector<CNodeRole>> mapNodeRoleByID;
 std::vector<CNodeRole> completeNodeRoles;
 CNodeRoleManager nodeRoleManager;

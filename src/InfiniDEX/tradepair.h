@@ -111,12 +111,12 @@ public:
 	}
 
 	bool VerifySignature();
+	void BroadcastToConnectedNode(CConnman& connman);
 };
 
 class CTradePairManager
 {
 public:
-	CTradePairManager() {}
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void RequestTradePairInfoFromNode(int TradePairID);
 	void BroadcastToConnectedNode(CConnman& connman, std::vector<CTradePair> tradePairs);

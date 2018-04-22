@@ -7,33 +7,87 @@
 #include "messagesigner.h"
 #include "net_processing.h"
 #include "noderole.h"
+#include "nodesetup.h"
 #include "userconnection.h"
 #include <boost/lexical_cast.hpp>
 
 class CTradePair;
 class CTradePairManager;
 
-std::map<int, CTradePair> mapCompleteTradePair;
-extern std::vector<CTradePair> completeTradePair;
+std::map<int, CTradePair> mapTradePair;
+std::vector<CTradePair> completeTradePair;
 CTradePairManager tradePairManager;
 
 void CTradePairManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman)
 {
-	if (strCommand == NetMsgType::DEXTRADEPAIR) 
+	if (strCommand == NetMsgType::DEXTRADEPAIRS)
 	{
-		std::vector<CTradePair> incomingTradePair;
-		vRecv >> incomingTradePair;
+		std::vector<CTradePair> incomings;
+		vRecv >> incomings;
 
-		for (auto tradePair : incomingTradePair)
+		std::vector<CTradePair> toBroadcast;
+		for (auto incoming : incomings)
 		{
-			if (!tradePair.VerifySignature()) {
+			if (!incoming.VerifySignature())
+			{
 				LogPrintf("CTradePairManager::ProcessMessage -- invalid signature\n");
 				Misbehaving(pfrom->GetId(), 100);
 				return;
 			}
-			InputTradePair(tradePair);
+			if (InputTradePair(incoming) && !nodeSetup.TradePairSyncInProgress)
+				toBroadcast.push_back(incoming);
 		}
-		BroadcastToConnectedNode(connman, incomingTradePair);
+		if (toBroadcast.size() > 0)
+			BroadcastToConnectedNode(connman, toBroadcast);
+
+		if (nodeSetup.TradePairSyncInProgress)
+		{
+			bool stillSync = false;
+
+			if (completeTradePair.size() < nodeSetup.TotalTradePairCount)
+				stillSync = true;
+
+			std::map<int, CTradePair>::reverse_iterator it = mapTradePair.rbegin();
+			if (it == mapTradePair.rend())
+				stillSync = true;
+			else if (it->first < nodeSetup.LastTradePairID)
+				stillSync = true;
+
+			if (!stillSync)
+				nodeSetup.TradePairSyncInProgress = false;
+		}
+	}
+	else if (strCommand == NetMsgType::DEXTRADEPAIR)
+	{
+		CTradePair incoming;
+		vRecv >> incoming;
+
+		if (!incoming.VerifySignature())
+		{
+			LogPrintf("CTradePairManager::ProcessMessage -- invalid signature\n");
+			Misbehaving(pfrom->GetId(), 100);
+			return;
+
+			if (InputTradePair(incoming))
+				incoming.BroadcastToConnectedNode(connman);
+		}
+	}
+}
+
+void CTradePair::BroadcastToConnectedNode(CConnman& connman)
+{
+	for (auto a : mapMNConnection)
+	{
+		if (!a.second.first->fDisconnect)
+			connman.PushMessage(a.second.first, NetMsgType::DEXTRADEPAIR, *this);
+	}
+	for (auto a : mapUserConnections)
+	{
+		for (auto b : a.second)
+		{
+			if (!b.first->fDisconnect)
+				connman.PushMessage(b.first, NetMsgType::DEXTRADEPAIR, *this);
+		}
 	}
 }
 
@@ -42,14 +96,14 @@ void CTradePairManager::BroadcastToConnectedNode(CConnman& connman, std::vector<
 	for (auto a : mapMNConnection)
 	{
 		if (!a.second.first->fDisconnect)
-			connman.PushMessage(a.second.first, NetMsgType::DEXTRADEPAIR, tradePairs);
+			connman.PushMessage(a.second.first, NetMsgType::DEXTRADEPAIRS, tradePairs);
 	}
 	for (auto a : mapUserConnections)
 	{
 		for (auto b : a.second)
 		{
 			if (!b.first->fDisconnect)
-				connman.PushMessage(b.first, NetMsgType::DEXTRADEPAIR, tradePairs);
+				connman.PushMessage(b.first, NetMsgType::DEXTRADEPAIRS, tradePairs);
 		}
 	}
 }
@@ -98,10 +152,10 @@ bool CTradePairManager::InputTradePair(CTradePair &tradePair)
 		return false;
 	}
 
-	if (!mapCompleteTradePair.count(tradePair.nTradePairID))
-		mapCompleteTradePair.insert(std::make_pair(tradePair.nTradePairID, tradePair));
-	else if (tradePair.nLastUpdate > mapCompleteTradePair[tradePair.nTradePairID].nLastUpdate)
-		mapCompleteTradePair[tradePair.nTradePairID] = tradePair;
+	if (!mapTradePair.count(tradePair.nTradePairID))
+		mapTradePair.insert(std::make_pair(tradePair.nTradePairID, tradePair));
+	else if (tradePair.nLastUpdate > mapTradePair[tradePair.nTradePairID].nLastUpdate)
+		mapTradePair[tradePair.nTradePairID] = tradePair;
 
 	return true;
 }
@@ -121,7 +175,7 @@ void CTradePairManager::SendTradePair(CTradePair TradePair, CNode* node, CConnma
 CTradePair CTradePairManager::GetTradePair(int TradePairID)
 {
 	if (IsValidTradePairID(TradePairID))
-		return mapCompleteTradePair[TradePairID];
+		return mapTradePair[TradePairID];
 
 	return CTradePair();
 }
@@ -129,14 +183,14 @@ CTradePair CTradePairManager::GetTradePair(int TradePairID)
 int CTradePairManager::GetAskSideCoinID(int TradePairID)
 {
 	if (IsValidTradePairID(TradePairID))
-		return mapCompleteTradePair[TradePairID].nCoinID2;
+		return mapTradePair[TradePairID].nCoinID2;
 	return 0;
 }
 
 int CTradePairManager::GetBidSideCoinID(int TradePairID)
 {
 	if (IsValidTradePairID(TradePairID))
-		return mapCompleteTradePair[TradePairID].nCoinID1;
+		return mapTradePair[TradePairID].nCoinID1;
 	return 0;
 }
 
@@ -153,8 +207,8 @@ tradepair_enum CTradePairManager::ProcessTradePair(CTradePair TradePair)
 		return TRADEPAIR_UPDATED;
 	}
 
-	std::map<int, CTradePair>::iterator it = mapCompleteTradePair.begin();
-	while (it != mapCompleteTradePair.end())
+	std::map<int, CTradePair>::iterator it = mapTradePair.begin();
+	while (it != mapTradePair.end())
 	{
 		if (it->second.nCoinID1 == TradePair.nCoinID1 && it->second.nCoinID2 == TradePair.nCoinID2)
 		{
@@ -175,7 +229,7 @@ tradepair_enum CTradePairManager::ProcessTradePair(CTradePair TradePair)
 		++it;
 	}
 
-	mapCompleteTradePair.insert(std::make_pair(TradePair.nTradePairID, TradePair));
+	mapTradePair.insert(std::make_pair(TradePair.nTradePairID, TradePair));
 	return TRADEPAIR_ADDED;
 }
 
@@ -183,8 +237,8 @@ void CTradePairManager::GetTradeFee(int TradePairID, int &BuyFee, int &SellFee)
 {	
 	if (IsValidTradePairID(TradePairID))
 	{
-		BuyFee = mapCompleteTradePair[TradePairID].nBidTradeFee;
-		SellFee = mapCompleteTradePair[TradePairID].nAskTradeFee;
+		BuyFee = mapTradePair[TradePairID].nBidTradeFee;
+		SellFee = mapTradePair[TradePairID].nAskTradeFee;
 		return;
 	}
 	BuyFee = 0;
@@ -195,7 +249,7 @@ int CTradePairManager::GetBidTradeFee(int TradePairID)
 {
 	if (IsValidTradePairID(TradePairID))
 	{
-		return mapCompleteTradePair[TradePairID].nBidTradeFee;
+		return mapTradePair[TradePairID].nBidTradeFee;
 	}
 	return 0;
 }
@@ -204,26 +258,26 @@ int CTradePairManager::GetAskTradeFee(int TradePairID)
 {
 	if (IsValidTradePairID(TradePairID))
 	{
-		return mapCompleteTradePair[TradePairID].nAskTradeFee;
+		return mapTradePair[TradePairID].nAskTradeFee;
 	}
 	return 0;
 }
 
 bool CTradePairManager::IsValidTradePairID(int TradePairID)
 {
-	return mapCompleteTradePair.count(TradePairID);
+	return mapTradePair.count(TradePairID);
 }
 
 std::string CTradePairManager::GetTradePairStatus(int TradePairID)
 {
 	if (IsValidTradePairID(TradePairID))
-		return mapCompleteTradePair[TradePairID].nStatus;
+		return mapTradePair[TradePairID].nStatus;
 	return "";
 }
 
 bool CTradePairManager::IsTradeEnabled(int TradePairID)
 {
 	if (IsValidTradePairID(TradePairID))
-		return mapCompleteTradePair[TradePairID].nTradeEnabled;
+		return mapTradePair[TradePairID].nTradeEnabled;
 	return false;
 }

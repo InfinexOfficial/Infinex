@@ -5,8 +5,10 @@
 #include "activenoderole.h"
 #include "chartdata.h"
 #include "coininfo.h"
-#include "orderbook.h"
 #include "net_processing.h"
+#include "noderole.h"
+#include "nodesetup.h"
+#include "orderbook.h"
 #include "trade.h"
 #include "trademanager.h"
 #include "tradepair.h"
@@ -26,23 +28,40 @@ void CActiveNodeRole::ProcessMessage(CNode* pfrom, std::string& strCommand, CDat
 {
 	if (strCommand == NetMsgType::DEXNODEROLES)
 	{
-		std::vector<CNodeRole> incomingNodeRoles;
-		vRecv >> incomingNodeRoles;
+		std::vector<CNodeRole> incomings;
+		vRecv >> incomings;
 
-		std::vector<CNodeRole> toBroadcastNodeRoles;
-		for (auto nodeRole : incomingNodeRoles)
+		std::vector<CNodeRole> toBroadcast;
+		for (auto incoming : incomings)
 		{
-			if (!nodeRole.VerifySignature()) {
+			if (!incoming.VerifySignature()) {
 				LogPrintf("CNodeRoleManager::ProcessMessage -- invalid signature\n");
 				Misbehaving(pfrom->GetId(), 100);
 				return;
 			}
 
-			if (InputNodeRole(nodeRole))
-				toBroadcastNodeRoles.push_back(nodeRole);
+			if (InputNodeRole(incoming))
+				toBroadcast.push_back(incoming);
 		}
-		if (toBroadcastNodeRoles.size() > 0)
-			BroadcastToConnectedNode(connman, toBroadcastNodeRoles);
+		if (toBroadcast.size() > 0)
+			BroadcastToConnectedNode(connman, toBroadcast);
+
+		if (nodeSetup.NodeRoleSyncInProgress)
+		{
+			bool stillSync = false;
+
+			if (completeNodeRoles.size() < nodeSetup.TotalNodeRoleCount)
+				stillSync = true;
+
+			std::map<int, CNodeRole>::reverse_iterator it = mapGlobalNodeRolesByID.rbegin();
+			if (it == mapGlobalNodeRolesByID.rend())
+				stillSync = true;
+			else if (it->first < nodeSetup.LastNodeRoleID)
+				stillSync = true;
+
+			if (!stillSync)
+				nodeSetup.NodeRoleSyncInProgress = false;
+		}
 	}
 	else if (strCommand == NetMsgType::DEXNODEROLE)
 	{

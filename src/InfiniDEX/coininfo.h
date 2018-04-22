@@ -88,7 +88,6 @@ public:
 class CCoinInfoManager
 {
 public:
-	CCoinInfoManager() {}
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 	void BroadcastCoinsInfoToConnectedNode(CConnman& connman, std::vector<CCoinInfo> coinInfo);
 	void BroadcastCoinInfoToConnectedNode(CConnman& connman, CCoinInfo coinInfo);
