@@ -36,15 +36,6 @@ void CUserBalanceManager::ProcessMessage(CNode* pfrom, std::string& strCommand, 
 				Misbehaving(pfrom->GetId(), 100);
 				return;
 			}
-
-			if (incoming.nMNPubKey == "")
-			{
-
-			}
-			else
-			{
-
-			}
 		}
 	}
 }

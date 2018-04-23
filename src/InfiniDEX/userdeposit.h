@@ -21,14 +21,14 @@ class CUserDeposit;
 class CUserDepositSetting;
 class CUserDepositManager;
 
-typedef std::map<std::string, uint64_t> mapLastRequestTimeByPubKey;
+typedef std::map<std::string, uint64_t> mapUserLastRequestDepositTime;
 typedef std::map<int, std::shared_ptr<CUserDeposit>> mapUserDepositWithID;
 typedef std::pair<int, mapUserDepositWithID> UserDepositInfo;
 typedef std::map<std::string, UserDepositInfo> mapUserDepositWithPubKey;
 typedef std::map<int, UserDepositInfo> mapUserDepositWithCoinID;
 extern std::map<int, mapUserDepositWithPubKey> mapUserDepositByCoinID;
 extern std::map<std::string, mapUserDepositWithCoinID> mapUserDepositByPubKey;
-extern std::map<int, mapLastRequestTimeByPubKey> mapUserLastRequestTime;
+extern std::map<int, mapUserLastRequestDepositTime> mapUserLastRequestTime;
 extern std::map<int, CUserDepositSetting> mapUserDepositSetting;
 extern CUserDepositManager userDepositManager;
 
@@ -134,6 +134,7 @@ private:
 public:
 	CUserDepositManager() {}
 	void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+	void RelayUserDepositInfoToUser(CNode* node, CConnman& connman);
 	void InputUserDeposit(const std::shared_ptr<CUserDeposit>& UserDeposit);
 	void AssignDepositInfoRole(int TradePairID);
 	bool IsInChargeOfUserDepositInfo(int CoinID);

@@ -16,7 +16,7 @@ class CUserDepositManager;
 
 std::map<int, mapUserDepositWithPubKey> mapUserDepositByCoinID;
 std::map<std::string, mapUserDepositWithCoinID> mapUserDepositByPubKey;
-std::map<int, mapLastRequestTimeByPubKey> mapUserLastRequestTime;
+std::map<int, mapUserLastRequestDepositTime> mapUserLastRequestTime;
 std::map<int, CUserDepositSetting> mapUserDepositSetting;
 CUserDepositManager userDepositManager;
 
@@ -36,6 +36,15 @@ void CUserDepositManager::ProcessMessage(CNode* pfrom, std::string& strCommand, 
 		std::shared_ptr<CUserDeposit> UserDeposit = std::make_shared<CUserDeposit>(userDeposit);
 		InputUserDeposit(UserDeposit);
 	}
+	else if (strCommand == NetMsgType::DEXGETUSERDEPOSIT)
+	{
+		
+	}
+}
+
+void CUserDepositManager::RelayUserDepositInfoToUser(CNode* node, CConnman& connman)
+{
+	
 }
 
 bool CUserDeposit::VerifySignature()
@@ -179,7 +188,7 @@ void CUserDepositManager::SetSyncInProgress(int CoinID, bool status)
 void CUserDepositManager::AddCoinToList(int CoinID)
 {
 	mapUserDepositSetting.insert(std::make_pair(CoinID, CUserDepositSetting()));
-	mapUserLastRequestTime.insert(std::make_pair(CoinID, mapLastRequestTimeByPubKey()));
+	mapUserLastRequestTime.insert(std::make_pair(CoinID, mapUserLastRequestDepositTime()));
 	mapUserDepositByCoinID.insert(std::make_pair(CoinID, mapUserDepositWithPubKey()));
 }
 

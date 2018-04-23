@@ -109,12 +109,11 @@ bool CActiveNodeRole::InputNodeRole(CNodeRole &Role)
 	{
 		completeNodeRoles.push_back(Role);
 		std::pair<int, std::shared_ptr<CNodeRole>> temp = std::make_pair(Role.NodeRoleID, nodeRole);
-		mapGlobalNodeRoles.insert(temp);
-		mapGlobalNodeRolesByRole[Role.NodeRole].insert(temp);
+		mapGlobalNodeRoles.insert(temp);		
 		if (Role.TradePairID > 0)
-			mapGlobalNodeRolesByTradePairID[Role.TradePairID].insert(temp);
+			mapGlobalNodeRolesByTradePairID[Role.TradePairID][Role.NodeRole].insert(temp);
 		if (Role.Char != NULL)
-			mapGlobalNodeRolesByChar[Role.Char].insert(temp);
+			mapGlobalNodeRolesByChar[Role.Char][Role.NodeRole].insert(temp);
 		if (Role.NodePubKey == MNPubKey)
 		{
 			mapLocalNodeRoles[Role.NodeRole].insert(temp);
@@ -173,9 +172,9 @@ bool CActiveNodeRole::ProcessNewRole(CNodeRole &Role)
 		if (Role.NodeRole == INFINIDEX_BALANCE_HANDLER)
 		{
 			if (!Role.IsBackup)
-				userBalanceManager.AssignUserBalanceRole(Role.Char);
+				userBalanceManager.AssignUserBalanceRole(Role.Char, Role.StartTime);
 			else
-				userBalanceManager.AssignBackupRole(Role.Char);
+				userBalanceManager.AssignBackupRole(Role.Char, Role.StartTime);
 		}
 		else if (Role.NodeRole == INFINIDEX_MARKET_OVERVIEW_PROCESSOR)
 		{
